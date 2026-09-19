@@ -40,6 +40,7 @@
     answers: {},
     questionIndex: 0,
     candidates: [],
+    subset: null,
     cameraStream: null,
   };
 
@@ -148,14 +149,15 @@
     show('analyzing');
 
     let reading;
+    let result;
     try {
       // A short floor on the scan animation: an instant cut reads as a bug,
       // and the first WebGL pass is not always instant anyway.
-      const [probabilities] = await Promise.all([
+      [result] = await Promise.all([
         VISION.classify(source, width, height),
         new Promise((done) => setTimeout(done, 600)),
       ]);
-      reading = RECOGNIZER.interpret(probabilities);
+      reading = RECOGNIZER.interpret(result.classes, { material: result.material });
     } catch {
       return openPicker('The recognizer could not run on this device. Choose the item instead.');
     }
@@ -163,6 +165,26 @@
     state.candidates = reading.candidates;
 
     if (!reading.recognized) {
+      // A living thing or a landscape is not a recycling question. Say so,
+      // rather than letting the material head guess a material for a cat.
+      if (!reading.looksLikeWaste) {
+        return openPicker(`That reads as “${reading.saw.label}”, not a household item. `
+          + 'Search for what you are actually holding.');
+      }
+
+      // The object model failed, but the material model usually has not — and
+      // "it is glass" turns 177 entries into a shortlist. Two taps, not a dead end.
+      const narrowed = result.material
+        && RECOGNIZER.byMaterial(result.material, { ranked: reading.ranked, limit: 24 });
+
+      if (narrowed && narrowed.objects.length) {
+        return openPicker(
+          `Not certain what it is, but the material reads as ${narrowed.material.id}. `
+          + 'These are the closest matches — the likeliest first.',
+          narrowed.objects,
+        );
+      }
+
       const saw = reading.saw.label;
       return openPicker(saw
         ? `Closest guess was “${saw}”, which has no disposal rule yet. Choose the item instead.`
@@ -174,9 +196,13 @@
     $('confidence-fill').style.width = `${Math.round(Math.min(1, best.score) * 100)}%`;
     $('confidence-value').textContent = `${Math.round(Math.min(1, best.score) * 100)}% match`;
     $('confidence-source').textContent = 'On-device model';
-    $('match-note').textContent = reading.saw.label
-      ? `The classifier read the photo as “${reading.saw.label}”.`
+    // Say what each model actually saw. When the guess is wrong, this is what
+    // tells the user whether the photo or the catalog is the problem.
+    const read = reading.saw.label ? `Read as “${reading.saw.label}”` : '';
+    const material = reading.material && reading.material.probability >= 0.5
+      ? `${read ? ', material looks like' : 'Material looks like'} ${reading.material.id}`
       : '';
+    $('match-note').textContent = read || material ? `${read}${material}.` : '';
 
     const alternatives = reading.candidates.slice(1);
     $('alternatives-block').classList.toggle('u-hidden', alternatives.length === 0);
@@ -191,7 +217,13 @@
 
   // --- catalog picker -----------------------------------------------------
 
-  function openPicker(note) {
+  /**
+   * The picker doubles as the recovery path. `subset` is what the material
+   * head narrowed the catalog down to; searching clears it, because a typed
+   * query is a stronger signal than a model's guess.
+   */
+  function openPicker(note, subset) {
+    state.subset = subset || null;
     $('picker-note').textContent = note || '';
     $('picker-note').classList.toggle('u-hidden', !note);
     $('picker-search').value = '';
@@ -201,16 +233,27 @@
   }
 
   function renderPicker(query) {
-    const needle = query.trim().toLowerCase();
-    const matches = RULES.OBJECTS.filter((o) => !needle || o.label.toLowerCase().includes(needle));
+    const needle = query.trim();
+    const narrowed = state.subset && !needle;
+    const matches = narrowed ? state.subset : RULES.search(needle, needle ? 60 : 0);
+
+    $('show-all').classList.toggle('u-hidden', !narrowed);
+    $('picker-count').textContent = needle
+      ? `${matches.length} match${matches.length === 1 ? '' : 'es'}`
+      : (narrowed
+        ? `${matches.length} of ${RULES.OBJECTS.length} items`
+        : `${matches.length} items`);
 
     $('picker-list').innerHTML = matches.length
       ? matches.map((o) => `
         <button type="button" data-id="${esc(o.id)}">
-          <span>${esc(o.label)}</span>
+          <span>
+            ${esc(o.label)}
+            <span class="btn-sub">${esc(o.components.map((c) => c.material).join(' · '))}</span>
+          </span>
           ${icon('chevron', 16)}
         </button>`).join('')
-      : '<p class="empty">Nothing in the catalog matches that yet.</p>';
+      : '<p class="empty">Nothing in the catalog matches that yet. Try a material, like “foam” or “steel”.</p>';
   }
 
   // --- follow-up questions ------------------------------------------------
@@ -301,6 +344,7 @@
     state.answers = {};
     state.questionIndex = 0;
     state.candidates = [];
+    state.subset = null;
     show('capture');
   }
 
@@ -334,6 +378,7 @@
   });
 
   $('open-picker').addEventListener('click', () => openPicker(''));
+  $('show-all').addEventListener('click', () => { state.subset = null; renderPicker($('picker-search').value); });
   $('restart').addEventListener('click', restart);
   $('again').addEventListener('click', restart);
 

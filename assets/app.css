@@ -587,6 +587,28 @@ h1, h2, h3, p { margin: 0; }
 .search::placeholder { color: var(--ink-3); }
 .search:focus { outline: 2px solid var(--focus); outline-offset: -1px; border-color: transparent; }
 
+.picker-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: -.5rem;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.picker-meta .link-btn { font-size: .6875rem; text-transform: none; letter-spacing: 0; }
+
+.picker button .btn-sub {
+  display: block;
+  margin-top: .0625rem;
+  color: var(--ink-3);
+  font-size: .75rem;
+}
+
 .picker {
   flex: 0 1 auto;
   min-height: 0;
