@@ -74,7 +74,7 @@ test('questions are deduplicated across components', () => {
 
 test('an object with no conditional rules asks nothing', () => {
   assert.deepStrictEqual(questionsFor(findObject('receipt')), []);
-  assert.deepStrictEqual(questionsFor(findObject('styrofoam')), []);
+  assert.deepStrictEqual(questionsFor(findObject('foam-takeout-tray')), []);
 });
 
 test('coffee cup splits three materials across two destinations', () => {
@@ -102,7 +102,7 @@ test('a part-full aerosol becomes hazardous drop-off', () => {
 });
 
 test('working electronics are routed to reuse over recycling', () => {
-  const device = findObject('electronics');
+  const device = findObject('smartphone');
   assert.strictEqual(resolve(device, { condition: 'good' }).components[0].outcome.id, 'reuse');
   assert.strictEqual(resolve(device, { condition: 'broken' }).components[0].outcome.id, 'dropoff');
 });
@@ -150,21 +150,21 @@ test('every stream is actually reachable from some object', () => {
 });
 
 test('resolve expands a stream with its resin code and acceptance', () => {
-  const bottle = resolve(findObject('plastic-bottle'));
+  const bottle = resolve(findObject('water-bottle'));
   const [body, cap] = bottle.components;
 
   assert.strictEqual(body.stream.code, '#1');
   assert.strictEqual(body.stream.short, 'PET');
   assert.strictEqual(body.stream.family, 'Plastic');
   assert.strictEqual(body.stream.acceptance.id, 'widely');
-  assert.strictEqual(cap.stream.code, '#2');
+  assert.strictEqual(cap.stream.code, '#5');
 });
 
 test('the same outcome can still mean different streams', () => {
-  // Every part of a carton "recycles", but into three different streams.
+  // Both parts of a carton "recycle", but into two different streams.
   const carton = resolve(findObject('milk-carton'));
-  assert.deepStrictEqual(outcomesOf(carton), ['recycle', 'recycle', 'trash']);
-  assert.deepStrictEqual(streamsOf(carton), ['carton', 'hdpe', null]);
+  assert.deepStrictEqual(outcomesOf(carton), ['recycle', 'recycle']);
+  assert.deepStrictEqual(streamsOf(carton), ['carton', 'hdpe']);
   assert.strictEqual(carton.split, true, 'differing streams should count as a split');
 });
 
@@ -202,7 +202,7 @@ test('a trash verdict still names the material that caused it', () => {
 });
 
 test('film routes to store drop-off unless the program takes it curbside', () => {
-  const bag = findObject('plastic-bag');
+  const bag = findObject('produce-bag');
   const dropoff = resolve(bag, { filmPlastic: 'no' }).components[0];
   assert.strictEqual(dropoff.outcome.id, 'dropoff');
   assert.strictEqual(dropoff.stream.id, 'filmDropoff');
@@ -229,8 +229,8 @@ test('acceptance is honest about low-value plastics', () => {
 });
 
 test('matchObject prefers the most specific term', () => {
-  assert.strictEqual(matchObject('plastic bottle').id, 'plastic-bottle');
+  assert.strictEqual(matchObject('plastic bottle').id, 'water-bottle');
   assert.strictEqual(matchObject('Pizza Box').id, 'pizza-box');
   assert.strictEqual(matchObject(''), null);
-  assert.strictEqual(matchObject('quantum toaster'), null);
+  assert.strictEqual(matchObject('xylophone'), null);
 });

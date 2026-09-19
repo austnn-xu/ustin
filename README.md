@@ -14,8 +14,9 @@ People want to dispose of things correctly and mostly can't. Looking up each ite
 US Tin breaks an object into **components**, and gives each one both a destination and a **stream** — the specific resin code or material class that decides whether it's genuinely accepted.
 
 ```
-Camera → Classify on device → Confirm the match
-       → Follow-up questions → Per-component verdict → Explanation
+Camera → Classify on device ─┬─ recognised → Confirm the match ─┐
+                             ├─ material only → Narrowed picker ─┤
+                             └─ nothing → Full picker ───────────┴→ Questions → Verdict
 ```
 
 Follow-up questions are asked only when the answer actually changes the outcome. A greasy pizza box goes somewhere different from a clean one, so it's worth one tap to ask.
@@ -56,17 +57,41 @@ Plus drop-off destinations: `WEEE` e-waste, `BATT` batteries, `HHW` hazardous, `
 
 Recognition is real and runs **on the device**. MobileNet v2 executes in the browser through TensorFlow.js: the weights travel to the phone, the photo never leaves it. There is no inference server, no API key and no upload.
 
-The model is trained on ILSVRC-2012, whose label space only partly overlaps with household waste, so `lib/recognizer.js` is the translation layer between them:
+Two models run on every photo, from a single forward pass:
+
+**1. The object model** is MobileNet's 1000-way ILSVRC-2012 classifier. Its label space only partly overlaps with household waste, so `lib/recognizer.js` translates:
 
 - An ILSVRC class maps to one or more catalog objects with a weight. `pizza` leans towards the pizza box but keeps food scraps on offer.
 - Scores are summed across the whole distribution rather than read off the top class. `beer bottle` + `wine bottle` + `goblet` at 12% each is a much stronger glass verdict than any one of them looks.
-- Below the recognition floor the app says so and opens the picker. A confident wrong answer is worse for the user than an honest shrug.
+- Below the recognition floor the app says so rather than guessing.
+
+**2. The material head** is a linear classifier over MobileNet's 1280-dimensional embedding, trained here on [TrashNet](https://github.com/garythung/trashnet) — 2,527 photographs of real household waste labelled cardboard / glass / metal / paper / plastic / trash. It ships as a ~60 KB JSON file and runs in plain JavaScript.
+
+The two are **fused**: material agreement lifts a candidate but never vetoes it. `water bottle` is genuinely ambiguous between a plastic bottle and a metal flask, and the object model splits it — the material head decides. And when the object model has nothing at all, the material head usually still does, so instead of a dead end the picker opens pre-filtered: *"Not sure what it is, but it looks like glass. Here is everything made of that."* That turns a failed guess into two taps.
 
 The confirm screen shows the match, the score, the raw class the model read, and the runner-up catalog objects, so a wrong guess is one tap from being corrected.
 
-**Four catalog objects are unreachable from the camera** — batteries, polystyrene foam, paint and receipts have no usable ILSVRC class. They're reachable from the picker and search, and `UNREACHABLE_OBJECTS` is asserted by the test suite so the gap stays visible rather than being discovered by a user.
+### The bug this all started with
 
-Swapping in a stronger model means changing `MODEL_URL` and the mapping table; nothing downstream of `interpret()` changes.
+The first version of this was, in the user's words, *insanely inaccurate*. The cause was one line: this MobileNet graph emits **1001** logits — a leading "background" class, then the 1000 real ones — and the code read index *i* as class *i*. Every lookup landed one class off, which turns a classifier into a random number generator. It was invisible in casual testing because the neighbouring class is often plausible: a photo of an espresso cup returned "cup" instead of "espresso", and both point at a coffee cup.
+
+`interpret()` now refuses a vector that is not exactly 1000 long, and a test pins that. Silent nonsense is worse than a crash.
+
+### Measured
+
+`test/` covers the logic; the numbers come from evaluating against all 2,527 TrashNet photographs, scoring whether the material family of the object the app would show matches what the photograph actually is.
+
+| | Useful answer rate |
+|---|---|
+| Before (off-by-one bug) | BEFORE_NUMBER |
+| After the fix | AFTER_NUMBER |
+| After the fix, with the material head | FUSED_NUMBER |
+
+Material head accuracy on a held-out 20% of TrashNet: HEAD_NUMBER.
+
+Two honest caveats. TrashNet photographs are single objects on a white posterboard, so they are kinder than a real kitchen counter — treat these as an upper bound, not a field measurement. And the evaluation scores *material family*, not the exact catalog entry, because TrashNet is labelled by material.
+
+**About half the catalog is reachable from the camera.** The rest — anything with no ILSVRC counterpart — is reachable by search, by the picker and by material narrowing. A test asserts a floor on camera coverage so a careless edit cannot quietly gut the mapping.
 
 ## Running it
 
@@ -75,7 +100,7 @@ No dependencies, no install, no build step for development.
 ```bash
 node server.js          # http://localhost:3000
 PORT=8080 node server.js
-npm test                # 34 checks across the rules engine and the mapping
+npm test                # 40 checks across the engine, the catalog and the recogniser
 ./build.sh              # assemble dist/ for static hosting
 ```
 
@@ -88,20 +113,36 @@ The camera needs a secure context, so `localhost` works, but testing from a phon
 ## Layout
 
 ```
-lib/rules.js            Knowledge base + decision engine  ← the actual substance
-lib/recognizer.js       ILSVRC classes -> catalog objects
-lib/imagenet-labels.js  The 1000 class names (generated)
-public/index.html       App shell and icon set
-public/assets/app.js    Screen flow and rendering
-public/assets/vision.js MobileNet loading and inference
-public/vendor/          TensorFlow.js, vendored
-server.js               Dev server: static files + two JSON endpoints
-test/                   Engine and mapping checks
+lib/catalog.js             177 objects, built from component factories  ← the substance
+lib/streams.js             Outcomes, material streams, follow-up questions
+lib/rules.js               The decision engine
+lib/recognizer.js          ILSVRC classes + material head -> catalog objects
+lib/imagenet-labels.js     The 1000 class names (generated)
+public/index.html          App shell and icon set
+public/assets/app.js       Screen flow and rendering
+public/assets/vision.js    MobileNet loading and inference
+public/assets/material-head.json  The trained material classifier
+public/vendor/             TensorFlow.js, vendored
+server.js                  Dev server: static files + two JSON endpoints
+test/                      Engine, catalog and recognizer checks
 ```
 
-### `lib/rules.js`
+### `lib/catalog.js`
 
-The file that matters. Each catalog object lists its components; each component has a base outcome and stream, plus optional `rules` that override either one based on answers. Later matching rules win.
+The file that matters. Each object lists its components; each component has a base outcome and stream, plus optional `rules` that override either one based on answers. Later matching rules win.
+
+The same physical part turns up on dozens of objects — a PET bottle body, a paperboard sleeve, a lithium cell — so components are built by factories rather than copied:
+
+```js
+{
+  id: 'shampoo-bottle', label: 'Shampoo bottle',
+  match: ['shampoo bottle', 'conditioner bottle', 'body wash'],
+  components: [part.hdpe('Bottle', 'Bathroom bottles are ordinary #2 HDPE…'), cap.plastic()],
+  tip: 'Bathroom plastics are the most commonly missed recyclables in the house.',
+}
+```
+
+Every factory takes an explanation, because the reason is the product: a verdict with a generic sentence under it teaches nothing. Where an object needs real nuance, it is written out longhand instead:
 
 ```js
 {
@@ -118,7 +159,7 @@ The file that matters. Each catalog object lists its components; each component 
 }
 ```
 
-Adding an object is a data edit — no engine changes. 20 objects currently, chosen for the ones people actually get wrong.
+Adding an object is a data edit — no engine changes. 177 objects currently, spanning kitchen packaging, organics, paper, bathroom, electronics, hazardous household chemicals, textiles and durables.
 
 The headline verdict is the component needing the **most** care, so a summary never understates a hazard: a battery inside a toy makes the whole thing a drop-off.
 
@@ -136,6 +177,7 @@ The browser does not call these — the engine and the classifier both run clien
 ## Known limits
 
 - **Rules are generic, not local.** Disposal is set by your municipality, and the acceptance ratings are national averages. A real version needs postcode-level rule sets; questions like "does your program take film?" paper over this for now.
-- **Recognition is as good as MobileNet.** It is solid on bottles, cups, cans, cartons, packets, bags, food, electronics and clothing, and weak on everything the ILSVRC label space does not cover. The alternatives list and the picker exist because of this.
-- **20 objects.** Anything outside the catalog has no answer — no graceful degradation to a material-level guess yet.
+- **Recognition is as good as MobileNet.** It is solid on bottles, cups, cans, cartons, packets, bags, food, electronics and clothing, and weak on everything the ILSVRC label space does not cover. The alternatives list, the material narrowing and the picker all exist because of this.
+- **The material head learned from posed photographs.** TrashNet is single objects on white posterboard. Cluttered, badly-lit real photos are harder than anything it was trained on.
+- **177 objects.** Anything outside the catalog still has no answer, though material narrowing now gets a user close.
 - **No history**, accounts, or persistence. Every scan is standalone.

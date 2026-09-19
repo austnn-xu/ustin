@@ -20,9 +20,17 @@
 window.USTinVision = (function () {
   const TFJS_SRC = 'vendor/tensorflow.min.js';
   const MODEL_URL = 'https://storage.googleapis.com/tfjs-models/savedmodel/mobilenet_v2_1.0_224/model.json';
+  const HEAD_URL = 'assets/material-head.json';
   const INPUT_SIZE = 224;
 
+  // The graph exposes its penultimate pooled features as well as its logits.
+  // One pass gives us both: the 1000-way object guess and the 1280-dimensional
+  // embedding the material head reads.
+  const EMBED_NODE = 'module_apply_default/MobilenetV2/Logits/AvgPool';
+  const LOGITS_NODE = 'module_apply_default/MobilenetV2/Logits/output';
+
   let model = null;
+  let head = null;
   let loading = null;
   let status = 'idle'; // idle | loading | ready | failed
 
@@ -48,6 +56,12 @@ window.USTinVision = (function () {
     loading = (async () => {
       if (!window.tf) await loadScript(TFJS_SRC);
       await window.tf.ready();
+
+      // The material head is small and same-origin, so it is never the thing
+      // that makes the user wait. If it is missing the app still works — it
+      // just loses the material tie-break and the narrowing fallback.
+      head = await fetch(HEAD_URL).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+
       model = await window.tf.loadGraphModel(MODEL_URL, {
         onProgress: (fraction) => {
           if (typeof onProgress === 'function') onProgress(fraction);
@@ -57,9 +71,9 @@ window.USTinVision = (function () {
       // The first inference compiles the WebGL shaders — several hundred
       // milliseconds that would otherwise land on the user's first photo.
       const warm = window.tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3]);
-      const out = model.predict(warm);
-      out.dataSync();
-      window.tf.dispose([warm, out]);
+      const out = model.execute(warm, [EMBED_NODE, LOGITS_NODE]);
+      out.forEach((t) => t.dataSync());
+      window.tf.dispose([warm, ...out]);
 
       status = 'ready';
     })().catch((err) => {
@@ -89,25 +103,69 @@ window.USTinVision = (function () {
     return canvas;
   }
 
-  /** @returns {Promise<Float32Array>} probabilities over the 1000 classes. */
+  /** Softmax over a plain array, for the handful of numbers the head emits. */
+  function softmax(values) {
+    const max = Math.max(...values);
+    const exps = values.map((v) => Math.exp(v - max));
+    const total = exps.reduce((a, b) => a + b, 0);
+    return exps.map((v) => v / total);
+  }
+
+  /**
+   * The material head: a linear layer over the embedding, trained on 2,527
+   * photographs of actual household waste. Small enough to run in plain
+   * JavaScript, which keeps it out of the WebGL path entirely.
+   */
+  function readMaterial(embedding) {
+    if (!head) return null;
+
+    const logits = head.bias.map((b, k) => {
+      let sum = b;
+      const row = k * head.inputs;
+      for (let i = 0; i < head.inputs; i += 1) sum += embedding[i] * head.weights[row + i];
+      return sum;
+    });
+
+    const probabilities = softmax(logits);
+    const out = {};
+    head.classes.forEach((name, i) => { out[name] = probabilities[i]; });
+    return out;
+  }
+
+  /**
+   * @returns {Promise<{classes: Float32Array, material: object|null}>}
+   *   `classes` is the 1000-way ILSVRC distribution; `material` is the
+   *   six-way material distribution, or null if the head did not load.
+   */
   async function classify(source, width, height) {
     if (!model) throw new Error('The classifier is not loaded yet');
     const tf = window.tf;
     const square = toSquare(source, width, height);
 
-    const probabilities = tf.tidy(() => {
+    const [probabilities, embedding] = tf.tidy(() => {
       // MobileNet v2 was trained on inputs scaled to [-1, 1].
       const input = tf.browser.fromPixels(square)
         .toFloat()
         .div(127.5)
         .sub(1)
         .expandDims(0);
-      return tf.softmax(model.predict(input).squeeze());
+
+      const [embed, logits] = model.execute(input, [EMBED_NODE, LOGITS_NODE]);
+
+      // This graph emits 1001 logits: a leading "background" class, then the
+      // 1000 ILSVRC classes. Dropping it is not cosmetic — leave it in and
+      // every class is read one index off, which silently turns the whole
+      // classifier into noise.
+      const flat = logits.squeeze();
+      const classes = flat.size === 1001 ? flat.slice([1], [1000]) : flat;
+      return [tf.softmax(classes), embed.reshape([-1])];
     });
 
-    const values = await probabilities.data();
-    probabilities.dispose();
-    return values;
+    const classes = await probabilities.data();
+    const features = await embedding.data();
+    tf.dispose([probabilities, embedding]);
+
+    return { classes, material: readMaterial(features) };
   }
 
   return {

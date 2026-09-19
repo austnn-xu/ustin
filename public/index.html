@@ -218,7 +218,12 @@
 
       <div class="search-wrap">
         <svg width="17" height="17" aria-hidden="true"><use href="#i-search"/></svg>
-        <input id="picker-search" class="search" type="search" placeholder="Search 20 items…" autocomplete="off" aria-label="Search items">
+        <input id="picker-search" class="search" type="search" placeholder="Search items…" autocomplete="off" aria-label="Search items">
+      </div>
+
+      <div class="picker-meta">
+        <span id="picker-count"></span>
+        <button id="show-all" class="link-btn u-hidden" type="button">Show every item</button>
       </div>
 
       <div id="picker-list" class="picker"></div>
@@ -256,7 +261,9 @@
 
 <p class="site-note">US Tin breaks an object into its parts and names the stream each one belongs to. Recognition runs in your browser; photos stay on your device.</p>
 
-<!-- The rules engine and the classifier both run client-side; order matters. -->
+<!-- The knowledge base and the classifier both run client-side; order matters. -->
+<script src="lib/streams.js"></script>
+<script src="lib/catalog.js"></script>
 <script src="lib/rules.js"></script>
 <script src="lib/imagenet-labels.js"></script>
 <script src="lib/recognizer.js"></script>

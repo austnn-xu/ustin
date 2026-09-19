@@ -7,6 +7,6 @@ rm -rf dist
 mkdir -p dist/lib
 
 cp -R public/. dist/
-cp lib/rules.js lib/recognizer.js lib/imagenet-labels.js dist/lib/
+cp lib/streams.js lib/catalog.js lib/rules.js lib/recognizer.js lib/imagenet-labels.js dist/lib/
 
 echo "built dist/ ($(find dist -type f | wc -l | tr -d ' ') files, $(du -sh dist | cut -f1))"
