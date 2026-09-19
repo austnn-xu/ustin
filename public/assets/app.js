@@ -187,9 +187,13 @@
     $('confidence-fill').style.width = `${Math.round(Math.min(1, best.score) * 100)}%`;
     $('confidence-value').textContent = `${Math.round(Math.min(1, best.score) * 100)}% match`;
     $('confidence-source').textContent = 'On-device model';
-    $('match-note').textContent = reading.saw.label
-      ? `The classifier read the photo as “${reading.saw.label}”.`
+    // Say what each model actually saw. When the guess is wrong, this is what
+    // tells the user whether the photo or the catalog is the problem.
+    const read = reading.saw.label ? `Read as “${reading.saw.label}”` : '';
+    const material = reading.material && reading.material.probability >= 0.5
+      ? `${read ? ', material looks like' : 'Material looks like'} ${reading.material.id}`
       : '';
+    $('match-note').textContent = read || material ? `${read}${material}.` : '';
 
     const alternatives = reading.candidates.slice(1);
     $('alternatives-block').classList.toggle('u-hidden', alternatives.length === 0);
