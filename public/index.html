@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Binly — What bin does this go in?</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9851;</text></svg>">
+</head>
+<body>
+<div class="phone">
+
+  <header class="topbar">
+    <span class="logo" aria-hidden="true">&#9851;</span>
+    <h1>Binly</h1>
+    <button id="restart" class="restart" hidden>Start over</button>
+  </header>
+
+  <!-- 1. Camera -->
+  <section id="step-camera" class="step is-active">
+    <div class="viewfinder">
+      <video id="video" playsinline muted autoplay></video>
+      <canvas id="canvas" hidden></canvas>
+      <div id="camera-fallback" class="fallback" hidden>
+        <p class="fallback-icon">&#128247;</p>
+        <p>Camera unavailable here.</p>
+        <p class="sub">Upload a photo, or skip straight to picking the item.</p>
+      </div>
+      <div class="reticle" aria-hidden="true"></div>
+    </div>
+
+    <p class="prompt">Point at the item you want to throw away.</p>
+
+    <div class="controls">
+      <button id="shutter" class="shutter" aria-label="Take photo"><span></span></button>
+    </div>
+
+    <div class="alt-actions">
+      <label class="link" for="file">Upload a photo</label>
+      <input id="file" type="file" accept="image/*" capture="environment" hidden>
+      <button id="pick-manual" class="link">Pick from list</button>
+    </div>
+  </section>
+
+  <!-- 2. Identifying -->
+  <section id="step-scanning" class="step">
+    <div class="scanning">
+      <img id="shot" alt="Captured item" class="shot">
+      <div class="scanbar" aria-hidden="true"></div>
+    </div>
+    <p class="prompt" id="scan-status" role="status" aria-live="polite">Identifying&hellip;</p>
+  </section>
+
+  <!-- 3. Confirm the guess -->
+  <section id="step-confirm" class="step">
+    <p class="eyebrow">I think this is</p>
+    <h2 id="guess-label" class="guess"></h2>
+    <p id="guess-confidence" class="confidence"></p>
+    <div class="stack">
+      <button id="confirm-yes" class="btn btn-primary">That's right</button>
+      <button id="confirm-no" class="btn">No, it's something else</button>
+    </div>
+  </section>
+
+  <!-- 4. Manual picker -->
+  <section id="step-picker" class="step">
+    <h2 class="heading">What is it?</h2>
+    <input id="picker-search" class="search" type="search" placeholder="Search items…" autocomplete="off">
+    <div id="picker-list" class="picker"></div>
+  </section>
+
+  <!-- 5. Follow-up questions -->
+  <section id="step-questions" class="step">
+    <p class="eyebrow" id="q-progress"></p>
+    <h2 class="heading" id="q-text"></h2>
+    <p class="help" id="q-help"></p>
+    <div class="stack" id="q-options"></div>
+  </section>
+
+  <!-- 6. Result -->
+  <section id="step-result" class="step">
+    <div id="verdict" class="verdict"></div>
+    <div id="components" class="components"></div>
+    <p id="tip" class="tip" hidden></p>
+    <button id="again" class="btn btn-primary wide">Scan another item</button>
+  </section>
+
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
