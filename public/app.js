@@ -1,6 +1,6 @@
 'use strict';
 
-// Binly — camera -> identify -> follow-ups -> disposal verdict.
+// US Tin — camera -> identify -> follow-ups -> disposal verdict.
 
 const el = (id) => document.getElementById(id);
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => (
@@ -137,6 +137,12 @@ function nextQuestion() {
   show('questions');
 }
 
+// A stream badge: resin code (or material code) plus its plain-English name.
+function streamChip(s) {
+  return `<span class="chip" data-family="${esc(s.family)}">
+    <b>${esc(s.code)}</b>${esc(s.short)}</span>`;
+}
+
 async function showResult() {
   let data;
   try {
@@ -152,7 +158,8 @@ async function showResult() {
     <div class="verdict-icon">${data.headline.icon}</div>
     <h2>${esc(data.headline.label)}</h2>
     <p>${esc(data.headline.blurb)}</p>
-    ${data.split ? '<p class="split-note">This item splits into parts that go to different places — see below.</p>' : ''}
+    ${data.streams.length ? `<div class="stream-row">${data.streams.map(streamChip).join('')}</div>` : ''}
+    ${data.split ? '<p class="split-note">This item splits into parts that go to different streams — see below.</p>' : ''}
     ${data.hazard ? '<p class="hazard-flag">Do not put this in a household bin.</p>' : ''}`;
 
   el('components').innerHTML = data.components.map((c) => `
@@ -162,6 +169,14 @@ async function showResult() {
         <span class="comp-dest">${c.outcome.icon} ${esc(c.outcome.label)}</span>
       </div>
       <p class="comp-material">${esc(c.material)}</p>
+      ${c.stream ? `
+        <div class="stream">
+          <div class="stream-head">
+            ${streamChip(c.stream)}
+            <span class="acceptance" data-level="${c.stream.acceptance.id}">${esc(c.stream.acceptance.label)}</span>
+          </div>
+          <p class="stream-note">${esc(c.stream.note)}</p>
+        </div>` : ''}
       <p class="comp-why">${esc(c.why)}</p>
     </div>`).join('');
 

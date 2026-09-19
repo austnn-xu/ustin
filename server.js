@@ -159,7 +159,7 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, () => {
-    console.log(`Binly running at http://localhost:${PORT}`);
+    console.log(`US Tin running at http://localhost:${PORT}`);
     console.log(`Recognition: ${STUBBED ? 'STUBBED (hash-based)' : 'live'} · ${OBJECTS.length} objects in catalog`);
   });
 }
