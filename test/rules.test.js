@@ -7,7 +7,6 @@ const {
   OBJECTS, OUTCOMES, STREAMS, ACCEPTANCE, QUESTIONS,
   findObject, matchObject, questionsFor, resolve,
 } = require('../lib/rules');
-const { identify } = require('../lib/identify');
 
 const outcomesOf = (result) => result.components.map((c) => c.outcome.id);
 const streamsOf = (result) => result.components.map((c) => (c.stream ? c.stream.id : null));
@@ -234,16 +233,4 @@ test('matchObject prefers the most specific term', () => {
   assert.strictEqual(matchObject('Pizza Box').id, 'pizza-box');
   assert.strictEqual(matchObject(''), null);
   assert.strictEqual(matchObject('quantum toaster'), null);
-});
-
-test('recognition stub is deterministic and prefers a user hint', () => {
-  const image = Buffer.from('a fixed test image');
-  assert.strictEqual(identify(image).object.id, identify(image).object.id);
-
-  const hinted = identify(image, 'battery');
-  assert.strictEqual(hinted.object.id, 'battery');
-  assert.strictEqual(hinted.source, 'user');
-  assert.strictEqual(hinted.confidence, 1);
-
-  assert.strictEqual(identify(null), null);
 });

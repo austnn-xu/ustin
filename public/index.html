@@ -4,91 +4,263 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>US Tin — What bin does this go in?</title>
-<link rel="stylesheet" href="styles.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9851;</text></svg>">
+<meta name="description" content="Point your camera at something and get the right disposal route — down to the resin code, with the reason behind it.">
+<meta name="theme-color" content="#14664a" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0d0e" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314664a' stroke-width='1.9' stroke-linecap='round'><ellipse cx='12' cy='6.5' rx='6' ry='2.6'/><path d='M6 6.5v11c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-11'/></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
-<div class="phone">
 
-  <header class="topbar">
-    <span class="logo" aria-hidden="true">&#9851;</span>
-    <h1>US Tin</h1>
-    <button id="restart" class="restart" hidden>Start over</button>
+<!-- Icon set. Stroked, 24px grid, 1.7 weight — no emoji anywhere in the UI. -->
+<svg class="u-sr" aria-hidden="true" focusable="false">
+  <symbol id="i-tin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="12" cy="6.5" rx="6" ry="2.6"/>
+    <path d="M6 6.5v11c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-11"/>
+  </symbol>
+
+  <symbol id="i-recycle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.6 12a7.4 7.4 0 0 1 12.5-5.4"/>
+    <path d="M19.4 12a7.4 7.4 0 0 1-12.5 5.4"/>
+    <path d="M17.4 3.4v3.4H14"/>
+    <path d="M6.6 20.6v-3.4H10"/>
+  </symbol>
+
+  <symbol id="i-dropoff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20.8s6.8-5.6 6.8-10.8a6.8 6.8 0 1 0-13.6 0c0 5.2 6.8 10.8 6.8 10.8Z"/>
+    <circle cx="12" cy="9.8" r="2.4"/>
+  </symbol>
+
+  <symbol id="i-compost" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 19.5C5 12 9.8 6.8 19 6.8c0 8-4.9 12.7-11.4 12.7H5Z"/>
+    <path d="M5.4 19.1C7.9 15.4 10.9 12.8 14.6 11"/>
+  </symbol>
+
+  <symbol id="i-reuse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 9h13"/><path d="m13.6 5.6 3.4 3.4-3.4 3.4"/>
+    <path d="M20 15H7"/><path d="m10.4 11.6-3.4 3.4 3.4 3.4"/>
+  </symbol>
+
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 7h16"/>
+    <path d="M9.6 7V5.3c0-.7.5-1.3 1.2-1.3h2.4c.7 0 1.2.6 1.2 1.3V7"/>
+    <path d="m6.6 7 .9 12.1c.1 1 .9 1.9 1.9 1.9h5.2c1 0 1.8-.8 1.9-1.9L17.4 7"/>
+    <path d="M10.4 11v6M13.6 11v6"/>
+  </symbol>
+
+  <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 8.8A2.5 2.5 0 0 1 5.5 6.3h1.8l1.1-1.8c.2-.3.5-.5.9-.5h5.4c.4 0 .7.2.9.5l1.1 1.8h1.8A2.5 2.5 0 0 1 21 8.8v7.7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5Z"/>
+    <circle cx="12" cy="12.4" r="3.5"/>
+  </symbol>
+
+  <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4.6" width="18" height="14.8" rx="2.2"/>
+    <circle cx="8.6" cy="9.6" r="1.5"/>
+    <path d="m3.6 16.8 4.2-3.8a1.8 1.8 0 0 1 2.4 0l3 2.7a1.8 1.8 0 0 0 2.4 0l4.8-4.3"/>
+  </symbol>
+
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 6.5h11M9 12h11M9 17.5h11"/>
+    <circle cx="4.4" cy="6.5" r=".9" fill="currentColor" stroke="none"/>
+    <circle cx="4.4" cy="12" r=".9" fill="currentColor" stroke="none"/>
+    <circle cx="4.4" cy="17.5" r=".9" fill="currentColor" stroke="none"/>
+  </symbol>
+
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="6.4"/><path d="m15.8 15.8 4.4 4.4"/>
+  </symbol>
+
+  <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m9.6 5.8 6.2 6.2-6.2 6.2"/>
+  </symbol>
+
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m5 12.6 4.6 4.6L19 6.8"/>
+  </symbol>
+
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 4.2 2.9 19.8h18.2L12 4.2Z"/>
+    <path d="M12 10.2v4.3"/>
+    <circle cx="12" cy="17.3" r=".95" fill="currentColor" stroke="none"/>
+  </symbol>
+
+  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.6"/>
+    <path d="M12 11.3v5"/>
+    <circle cx="12" cy="8.2" r=".95" fill="currentColor" stroke="none"/>
+  </symbol>
+
+  <symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.2 12a8.2 8.2 0 1 1-2.7-6.1"/>
+    <path d="M20.4 4.2v4.4H16"/>
+  </symbol>
+</svg>
+
+<main class="app">
+
+  <header class="masthead">
+    <span class="mark"><svg width="16" height="16" aria-hidden="true"><use href="#i-tin"/></svg></span>
+    <span class="wordmark">US Tin</span>
+    <span class="masthead-spacer"></span>
+    <button id="restart" class="ghost-btn u-hidden" type="button">
+      <svg width="14" height="14" aria-hidden="true"><use href="#i-rotate"/></svg>
+      Start over
+    </button>
   </header>
 
-  <!-- 1. Camera -->
-  <section id="step-camera" class="step is-active">
-    <div class="viewfinder">
-      <video id="video" playsinline muted autoplay></video>
-      <canvas id="canvas" hidden></canvas>
-      <div id="camera-fallback" class="fallback" hidden>
-        <p class="fallback-icon">&#128247;</p>
-        <p>Camera unavailable here.</p>
-        <p class="sub">Upload a photo, or skip straight to picking the item.</p>
+  <div class="rail" id="rail" aria-hidden="true">
+    <span data-on="true"></span><span></span><span></span><span></span>
+  </div>
+
+  <div class="screens">
+
+    <!-- 1 · Capture ------------------------------------------------------ -->
+    <section id="screen-capture" class="screen is-active" aria-labelledby="capture-title">
+      <div class="viewfinder">
+        <video id="video" playsinline muted autoplay></video>
+        <canvas id="canvas" class="u-hidden"></canvas>
+        <div class="brackets"><i></i><i></i><i></i><i></i></div>
+        <div id="camera-off" class="camera-off u-hidden">
+          <svg width="26" height="26" aria-hidden="true"><use href="#i-camera"/></svg>
+          <p id="camera-off-text">The camera is not available here. Upload a photo, or choose the item from the list.</p>
+        </div>
       </div>
-      <div class="reticle" aria-hidden="true"></div>
-    </div>
 
-    <p class="prompt">Point at the item you want to throw away.</p>
+      <div>
+        <p class="eyebrow">Step 1</p>
+        <h1 id="capture-title" class="title">What are you throwing away?</h1>
+        <p class="body">Fill the frame with one item. Recognition runs on this device — the photo is never uploaded.</p>
+      </div>
 
-    <div class="controls">
-      <button id="shutter" class="shutter" aria-label="Take photo"><span></span></button>
-    </div>
+      <div id="model-status" class="status-chip u-hidden" role="status" aria-live="polite"></div>
 
-    <div class="alt-actions">
-      <label class="link" for="file">Upload a photo</label>
-      <input id="file" type="file" accept="image/*" capture="environment" hidden>
-      <button id="pick-manual" class="link">Pick from list</button>
-    </div>
-  </section>
+      <div class="capture-controls">
+        <button id="shutter" class="shutter" type="button" aria-label="Take photo" disabled></button>
+      </div>
 
-  <!-- 2. Identifying -->
-  <section id="step-scanning" class="step">
-    <div class="scanning">
-      <img id="shot" alt="Captured item" class="shot">
-      <div class="scanbar" aria-hidden="true"></div>
-    </div>
-    <p class="prompt" id="scan-status" role="status" aria-live="polite">Identifying&hellip;</p>
-  </section>
+      <div class="alt-actions">
+        <label class="link-btn" for="file" tabindex="0" role="button">
+          <svg width="15" height="15" aria-hidden="true"><use href="#i-image"/></svg>
+          Upload a photo
+        </label>
+        <input id="file" type="file" accept="image/*" class="u-hidden">
+        <span class="alt-sep" aria-hidden="true"></span>
+        <button id="open-picker" class="link-btn" type="button">
+          <svg width="15" height="15" aria-hidden="true"><use href="#i-list"/></svg>
+          Choose from the list
+        </button>
+      </div>
 
-  <!-- 3. Confirm the guess -->
-  <section id="step-confirm" class="step">
-    <p class="eyebrow">I think this is</p>
-    <h2 id="guess-label" class="guess"></h2>
-    <p id="guess-confidence" class="confidence"></p>
-    <div class="stack">
-      <button id="confirm-yes" class="btn btn-primary">That's right</button>
-      <button id="confirm-no" class="btn">No, it's something else</button>
-    </div>
-  </section>
+      <p class="footnote">Guidance reflects common US curbside programs. Your municipality has the final say.</p>
+    </section>
 
-  <!-- 4. Manual picker -->
-  <section id="step-picker" class="step">
-    <h2 class="heading">What is it?</h2>
-    <input id="picker-search" class="search" type="search" placeholder="Search items…" autocomplete="off">
-    <div id="picker-list" class="picker"></div>
-  </section>
+    <!-- 2 · Analysing ---------------------------------------------------- -->
+    <section id="screen-analyzing" class="screen">
+      <div class="analyzing">
+        <img id="shot" alt="The photo being analyzed">
+        <div class="scanline" aria-hidden="true"></div>
+      </div>
+      <div>
+        <p class="eyebrow">Step 2</p>
+        <h2 class="title" id="analyzing-title" role="status" aria-live="polite">Identifying…</h2>
+        <p class="body">Running the classifier in your browser.</p>
+      </div>
+    </section>
 
-  <!-- 5. Follow-up questions -->
-  <section id="step-questions" class="step">
-    <p class="eyebrow" id="q-progress"></p>
-    <h2 class="heading" id="q-text"></h2>
-    <p class="help" id="q-help"></p>
-    <div class="stack" id="q-options"></div>
-  </section>
+    <!-- 3 · Confirm ------------------------------------------------------ -->
+    <section id="screen-confirm" class="screen">
+      <img id="match-thumb" class="preview" alt="The photo you just took">
 
-  <!-- 6. Result -->
-  <section id="step-result" class="step">
-    <div id="verdict" class="verdict"></div>
-    <div id="components" class="components"></div>
-    <p id="tip" class="tip" hidden></p>
-    <button id="again" class="btn btn-primary wide">Scan another item</button>
-  </section>
+      <div>
+        <p class="eyebrow">Step 2 · Best match</p>
+        <h2 class="title" id="guess-label"></h2>
+      </div>
 
-</div>
-<!-- The rules engine runs client-side; load order matters. -->
+      <div class="confidence">
+        <div class="track"><i id="confidence-fill"></i></div>
+        <div class="meta">
+          <span id="confidence-value"></span>
+          <span id="confidence-source"></span>
+        </div>
+        <p class="match-note" id="match-note"></p>
+      </div>
+
+      <div id="alternatives-block" class="u-hidden">
+        <p class="section-label">Or did you mean</p>
+        <div class="stack" id="alternatives"></div>
+      </div>
+
+      <div class="stack confirm-actions">
+        <button id="confirm-yes" class="btn btn-primary" type="button">
+          <svg width="17" height="17" aria-hidden="true"><use href="#i-check"/></svg>
+          Yes, that's it
+        </button>
+        <button id="confirm-no" class="btn" type="button">
+          Something else
+          <svg width="17" height="17" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- 4 · Picker ------------------------------------------------------- -->
+    <section id="screen-picker" class="screen">
+      <div>
+        <p class="eyebrow" id="picker-eyebrow">Step 2</p>
+        <h2 class="title">Which item is it?</h2>
+        <p class="body" id="picker-note"></p>
+      </div>
+
+      <div class="search-wrap">
+        <svg width="17" height="17" aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="picker-search" class="search" type="search" placeholder="Search 20 items…" autocomplete="off" aria-label="Search items">
+      </div>
+
+      <div id="picker-list" class="picker"></div>
+    </section>
+
+    <!-- 5 · Follow-up questions ------------------------------------------ -->
+    <section id="screen-question" class="screen">
+      <div>
+        <p class="eyebrow" id="question-progress"></p>
+        <h2 class="title" id="question-text"></h2>
+        <p class="body" id="question-help"></p>
+      </div>
+      <div class="stack" id="question-options"></div>
+      <p class="footnote">We only ask when the answer changes where it goes.</p>
+    </section>
+
+    <!-- 6 · Result ------------------------------------------------------- -->
+    <section id="screen-result" class="screen">
+      <div class="result-scroll">
+        <div id="verdict" class="verdict"></div>
+        <p class="section-label">Part by part</p>
+        <div id="components" class="components"></div>
+        <div id="tip" class="note note-info u-hidden"></div>
+      </div>
+      <div class="result-actions">
+        <button id="again" class="btn btn-primary" type="button">
+          <svg width="17" height="17" aria-hidden="true"><use href="#i-camera"/></svg>
+          Scan another item
+        </button>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<p class="site-note">US Tin breaks an object into its parts and names the stream each one belongs to. Recognition runs in your browser; photos stay on your device.</p>
+
+<!-- The rules engine and the classifier both run client-side; order matters. -->
 <script src="lib/rules.js"></script>
-<script src="lib/identify.js"></script>
-<script src="app.js"></script>
+<script src="lib/imagenet-labels.js"></script>
+<script src="lib/recognizer.js"></script>
+<script src="assets/vision.js"></script>
+<script src="assets/app.js"></script>
 </body>
 </html>

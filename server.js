@@ -4,18 +4,20 @@ const http = require('node:http');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
 
-const { OBJECTS, findObject, questionsFor, resolve } = require('./lib/rules');
-const { identify, STUBBED } = require('./lib/identify');
+const { OBJECTS, findObject, resolve } = require('./lib/rules');
 
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const MAX_UPLOAD = 8 * 1024 * 1024; // 8 MB of base64 image
+const MAX_BODY = 64 * 1024;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
 };
 
 function sendJson(res, status, payload) {
@@ -28,14 +30,14 @@ function sendJson(res, status, payload) {
   res.end(body);
 }
 
-function readJsonBody(req, limit = MAX_UPLOAD) {
+function readJsonBody(req, limit = MAX_BODY) {
   return new Promise((resolve_, reject) => {
     const chunks = [];
     let size = 0;
     req.on('data', (chunk) => {
       size += chunk.length;
       if (size > limit) {
-        reject(Object.assign(new Error('Image too large (8 MB max)'), { statusCode: 413 }));
+        reject(Object.assign(new Error('Request body too large'), { statusCode: 413 }));
         req.destroy();
         return;
       }
@@ -58,48 +60,9 @@ function readJsonBody(req, limit = MAX_UPLOAD) {
   });
 }
 
-function decodeImage(dataUrl) {
-  if (typeof dataUrl !== 'string' || !dataUrl) return null;
-  const comma = dataUrl.indexOf(',');
-  const base64 = comma === -1 ? dataUrl : dataUrl.slice(comma + 1);
-  try {
-    const buf = Buffer.from(base64, 'base64');
-    return buf.length ? buf : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Step 1: photo (or manual pick) -> object + the questions it needs. */
-async function handleIdentify(req, res) {
-  const body = await readJsonBody(req);
-  const image = decodeImage(body.image);
-  const hint = typeof body.hint === 'string' ? body.hint : '';
-
-  if (!image && !hint) {
-    return sendJson(res, 400, { error: 'Send an image or a hint.' });
-  }
-
-  const guess = identify(image, hint);
-  if (!guess) {
-    return sendJson(res, 422, {
-      error: 'Could not identify that. Pick it from the list instead.',
-      catalog: OBJECTS.map((o) => ({ id: o.id, label: o.label })),
-    });
-  }
-
-  sendJson(res, 200, {
-    stubbed: STUBBED,
-    confidence: guess.confidence,
-    source: guess.source,
-    object: { id: guess.object.id, label: guess.object.label },
-    questions: questionsFor(guess.object),
-  });
-}
-
-/** Step 2: object + answers -> per-component disposal verdict. */
+/** Object + answers -> per-component disposal verdict. */
 async function handleResolve(req, res) {
-  const body = await readJsonBody(req, 64 * 1024);
+  const body = await readJsonBody(req);
   const obj = findObject(String(body.objectId || ''));
   if (!obj) return sendJson(res, 404, { error: 'Unknown object' });
 
@@ -113,10 +76,9 @@ async function handleResolve(req, res) {
 async function serveStatic(pathname, res) {
   const rel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
 
-  // The browser loads the shared rules engine from /lib/, which lives beside
-  // public/ rather than inside it.
-  const isLib = rel === 'lib/rules.js' || rel === 'lib/identify.js';
-  const base = isLib ? __dirname : PUBLIC_DIR;
+  // The browser loads the shared engine from /lib/, which lives beside public/
+  // rather than inside it. The prefix check below still contains both roots.
+  const base = rel.startsWith('lib/') ? __dirname : PUBLIC_DIR;
   const target = path.join(base, rel);
 
   if (target !== base && !target.startsWith(base + path.sep)) {
@@ -139,9 +101,6 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
   try {
-    if (url.pathname === '/api/identify' && req.method === 'POST') {
-      return await handleIdentify(req, res);
-    }
     if (url.pathname === '/api/resolve' && req.method === 'POST') {
       return await handleResolve(req, res);
     }
@@ -165,7 +124,7 @@ const server = http.createServer(async (req, res) => {
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`US Tin running at http://localhost:${PORT}`);
-    console.log(`Recognition: ${STUBBED ? 'STUBBED (hash-based)' : 'live'} · ${OBJECTS.length} objects in catalog`);
+    console.log(`${OBJECTS.length} objects in the catalog · recognition runs in the browser`);
   });
 }
 
