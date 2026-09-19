@@ -165,13 +165,22 @@
     state.candidates = reading.candidates;
 
     if (!reading.recognized) {
+      // A living thing or a landscape is not a recycling question. Say so,
+      // rather than letting the material head guess a material for a cat.
+      if (!reading.looksLikeWaste) {
+        return openPicker(`That reads as “${reading.saw.label}”, not a household item. `
+          + 'Search for what you are actually holding.');
+      }
+
       // The object model failed, but the material model usually has not — and
-      // "it is glass" turns 177 entries into a dozen. Two taps, not a dead end.
-      const narrowed = result.material && RECOGNIZER.byMaterial(result.material);
+      // "it is glass" turns 177 entries into a shortlist. Two taps, not a dead end.
+      const narrowed = result.material
+        && RECOGNIZER.byMaterial(result.material, { ranked: reading.ranked, limit: 24 });
 
       if (narrowed && narrowed.objects.length) {
         return openPicker(
-          `Not sure what it is, but it looks like ${narrowed.material.id}. Here is everything made of that.`,
+          `Not certain what it is, but the material reads as ${narrowed.material.id}. `
+          + 'These are the closest matches — the likeliest first.',
           narrowed.objects,
         );
       }
@@ -226,12 +235,14 @@
   function renderPicker(query) {
     const needle = query.trim();
     const narrowed = state.subset && !needle;
-    const matches = narrowed ? state.subset : RULES.search(needle, 60);
+    const matches = narrowed ? state.subset : RULES.search(needle, needle ? 60 : 0);
 
     $('show-all').classList.toggle('u-hidden', !narrowed);
     $('picker-count').textContent = needle
       ? `${matches.length} match${matches.length === 1 ? '' : 'es'}`
-      : `${matches.length} of ${RULES.OBJECTS.length} items`;
+      : (narrowed
+        ? `${matches.length} of ${RULES.OBJECTS.length} items`
+        : `${matches.length} items`);
 
     $('picker-list').innerHTML = matches.length
       ? matches.map((o) => `

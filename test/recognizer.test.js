@@ -81,7 +81,7 @@ test('a confident class resolves to its catalog object', () => {
 test('related classes accumulate rather than competing', () => {
   // No single clothing class clears the floor; together they clearly should.
   const reading = interpret(distribution({
-    'jersey, T-shirt, tee shirt': 0.08, sweatshirt: 0.06, cardigan: 0.05,
+    'jersey, T-shirt, tee shirt': 0.28, sweatshirt: 0.22, cardigan: 0.18,
   }));
 
   assert.strictEqual(reading.recognized, true);
@@ -104,6 +104,20 @@ test('an unmapped subject is reported as unrecognised, not guessed at', () => {
   assert.strictEqual(reading.saw.label, 'tiger cat');
 });
 
+test('a living thing or a landscape is not a recycling question', () => {
+  // Without this the material head answers anyway: a cat reads 58% plastic.
+  assert.strictEqual(interpret(distribution({ 'tiger cat': 0.94 })).looksLikeWaste, false);
+  assert.strictEqual(interpret(distribution({ volcano: 0.8 })).looksLikeWaste, false);
+  assert.strictEqual(interpret(distribution({ 'scuba diver': 0.6 })).looksLikeWaste, false);
+
+  // Artifacts and food are fair game.
+  assert.strictEqual(interpret(distribution({ 'pop bottle, soda bottle': 0.8 })).looksLikeWaste, true);
+  assert.strictEqual(interpret(distribution({ banana: 0.8 })).looksLikeWaste, true);
+
+  // An unconfident animal reading is not enough to refuse on.
+  assert.strictEqual(interpret(distribution({ 'tiger cat': 0.15 })).looksLikeWaste, true);
+});
+
 test('noise below the class floor never contributes', () => {
   const reading = interpret(distribution({ 'coffee mug': 0.003, cup: 0.002 }));
   assert.strictEqual(reading.recognized, false);
@@ -122,11 +136,26 @@ test('the material head breaks a tie the object model cannot', () => {
 });
 
 test('the material head lifts but never vetoes', () => {
-  const probabilities = distribution({ 'pop bottle, soda bottle': 0.7 });
+  // Deliberate, and against the benchmark: a veto scores better on TrashNet,
+  // but the head has no "none of the above" and is confidently wrong off its
+  // distribution — a ceramic cup reads 91% metal. A veto on a reading like
+  // that deletes a correct answer, and TrashNet cannot show it happening.
+  const probabilities = distribution({ 'pop bottle, soda bottle': 0.9 });
   const reading = interpret(probabilities, { material: material({ metal: 0.95 }) });
 
-  // Wrong material, overwhelming object evidence: the bottle still wins.
   assert.strictEqual(reading.candidates[0].object.id, 'soda-bottle');
+});
+
+test('the narrowed list leads with what the classifier did think', () => {
+  const probabilities = distribution({ 'beer bottle': 0.1, 'wine bottle': 0.05 });
+  const reading = interpret(probabilities, { material: material({ glass: 0.8 }) });
+
+  // Not confident enough to name one, which is not the same as no opinion.
+  assert.strictEqual(reading.recognized, false);
+
+  const narrowed = byMaterial(material({ glass: 0.8 }), { ranked: reading.ranked });
+  assert.strictEqual(narrowed.objects[0].id, 'beer-bottle');
+  assert.strictEqual(narrowed.objects[1].id, 'wine-bottle');
 });
 
 test('material alone narrows the catalog to something usable', () => {

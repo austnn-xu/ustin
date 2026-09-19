@@ -65,9 +65,11 @@ Two models run on every photo, from a single forward pass:
 - Scores are summed across the whole distribution rather than read off the top class. `beer bottle` + `wine bottle` + `goblet` at 12% each is a much stronger glass verdict than any one of them looks.
 - Below the recognition floor the app says so rather than guessing.
 
-**2. The material head** is a linear classifier over MobileNet's 1280-dimensional embedding, trained here on [TrashNet](https://github.com/garythung/trashnet) — 2,527 photographs of real household waste labelled cardboard / glass / metal / paper / plastic / trash. It ships as a ~60 KB JSON file and runs in plain JavaScript.
+**2. The material head** is a linear classifier over MobileNet's 1280-dimensional embedding, trained here on [TrashNet](https://github.com/garythung/trashnet) — 2,527 photographs of real household waste labelled cardboard / glass / metal / paper / plastic / trash. It ships as a 63 KB JSON file and runs in plain JavaScript, so it never touches the WebGL path.
 
-The two are **fused**: material agreement lifts a candidate but never vetoes it. `water bottle` is genuinely ambiguous between a plastic bottle and a metal flask, and the object model splits it — the material head decides. And when the object model has nothing at all, the material head usually still does, so instead of a dead end the picker opens pre-filtered: *"Not sure what it is, but it looks like glass. Here is everything made of that."* That turns a failed guess into two taps.
+The two are **fused**: material agreement lifts a candidate, but never vetoes one (see below for why). `water bottle` is genuinely ambiguous between a plastic bottle and a metal flask, and the object model splits it — the material head breaks the tie.
+
+And when the object model has nothing confident, the material head usually still does, so instead of a dead end the picker opens pre-filtered and ranked: *"Not certain what it is, but the material reads as glass. These are the closest matches — the likeliest first."* The ordering comes from the object model's own scores, because failing to clear the naming threshold is not the same as having no opinion. That turns a failed guess into two taps.
 
 The confirm screen shows the match, the score, the raw class the model read, and the runner-up catalog objects, so a wrong guess is one tap from being corrected.
 
@@ -79,17 +81,25 @@ The first version of this was, in the user's words, *insanely inaccurate*. The c
 
 ### Measured
 
-`test/` covers the logic; the numbers come from evaluating against all 2,527 TrashNet photographs, scoring whether the material family of the object the app would show matches what the photograph actually is.
+The numbers come from evaluating against 506 held-out [TrashNet](https://github.com/garythung/trashnet) photographs, scoring whether the material family of the object the app would show matches what the photograph actually is. The material head evaluated is trained only on the other 80%.
 
-| | Useful answer rate |
-|---|---|
-| Before (off-by-one bug) | BEFORE_NUMBER |
-| After the fix | AFTER_NUMBER |
-| After the fix, with the material head | FUSED_NUMBER |
+| | Names an item | Of those, correct | Confidently wrong | Useful answer |
+|---|---|---|---|---|
+| As first shipped (off-by-one bug) | 37.2% | 14.9% | 31.6% | **5.5%** |
+| Off-by-one fixed | 54.9% | 24.1% | 41.7% | **13.2%** |
+| + material head, retuned | 14.0% | 69.0% | 4.3% | **77.1%** |
 
-Material head accuracy on a held-out 20% of TrashNet: HEAD_NUMBER.
+"Useful answer" counts a correct named item *or* a correct material narrowing. The material head scores 79.8% on the same held-out split.
 
-Two honest caveats. TrashNet photographs are single objects on a white posterboard, so they are kinder than a real kitchen counter — treat these as an upper bound, not a field measurement. And the evaluation scores *material family*, not the exact catalog entry, because TrashNet is labelled by material.
+Two things worth reading off that table. The bug was real and severe — but **fixing it was not sufficient**. The object model on its own, pointed at photographs of actual waste, gets its own answers right about a quarter of the time. It was never going to carry this product. What made the app usable was adding a second model trained on the right data, and then *answering far less often*: naming an item dropped from 55% of photos to 14%, and that is the point. A confident wrong answer is what made the first version feel broken.
+
+### What the benchmark cannot see
+
+TrashNet photographs are single objects on a white posterboard, so they are kinder than a real kitchen counter. Treat these as an upper bound.
+
+More importantly, **every TrashNet image is one of the six materials the head knows**, and most of what people actually photograph is not. The head has no "none of the above" to reach for, so off its distribution it is confidently wrong: a cat reads 58% plastic, a rocket 82% cardboard, a ceramic espresso cup 91% metal.
+
+That is why the head is allowed to *lift* a candidate but never to *veto* one. On the benchmark a veto scores better — 77.5% against 77.1% useful, and named answers 70.8% correct against 69.0%. It is not worth it: the benchmark is blind to exactly the case where a veto does damage, and the failure it causes is deleting a correct answer. The test suite pins the no-veto behaviour with that reasoning attached, so it does not get "optimised" back in.
 
 **About half the catalog is reachable from the camera.** The rest — anything with no ILSVRC counterpart — is reachable by search, by the picker and by material narrowing. A test asserts a floor on camera coverage so a careless edit cannot quietly gut the mapping.
 
