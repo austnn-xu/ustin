@@ -23,15 +23,18 @@ function show(step) {
   el('restart').hidden = step === 'camera';
 }
 
-async function api(path, body) {
-  const res = await fetch(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(data.error || `Request failed (${res.status})`), { data });
-  return data;
+// The rules engine runs in the browser — lib/rules.js and lib/identify.js are
+// loaded ahead of this file, so there is no backend to call. server.js still
+// serves the same engine over HTTP for local development.
+const RULES = window.USTinRules;
+const IDENTIFY = window.USTinIdentify;
+
+function dataUrlToBytes(dataUrl) {
+  const comma = dataUrl.indexOf(',');
+  const binary = atob(comma === -1 ? dataUrl : dataUrl.slice(comma + 1));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
 }
 
 // --- camera ---------------------------------------------------------------
@@ -91,32 +94,26 @@ async function runIdentify(payload, previewDataUrl) {
 
   // A beat of visible "work" — the scan animation is the whole point of the
   // screen, and an instant flash reads as broken.
-  const [data] = await Promise.all([
-    api('/api/identify', payload).catch((err) => err),
+  const bytes = payload.image ? dataUrlToBytes(payload.image) : null;
+  const [guess] = await Promise.all([
+    Promise.resolve(IDENTIFY.identify(bytes, payload.hint)),
     new Promise((r) => setTimeout(r, 900)),
   ]);
 
-  if (data instanceof Error) {
-    if (data.data?.catalog) {
-      state.catalog = data.data.catalog;
-      return openPicker();
-    }
-    el('scan-status').textContent = data.message;
-    el('scan-status').className = 'error';
-    return;
-  }
+  // Nothing recognised — fall back to letting the user say what it is.
+  if (!guess) return openPicker();
 
-  state.object = data.object;
-  state.questions = data.questions || [];
+  state.object = { id: guess.object.id, label: guess.object.label };
+  state.questions = RULES.questionsFor(guess.object);
   state.answers = {};
   state.qIndex = 0;
 
   // A user-picked object needs no confirmation step.
-  if (data.source === 'user') return nextQuestion();
+  if (guess.source === 'user') return nextQuestion();
 
-  el('guess-label').textContent = data.object.label;
+  el('guess-label').textContent = guess.object.label;
   el('guess-confidence').textContent =
-    `${Math.round(data.confidence * 100)}% confident${data.stubbed ? ' · demo recognition' : ''}`;
+    `${Math.round(guess.confidence * 100)}% confident${IDENTIFY.STUBBED ? ' · demo recognition' : ''}`;
   show('confirm');
 }
 
@@ -144,14 +141,7 @@ function streamChip(s) {
 }
 
 async function showResult() {
-  let data;
-  try {
-    data = await api('/api/resolve', { objectId: state.object.id, answers: state.answers });
-  } catch (err) {
-    el('verdict').innerHTML = `<p class="error">${esc(err.message)}</p>`;
-    el('components').innerHTML = '';
-    return show('result');
-  }
+  const data = RULES.resolve(RULES.findObject(state.object.id), state.answers);
 
   el('verdict').dataset.outcome = data.headline.id;
   el('verdict').innerHTML = `
@@ -189,8 +179,7 @@ async function showResult() {
 
 async function openPicker() {
   if (!state.catalog.length) {
-    const res = await fetch('/api/catalog');
-    state.catalog = (await res.json()).objects || [];
+    state.catalog = RULES.OBJECTS.map((o) => ({ id: o.id, label: o.label }));
   }
   el('picker-search').value = '';
   renderPicker('');

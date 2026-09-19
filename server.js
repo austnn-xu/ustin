@@ -112,9 +112,14 @@ async function handleResolve(req, res) {
 
 async function serveStatic(pathname, res) {
   const rel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
-  const target = path.join(PUBLIC_DIR, rel);
 
-  if (target !== PUBLIC_DIR && !target.startsWith(PUBLIC_DIR + path.sep)) {
+  // The browser loads the shared rules engine from /lib/, which lives beside
+  // public/ rather than inside it.
+  const isLib = rel === 'lib/rules.js' || rel === 'lib/identify.js';
+  const base = isLib ? __dirname : PUBLIC_DIR;
+  const target = path.join(base, rel);
+
+  if (target !== base && !target.startsWith(base + path.sep)) {
     return sendJson(res, 403, { error: 'Forbidden' });
   }
 
