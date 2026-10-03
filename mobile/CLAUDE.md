@@ -5,6 +5,30 @@
 The bar is "looks like a funded startup shipped it" (Airbnb / Uber / DoorDash), not "looks AI generated".
 These rules apply to **every screen and component**. If a rule blocks you, change the rule here first — don't quietly break it.
 
+## Product — read this first
+
+ustin (US Tin) answers one question: **"What bin does this go in?"** Point the camera at something, answer a question
+or two only if it changes the answer, and get where **each part** goes, down to the resin code, with the reason why.
+It is **not** a delivery, booking, or marketplace app. We borrow the *UX quality* of Uber / DoorDash / Airbnb
+(camera + bottom sheet, sheets for choices, rich detail pages, skeletons, springs), not their business model.
+Never write sample copy about drivers, orders, pickups, prices, or bookings.
+
+Core flow (same as the web app in `../`): Camera → Identify object → Follow-up questions → Per-component verdict + stream → Explanation.
+The knowledge base and decision engine live in `../lib/rules.js`; the app reuses it rather than reimplementing it.
+
+Outcomes: Curbside recycling · Special drop-off · Compost · Reuse/donate · Trash. Each has a Lucide icon
+(`Recycle`, `MapPin`, `Sprout`, `Repeat2`, `Trash`). Outcomes are told apart by **icon + label, not color**: accent marks
+"Widely accepted", `danger` only marks genuinely hazardous items (batteries, HHW). No emoji (the web app's emoji stay on the web).
+
+Screens:
+1. **Scan (home)** — full-screen camera, shutter, Uber-style draggable sheet with recent scans + "Pick from list".
+2. **Identify** — sheet over the frozen photo: "Looks like a disposable coffee cup", confirm or correct.
+3. **Questions** — one follow-up per sheet, option rows, skippable.
+4. **Result** — Airbnb-detail-style page: photo, headline verdict, one row per component (outcome, stream badge,
+   acceptance, why), tip, sticky bottom CTA ("Scan another" / "Find a drop-off" when needed).
+5. **Drop-off finder** — map + draggable sheet of nearby sites, only reached from drop-off verdicts.
+6. **History + settings** — past scans, location/local program, appearance.
+
 ## Stack
 
 - Expo SDK 57 + React Native + TypeScript (strict). Expo Router, routes in `src/app/`.
@@ -61,15 +85,17 @@ src/stores/           zustand stores
 - Every tap gives feedback: press scale `t.motion.pressScale` (0.97). Light haptic on primary actions (`haptics.light()`),
   selection haptic on toggles/segments, success/error notification haptics on completed/failed actions.
 - Bottom sheets have snap points and drag-to-dismiss (Uber ride sheet). Use `<Sheet>`.
-- Optimistic UI for likes, bookings, cart updates: update the TanStack Query cache in `onMutate`, roll back in `onError`, show a toast.
-- List → detail uses a shared/smooth transition, never a hard cut.
+- Optimistic UI for saving a scan, deleting from history, correcting an identification: update the TanStack Query cache
+  in `onMutate`, roll back in `onError`, show a toast.
+- History item / photo → Result uses a shared/smooth transition, never a hard cut.
 - Lists: FlashList, images sized to their container via expo-image with `recyclingKey`. Hold 60fps.
 - Safe areas respected on every screen (`<Screen>`). Keyboard avoidance on every screen with an input.
 - Every data screen has: pull-to-refresh, a real empty state (with a helpful action), a real error state with retry, skeleton loading.
 
 ## Data
 
-- Seed data must be realistic: real-sounding diverse names, plausible prices and addresses, real Unsplash photos.
+- Seed data must be realistic and come from the real catalog in `../lib/rules.js` (objects, materials, streams, why-text),
+  with real Unsplash photos of those objects. Real-sounding names for accounts, real places for drop-off sites.
 - Never ship placeholder copy. Write the actual microcopy.
 
 ## Process (per screen)

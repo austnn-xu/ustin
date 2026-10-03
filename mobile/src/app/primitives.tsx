@@ -1,19 +1,18 @@
 import { Image } from 'expo-image';
 import {
   ArrowRight,
-  Bell,
-  CreditCard,
-  Lock,
+  Camera,
+  Check,
+  Clock,
+  List,
   LogOut,
   Mail,
   MapPin,
   Moon,
-  Navigation,
-  Phone,
+  Recycle,
   Search,
   ShieldAlert,
-  SlidersHorizontal,
-  Truck,
+  Trash,
 } from 'lucide-react-native';
 import { useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
@@ -23,6 +22,7 @@ import {
   Button,
   Card,
   Divider,
+  Icon,
   Input,
   ListRow,
   Screen,
@@ -39,7 +39,7 @@ const CARD_IMAGE_RATIO = 2;
 
 /**
  * Design-system gallery. Every primitive, every state, both themes.
- * Dev-only; not part of the product navigation.
+ * Sample content is the coffee cup from ../lib/rules.js. Dev-only; not part of the product navigation.
  */
 export default function Primitives() {
   const styles = useStyles();
@@ -72,11 +72,12 @@ export default function Primitives() {
 
       <Section title="Badge">
         <View style={styles.wrap}>
-          <Badge label="Open now" tone="accent" dot />
-          <Badge label="Closes 5:00 PM" />
-          <Badge label="#5 PP accepted" />
+          <Badge label="#5 PP" />
+          <Badge label="Widely accepted" tone="accent" dot />
+          <Badge label="Varies by program" dot />
+          <Badge label="Rarely accepted curbside" dot />
           <Badge label="Hazardous" tone="danger" icon={ShieldAlert} />
-          <Badge label="New" tone="inverse" />
+          <Badge label="3 parts" tone="inverse" />
         </View>
       </Section>
 
@@ -96,15 +97,31 @@ export default function Primitives() {
 
       <Section title="List row" bleed>
         <ListRow
+          icon={Trash}
+          title="Cup body"
+          subtitle="Paper with a fused plastic lining. Very few facilities can separate the two."
+          trailing={<Badge label="Trash" />}
+          onPress={() => {}}
+        />
+        <Divider inset />
+        <ListRow
+          icon={Recycle}
+          title="Lid"
+          subtitle="Rigid #5 plastic. Put it in loose, not pushed inside the cup."
+          trailing={<Badge label="#5 PP" tone="accent" />}
+          onPress={() => {}}
+        />
+        <Divider inset />
+        <ListRow
           leading={<Avatar name="Maya Okafor" />}
           title="Maya Okafor"
           subtitle="maya.okafor@fastmail.com"
           onPress={() => {}}
         />
         <Divider inset />
-        <ListRow icon={CreditCard} title="Payment" value="Visa •••• 4242" onPress={() => {}} />
+        <ListRow icon={MapPin} title="Location" value="San Francisco" onPress={() => {}} />
         <Divider inset />
-        <ListRow icon={Bell} title="Notifications" subtitle="Pickup reminders, driver updates" onPress={() => {}} />
+        <ListRow icon={Clock} title="Scan history" value="38" onPress={() => {}} />
         <Divider inset />
         <ListRow icon={Moon} title="Appearance" trailing={<Badge label="System" />} onPress={() => {}} />
         <Divider inset />
@@ -162,21 +179,21 @@ function TypeScale() {
   const styles = useStyles();
   return (
     <View style={styles.stack}>
-      <Text variant="display">Drop-off near you</Text>
-      <Text variant="title">Recology San Francisco</Text>
-      <Text variant="heading">Saturday pickup window</Text>
+      <Text variant="display">Disposable coffee cup</Text>
+      <Text variant="title">Three parts, three bins</Text>
+      <Text variant="heading">Pull it apart before you bin it</Text>
       <Text variant="body">
-        Rinse containers and leave lids on. Flattened cardboard goes next to the bin, not inside it.
+        The waterproof plastic lining is fused to the paper. Very few facilities can separate the two.
       </Text>
-      <Text variant="bodyStrong">$24.00 · bulky item pickup</Text>
+      <Text variant="bodyStrong">Lid · #5 PP</Text>
       <Text variant="callout" color="textSecondary">
-        2.4 mi · Open until 5:00 PM
+        Polypropylene · Widely accepted
       </Text>
       <Text variant="caption" color="textTertiary">
-        Updated 3 min ago
+        Scanned 2 min ago
       </Text>
       <Text variant="label" color="textTertiary">
-        Accepted materials
+        Components
       </Text>
     </View>
   );
@@ -216,21 +233,21 @@ function Swatches() {
 function Buttons() {
   const styles = useStyles();
   const [loading, setLoading] = useState(false);
-  const book = () => {
+  const identify = () => {
     setLoading(true);
     setTimeout(() => setLoading(false), 1600);
   };
   return (
     <View style={styles.stack}>
-      <Button label="Schedule pickup" size="lg" fullWidth loading={loading} onPress={book} />
+      <Button label="Scan an item" size="lg" icon={Camera} fullWidth loading={loading} onPress={identify} />
       <View style={styles.wrap}>
-        <Button label="Directions" variant="secondary" icon={Navigation} />
-        <Button label="Save" variant="outline" />
+        <Button label="Pick from list" variant="secondary" icon={List} />
+        <Button label="Not it?" variant="outline" />
         <Button label="Skip" variant="ghost" />
       </View>
       <View style={styles.wrap}>
-        <Button label="Cancel pickup" variant="destructive" />
-        <Button label="Unavailable" disabled />
+        <Button label="Clear history" variant="destructive" />
+        <Button label="Find a drop-off" disabled />
       </View>
       <View style={styles.rowCenter}>
         <Button label="Small" size="sm" />
@@ -243,41 +260,39 @@ function Buttons() {
 
 function Inputs() {
   const styles = useStyles();
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('maya.okafor@');
-  const [password, setPassword] = useState('');
-  const [query, setQuery] = useState('Batteries');
+  const [query, setQuery] = useState('pizza box');
+  const [zip, setZip] = useState('9411');
+  const [email, setEmail] = useState('');
   return (
     <View style={styles.stack}>
       <Input
-        label="Phone number"
-        icon={Phone}
-        placeholder="(415) 555-0132"
-        keyboardType="phone-pad"
-        textContentType="telephoneNumber"
-        value={phone}
-        onChangeText={setPhone}
-        hint="We'll text you a 6-digit code."
+        icon={Search}
+        placeholder="Search items, like “battery” or “takeout tray”"
+        value={query}
+        onChangeText={setQuery}
+        clearable
+      />
+      <Input
+        label="ZIP code"
+        icon={MapPin}
+        keyboardType="number-pad"
+        maxLength={5}
+        value={zip}
+        onChangeText={setZip}
+        error={/^\d{5}$/.test(zip) ? undefined : 'ZIP codes are 5 digits.'}
       />
       <Input
         label="Email"
         icon={Mail}
         autoCapitalize="none"
         keyboardType="email-address"
+        textContentType="emailAddress"
+        placeholder="you@example.com"
         value={email}
         onChangeText={setEmail}
-        error={/^\S+@\S+\.\S+$/.test(email) ? undefined : 'Enter a full email address, like name@example.com.'}
+        hint="Optional. Keeps your scan history across devices."
       />
-      <Input
-        label="Password"
-        icon={Lock}
-        secureTextEntry
-        placeholder="At least 8 characters"
-        value={password}
-        onChangeText={setPassword}
-      />
-      <Input icon={Search} placeholder="Search items or places" value={query} onChangeText={setQuery} clearable />
-      <Input label="Pickup address" icon={MapPin} value="1458 Valencia St, San Francisco" editable={false} />
+      <Input label="Local program" icon={Recycle} value="San Francisco curbside" editable={false} />
     </View>
   );
 }
@@ -286,27 +301,22 @@ function Cards() {
   const styles = useStyles();
   return (
     <View style={styles.stack}>
-      <Card padding="none" onPress={() => {}} accessibilityLabel="Recology San Francisco">
+      <Card padding="none" onPress={() => {}} accessibilityLabel="Disposable coffee cup, scanned 2 minutes ago">
         <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&q=80' }}
+          source={{ uri: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&q=80' }}
           style={styles.cardImage}
           contentFit="cover"
         />
         <View style={styles.cardBody}>
-          <View style={styles.rowBetween}>
-            <Text variant="heading" numberOfLines={1} style={styles.flex}>
-              Recology San Francisco
-            </Text>
-            <Text variant="bodyStrong" tabular>
-              2.4 mi
-            </Text>
-          </View>
+          <Text variant="heading" numberOfLines={1}>
+            Disposable coffee cup
+          </Text>
           <Text variant="caption" color="textSecondary">
-            501 Tunnel Ave · Batteries, e-waste, paint
+            Scanned 2 min ago · 3 parts
           </Text>
           <View style={styles.wrap}>
-            <Badge label="Open now" tone="accent" dot />
-            <Badge label="Free drop-off" />
+            <Badge label="2 recycle" tone="accent" icon={Recycle} />
+            <Badge label="1 trash" icon={Trash} />
           </View>
         </View>
       </Card>
@@ -314,44 +324,42 @@ function Cards() {
       <Card variant="filled">
         <View style={styles.stackTight}>
           <Text variant="label" color="textTertiary">
-            Pickup summary
+            Where each part goes
           </Text>
-          <View style={styles.rowBetween}>
-            <Text variant="body">Couch, 3-seat</Text>
-            <Text variant="body" tabular>
-              $24.00
-            </Text>
-          </View>
-          <View style={styles.rowBetween}>
-            <Text variant="body" color="textSecondary">
-              Service fee
-            </Text>
-            <Text variant="body" color="textSecondary" tabular>
-              $2.40
-            </Text>
-          </View>
+          <BreakdownRow part="Cup body" bin="Trash" />
+          <BreakdownRow part="Lid" bin="Recycling · #5 PP" />
+          <BreakdownRow part="Sleeve" bin="Recycling · PAP" />
           <Divider />
-          <View style={styles.rowBetween}>
-            <Text variant="bodyStrong">Total</Text>
-            <Text variant="bodyStrong" tabular>
-              $26.40
-            </Text>
-          </View>
+          <Text variant="caption" color="textSecondary">
+            Three materials, three destinations. Pull it apart before you bin it.
+          </Text>
         </View>
       </Card>
 
       <Card variant="floating">
         <View style={styles.rowCenter}>
-          <Avatar name="Daniel Reyes" />
           <View style={styles.flex}>
-            <Text variant="bodyStrong">Daniel is 4 min away</Text>
+            <Text variant="bodyStrong">Looks like a pizza box</Text>
             <Text variant="caption" color="textSecondary">
-              White Ford Transit · 8KXR214
+              One question, then you’ll know.
             </Text>
           </View>
-          <Button label="Call" size="sm" variant="secondary" icon={Phone} />
+          <Button label="Not it?" size="sm" variant="secondary" />
+          <Button label="Yes" size="sm" />
         </View>
       </Card>
+    </View>
+  );
+}
+
+function BreakdownRow({ part, bin }: { part: string; bin: string }) {
+  const styles = useStyles();
+  return (
+    <View style={styles.rowBetween}>
+      <Text variant="body">{part}</Text>
+      <Text variant="body" color="textSecondary">
+        {bin}
+      </Text>
     </View>
   );
 }
@@ -368,12 +376,12 @@ function Skeletons() {
           <SkeletonText lines={1} variant="caption" />
           <View style={styles.wrap}>
             <Skeleton width="28%" height={t.space[6]} />
-            <Skeleton width="32%" height={t.space[6]} />
+            <Skeleton width="22%" height={t.space[6]} />
           </View>
         </View>
       </Card>
       <View style={styles.rowCenter}>
-        <Skeleton circle height={t.layout.avatar.md} />
+        <Skeleton height={t.layout.avatar.md} width={t.layout.avatar.md} radius="md" />
         <View style={styles.flex}>
           <SkeletonText lines={2} variant="caption" />
         </View>
@@ -385,43 +393,43 @@ function Skeletons() {
 function SheetDemo() {
   const styles = useStyles();
   const sheet = useRef<SheetRef>(null);
-  const [selected, setSelected] = useState<string[]>(['Batteries']);
-  const types = ['Batteries', 'E-waste', 'Paint', 'Textiles', 'Plastic film', 'Medications'];
-  const toggle = (k: string) => setSelected((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]));
+  const [cupType, setCupType] = useState<'paper' | 'plastic' | null>(null);
+  const options = [
+    { value: 'paper', label: 'Paper (hot cup)' },
+    { value: 'plastic', label: 'Clear plastic (cold cup)' },
+  ] as const;
 
   return (
     <>
-      <Button
-        label="Filter drop-off sites"
-        variant="outline"
-        icon={SlidersHorizontal}
-        onPress={() => sheet.current?.present()}
-      />
-      <Sheet ref={sheet} title="Filter drop-off sites">
+      <Button label="Ask a follow-up question" variant="outline" onPress={() => sheet.current?.present()} />
+      <Sheet ref={sheet} title="Is the cup plastic or paper?">
         <View style={styles.gutter}>
-          <Text variant="label" color="textTertiary">
-            Accepts
+          <Text variant="body" color="textSecondary">
+            A clear plastic cold cup and a lined paper hot cup are different materials.
           </Text>
         </View>
-        <View style={[styles.gutter, styles.wrap]}>
-          {types.map((k) => (
-            <Button
-              key={k}
-              size="sm"
-              label={k}
-              variant={selected.includes(k) ? 'secondary' : 'outline'}
-              onPress={() => toggle(k)}
-            />
+        <View>
+          {options.map((o, i) => (
+            <View key={o.value}>
+              {i > 0 && <Divider />}
+              <ListRow
+                title={o.label}
+                chevron={false}
+                trailing={cupType === o.value ? <Icon icon={Check} color="accent" /> : null}
+                onPress={() => setCupType(o.value)}
+              />
+            </View>
           ))}
         </View>
-        <ListRow icon={Truck} title="Offers pickup" subtitle="Sites that come to you, usually $15–$40" />
-        <View style={styles.gutter}>
+        <View style={[styles.gutter, styles.stackTight]}>
           <Button
-            label={`Show ${12 + selected.length * 3} sites`}
+            label="Continue"
             size="lg"
             fullWidth
+            disabled={!cupType}
             onPress={() => sheet.current?.dismiss()}
           />
+          <Button label="Not sure, skip" variant="ghost" fullWidth onPress={() => sheet.current?.dismiss()} />
         </View>
       </Sheet>
     </>
