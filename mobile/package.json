@@ -47,7 +47,9 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "check:tokens": "node scripts/check-tokens.mjs"
+    "check:tokens": "node scripts/check-tokens.mjs",
+    "export:web": "EXPO_OFFLINE=1 EXPO_BASE_URL=/ustin expo export --platform web",
+    "publish:web": "./scripts/publish-web.sh"
   },
   "private": true
 }
