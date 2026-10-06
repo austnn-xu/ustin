@@ -9,7 +9,7 @@
  * Hues carry meaning, they are never decoration:
  *  green  — primary action, correct answer, progress
  *  blue   — selection, secondary action, links, and the recycling bin
- *  red    — wrong answer, hearts, errors
+ *  red    — wrong answer, errors, hazards
  *  orange — streaks, and the special drop-off bin
  *  yellow — XP and celebration
  *  purple — achievements, and the reuse bin

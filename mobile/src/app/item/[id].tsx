@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft, Heart, Lightbulb, TriangleAlert, Zap } from 'lucide-react-native';
+import { ChevronLeft, Lightbulb, TriangleAlert, Zap } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { BIN, BinArt } from '@/components/art/Bin';
@@ -18,7 +18,7 @@ export default function ItemScreen() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const object = id ? rules.findObject(id) : null;
   if (!object) return <MissingItem />;
-  // Reading a guidebook is studying, not sorting a real item, so it earns no XP or hearts.
+  // Reading a guidebook is studying, not sorting a real item, so it earns no XP.
   return <ItemFlow key={object.id} object={object} record={from !== 'guide'} />;
 }
 
@@ -115,18 +115,14 @@ function Verdict({ object, answers, record, header, onRedo }: VerdictProps) {
   const [toast, setToast] = useState<ToastProps | null>(null);
   const recorded = useRef(false);
 
-  // Looking up a real item counts: XP, the streak, and a heart back the first time.
+  // Looking up a real item counts towards XP and the streak.
   useEffect(() => {
     if (recorded.current || !record) return;
     recorded.current = true;
     const r = recordSort(object.id);
     haptics.success();
     if (r.xpEarned === 0) return;
-    setToast(
-      r.heartEarned
-        ? { icon: Heart, hue: 'red', title: `+${r.xpEarned} XP and a heart back!`, subtitle: 'New item learned' }
-        : { icon: Zap, hue: 'yellow', title: `+${r.xpEarned} XP`, subtitle: r.isNew ? 'New item learned' : 'Sorted again' },
-    );
+    setToast({ icon: Zap, hue: 'yellow', title: `+${r.xpEarned} XP`, subtitle: r.isNew ? 'New item learned' : 'Sorted again' });
   }, [object.id, record, recordSort]);
 
   const headline = verdict.headline;

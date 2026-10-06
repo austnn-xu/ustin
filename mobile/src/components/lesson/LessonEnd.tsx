@@ -1,15 +1,14 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Check, Clock, Flame, Heart, Target, Zap } from 'lucide-react-native';
+import { Check, Clock, Flame, Target, Zap } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Confetti } from '@/components/art/Confetti';
 import { Mascot } from '@/components/art/Mascot';
 import { MascotSays } from '@/components/MascotSays';
-import { useNow } from '@/components/StatsBar';
 import { Button, Card, Icon, Screen, Text } from '@/components/ui';
 import type { Achievement } from '@/lib/achievements';
-import { dayKey, formatCountdown, lastWeek, weekdayLetter } from '@/lib/dates';
-import { heartsNow, useProgress } from '@/stores/progress';
+import { dayKey, lastWeek, weekdayLetter } from '@/lib/dates';
+import { useProgress } from '@/stores/progress';
 import { makeStyles, useTheme, type HueName } from '@/theme';
 
 /** Counts up to `to` once, for celebratory numbers. */
@@ -148,39 +147,6 @@ export function StreakCelebration({ streak, onContinue }: { streak: number; onCo
             {streak === 1
               ? 'A new streak starts today. Come back tomorrow to grow it!'
               : 'Do a lesson or look up an item every day to keep it burning.'}
-          </Text>
-        </Card>
-      </View>
-    </Screen>
-  );
-}
-
-export function NoHearts({ onLookUp, onQuit }: { onLookUp: () => void; onQuit: () => void }) {
-  const styles = useStyles();
-  const now = useNow(1000);
-  const hearts = useProgress((s) => s.hearts);
-  const heartsAt = useProgress((s) => s.heartsAt);
-  const { nextAt } = heartsNow(hearts, heartsAt, now);
-  return (
-    <Screen
-      footer={
-        <View style={styles.buttons}>
-          <Button label="Look up a real item" variant="secondary" fullWidth onPress={onLookUp} />
-          <Button label="End lesson" variant="ghost" fullWidth onPress={onQuit} />
-        </View>
-      }
-    >
-      <View style={styles.center}>
-        <Mascot mood="sad" size="xl" />
-        <Text variant="display" align="center">
-          You ran out of hearts
-        </Text>
-        <Card style={styles.note}>
-          <Icon icon={Heart} hue="red" filled />
-          <Text variant="body" color="textSecondary" style={styles.flex}>
-            {nextAt
-              ? `Next heart in ${formatCountdown(nextAt - now)}. Or earn one now: look up something you have never sorted before.`
-              : 'Your hearts are back. Go for it!'}
           </Text>
         </Card>
       </View>

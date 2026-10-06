@@ -1,25 +1,25 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Heart, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MascotSays } from '@/components/MascotSays';
 import { ExerciseView } from '@/components/lesson/ExerciseView';
 import { FeedbackPanel } from '@/components/lesson/FeedbackPanel';
-import { LessonComplete, NoHearts, QuitConfirm, StreakCelebration, type LessonSummary } from '@/components/lesson/LessonEnd';
+import { LessonComplete, QuitConfirm, StreakCelebration, type LessonSummary } from '@/components/lesson/LessonEnd';
 import { Button, Icon, PressableScale, ProgressBar, Text } from '@/components/ui';
 import { newlyUnlocked } from '@/lib/achievements';
 import { dayKey } from '@/lib/dates';
 import { lessons, type Exercise } from '@/lib/engine';
 import { haptics } from '@/lib/haptics';
-import { heartsNow, useProgress } from '@/stores/progress';
+import { useProgress } from '@/stores/progress';
 import { useSettings } from '@/stores/settings';
 import { makeStyles, useTheme } from '@/theme';
 
 const PRAISE = ['Nice!', 'Great job!', 'Correct!', 'You got it!', 'Amazing!', 'Spot on!'];
 const NUDGE = ['Not quite', 'Almost!', 'Good try'];
 
-type Phase = 'play' | 'complete' | 'streak' | 'nohearts';
+type Phase = 'play' | 'complete' | 'streak';
 
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,19 +33,17 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
   const styles = useStyles();
   const insets = useSafeAreaInsets();
   const built = useMemo(() => lessons.buildLesson(lessonId, Date.now()), [lessonId]);
-  const loseHeart = useProgress((s) => s.loseHeart);
   const recordMistakes = useProgress((s) => s.recordMistakes);
   const completeLesson = useProgress((s) => s.completeLesson);
   const markCelebrated = useProgress((s) => s.markCelebrated);
-  const hearts = heartsNow(useProgress((s) => s.hearts), useProgress((s) => s.heartsAt)).hearts;
   const goal = useSettings((s) => s.dailyGoal);
 
-  // Wrong answers go back on the end of the queue, once, like Duolingo.
+  // Mistakes cost nothing: a wrong answer just comes back once at the end of the lesson, so it gets a second go.
   const [queue, setQueue] = useState<Exercise[]>(built.exercises);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [checked, setChecked] = useState<boolean | null>(null);
-  const [phase, setPhase] = useState<Phase>(hearts > 0 ? 'play' : 'nohearts');
+  const [phase, setPhase] = useState<Phase>('play');
   const [quitting, setQuitting] = useState(false);
   const [combo, setCombo] = useState(0);
   const [title, setTitle] = useState('');
@@ -82,7 +80,6 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
       setTitle(NUDGE[Math.floor(Math.random() * NUDGE.length)]!);
       missed.current.add(exercise.id);
       recordMistakes(exercise.objects);
-      loseHeart();
       if (!retried.current.has(exercise.id)) {
         retried.current.add(exercise.id);
         setQueue((q) => [...q, exercise]);
@@ -111,22 +108,14 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
   };
 
   const next = () => {
-    const ranOut = checked === false && useProgress.getState().hearts <= 0;
     setSelected([]);
     setChecked(null);
-    if (ranOut) {
-      setPhase('nohearts');
-      return;
-    }
     if (index + 1 >= queue.length) finish();
     else setIndex(index + 1);
   };
 
   const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
-  if (phase === 'nohearts') {
-    return <NoHearts onLookUp={() => router.replace('/scan')} onQuit={leave} />;
-  }
   if (phase === 'complete' && summary.current) {
     return (
       <LessonComplete
@@ -151,12 +140,9 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
           <Icon icon={X} size="lg" color="textTertiary" />
         </PressableScale>
         <ProgressBar value={progress} accessibilityLabel="Lesson progress" />
-        <View style={styles.hearts} accessibilityLabel={`${hearts} hearts left`}>
-          <Icon icon={Heart} hue="red" filled />
-          <Text variant="bodyStrong" hue="red" tabular>
-            {hearts}
-          </Text>
-        </View>
+        <Text variant="callout" color="textSecondary" tabular accessibilityLabel={`Question ${index + 1} of ${queue.length}`}>
+          {`${index + 1}/${queue.length}`}
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
@@ -216,7 +202,6 @@ const useStyles = makeStyles((t) => ({
     maxWidth: t.layout.maxWidth,
     alignSelf: 'center',
   },
-  hearts: { flexDirection: 'row', alignItems: 'center', gap: t.space[1] },
   body: { paddingTop: t.space[2], paddingBottom: t.space[8] },
   column: { width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center', paddingHorizontal: t.layout.gutter, gap: t.space[2] },
   footer: { paddingTop: t.space[4], borderTopWidth: t.layout.border, borderTopColor: t.colors.border },

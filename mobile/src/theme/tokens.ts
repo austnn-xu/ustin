@@ -62,11 +62,16 @@ export const radius = {
   pill: 999,
 } as const;
 
+/**
+ * Two families: Bricolage Grotesque for display (titles, buttons, big numbers) — quirky and full of character — and
+ * Plus Jakarta Sans for reading (body, labels, captions) — clean and friendly at small sizes.
+ */
 export const fontFamily = {
-  semibold: 'Nunito_600SemiBold',
-  bold: 'Nunito_700Bold',
-  extrabold: 'Nunito_800ExtraBold',
-  black: 'Nunito_900Black',
+  display: 'BricolageGrotesque_800ExtraBold',
+  displayBold: 'BricolageGrotesque_700Bold',
+  body: 'PlusJakartaSans_500Medium',
+  bodySemibold: 'PlusJakartaSans_600SemiBold',
+  bodyBold: 'PlusJakartaSans_700Bold',
 } as const;
 
 /** The only font sizes in the app. */
@@ -82,16 +87,16 @@ const variant = (
 
 export const type = {
   /** Big celebratory numbers ("+15 XP", "7"). */
-  hero: variant(fontSize.hero, 46, fontFamily.black, -0.5),
-  display: variant(fontSize.xxl, 36, fontFamily.black, -0.3),
-  title: variant(fontSize.xl, 30, fontFamily.extrabold, -0.2),
-  heading: variant(fontSize.lg, 25, fontFamily.extrabold),
-  body: variant(fontSize.md, 23, fontFamily.semibold),
-  bodyStrong: variant(fontSize.md, 23, fontFamily.extrabold),
-  callout: variant(fontSize.sm, 19, fontFamily.bold),
-  caption: variant(fontSize.sm, 19, fontFamily.semibold),
-  label: variant(fontSize.xs, 16, fontFamily.extrabold, 0.8, { textTransform: 'uppercase' }),
-  button: variant(fontSize.md, 20, fontFamily.extrabold, 0.8, { textTransform: 'uppercase' }),
+  hero: variant(fontSize.hero, 46, fontFamily.display, -1),
+  display: variant(fontSize.xxl, 36, fontFamily.display, -0.8),
+  title: variant(fontSize.xl, 30, fontFamily.displayBold, -0.5),
+  heading: variant(fontSize.lg, 25, fontFamily.displayBold, -0.3),
+  body: variant(fontSize.md, 24, fontFamily.body),
+  bodyStrong: variant(fontSize.md, 24, fontFamily.bodyBold),
+  callout: variant(fontSize.sm, 20, fontFamily.bodySemibold),
+  caption: variant(fontSize.sm, 20, fontFamily.body),
+  label: variant(fontSize.xs, 16, fontFamily.bodyBold, 0.8, { textTransform: 'uppercase' }),
+  button: variant(fontSize.md, 22, fontFamily.displayBold, -0.1),
 } as const;
 
 export type TypeVariant = keyof typeof type;

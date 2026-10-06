@@ -7,7 +7,7 @@ export type IconProps = {
   color?: keyof ColorTokens;
   hue?: HueName;
   shade?: keyof Hue;
-  /** Fill the glyph with its own color (hearts, flames, stars). */
+  /** Fill the glyph with its own color (flames, stars, bolts). */
   filled?: boolean;
 };
 
