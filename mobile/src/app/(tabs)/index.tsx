@@ -12,7 +12,7 @@ import { Button, Card, Icon, ProgressBar, Screen, Text } from '@/components/ui';
 import { lessonState, nextLesson, unitProgress } from '@/lib/course';
 import { dayKey } from '@/lib/dates';
 import { lessons } from '@/lib/engine';
-import { currentStreak, heartsNow, useProgress } from '@/stores/progress';
+import { currentStreak, useProgress } from '@/stores/progress';
 import { useSettings } from '@/stores/settings';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -24,8 +24,6 @@ export default function Learn() {
   const styles = useStyles();
   const records = useProgress((s) => s.lessons);
   const streak = useProgress((s) => s.streak);
-  const hearts = useProgress((s) => s.hearts);
-  const heartsAt = useProgress((s) => s.heartsAt);
   const xpToday = useProgress((s) => s.xpByDay[dayKey()] ?? 0);
   const goal = useSettings((s) => s.dailyGoal);
   const current = nextLesson(records);
@@ -45,8 +43,8 @@ export default function Learn() {
   };
 
   const { count, doneToday } = currentStreak(streak);
-  const outOfHearts = heartsNow(hearts, heartsAt).hearts === 0;
-  const mood: Mood = outOfHearts ? 'sad' : doneToday ? 'happy' : count > 0 ? 'worried' : 'happy';
+  // Tin is happy once you have done something today, and a little worried while a streak is waiting on you.
+  const mood: Mood = doneToday || count === 0 ? 'happy' : 'worried';
 
   return (
     <Screen gutter={false} header={<StatsBar />}>

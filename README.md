@@ -1,12 +1,12 @@
 # US Tin
 
-**Duolingo for putting things in the right bin.** Learn where everything goes in five-minute lessons, look up anything in the moment, and find the nearest place that takes it.
+**Learn where everything goes, one short lesson at a time.** Then look up anything in the moment, and find the nearest place that takes it.
 
 The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has four tabs:
 
 | Tab | What it does |
 |---|---|
-| **Learn** | A Duolingo-style course: 11 units (one per catalog shelf), 49 lessons, XP, streaks, hearts, a daily goal, badges, and Tin the tin can, who cheers when you get it right and explains when you don't. |
+| **Learn** | A course of five-minute lessons: 11 units (one per catalog shelf), 49 lessons, XP, streaks, a daily goal, badges, and Tin the tin can, who cheers when you get it right and explains when you don't. No hearts or lives: a wrong answer is explained and comes back once at the end of the lesson. |
 | **What bin?** | Search 177 items or snap a photo (web build). Answers a follow-up only when it changes the verdict, then shows where *each part* goes, down to the resin code, and why. |
 | **Near me** | From your ZIP code or location, the nearest places that take the item: battery bins, e-waste, hazardous waste, clothing banks, pharmacies, transfer stations… Real data from OpenStreetMap. Every place is marked as *listed as accepting this* or *usually accepts, call ahead*. |
 | **Profile** | Streak, XP, badges, daily goal, location and appearance. |
