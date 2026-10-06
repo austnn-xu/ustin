@@ -1,0 +1,224 @@
+import { router, useLocalSearchParams } from 'expo-router';
+import { Heart, X } from 'lucide-react-native';
+import { useMemo, useRef, useState } from 'react';
+import { ScrollView, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MascotSays } from '@/components/MascotSays';
+import { ExerciseView } from '@/components/lesson/ExerciseView';
+import { FeedbackPanel } from '@/components/lesson/FeedbackPanel';
+import { LessonComplete, NoHearts, QuitConfirm, StreakCelebration, type LessonSummary } from '@/components/lesson/LessonEnd';
+import { Button, Icon, PressableScale, ProgressBar, Text } from '@/components/ui';
+import { newlyUnlocked } from '@/lib/achievements';
+import { dayKey } from '@/lib/dates';
+import { lessons, type Exercise } from '@/lib/engine';
+import { haptics } from '@/lib/haptics';
+import { heartsNow, useProgress } from '@/stores/progress';
+import { useSettings } from '@/stores/settings';
+import { makeStyles, useTheme } from '@/theme';
+
+const PRAISE = ['Nice!', 'Great job!', 'Correct!', 'You got it!', 'Amazing!', 'Spot on!'];
+const NUDGE = ['Not quite', 'Almost!', 'Good try'];
+
+type Phase = 'play' | 'complete' | 'streak' | 'nohearts';
+
+export default function LessonScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const lesson = id ? lessons.findLesson(id) : null;
+  if (!lesson) return <MissingLesson />;
+  return <LessonPlayer lessonId={lesson.id} />;
+}
+
+function LessonPlayer({ lessonId }: { lessonId: string }) {
+  const t = useTheme();
+  const styles = useStyles();
+  const insets = useSafeAreaInsets();
+  const built = useMemo(() => lessons.buildLesson(lessonId, Date.now()), [lessonId]);
+  const loseHeart = useProgress((s) => s.loseHeart);
+  const recordMistakes = useProgress((s) => s.recordMistakes);
+  const completeLesson = useProgress((s) => s.completeLesson);
+  const markCelebrated = useProgress((s) => s.markCelebrated);
+  const hearts = heartsNow(useProgress((s) => s.hearts), useProgress((s) => s.heartsAt)).hearts;
+  const goal = useSettings((s) => s.dailyGoal);
+
+  // Wrong answers go back on the end of the queue, once, like Duolingo.
+  const [queue, setQueue] = useState<Exercise[]>(built.exercises);
+  const [index, setIndex] = useState(0);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [checked, setChecked] = useState<boolean | null>(null);
+  const [phase, setPhase] = useState<Phase>(hearts > 0 ? 'play' : 'nohearts');
+  const [quitting, setQuitting] = useState(false);
+  const [combo, setCombo] = useState(0);
+  const [title, setTitle] = useState('');
+  const missed = useRef(new Set<string>());
+  const retried = useRef(new Set<string>());
+  const started = useRef(Date.now());
+  const summary = useRef<LessonSummary | null>(null);
+  const streakAfter = useRef(0);
+
+  const exercise = queue[index]!;
+  const done = index + (checked !== null ? 1 : 0);
+  const progress = done / queue.length;
+
+  const toggle = (choiceId: string) => {
+    if (checked !== null) return;
+    if (exercise.multi) {
+      setSelected((s) => (s.includes(choiceId) ? s.filter((c) => c !== choiceId) : [...s, choiceId]));
+    } else {
+      setSelected([choiceId]);
+    }
+  };
+
+  const check = () => {
+    const ok = lessons.isCorrect(exercise, selected);
+    setChecked(ok);
+    if (ok) {
+      haptics.success();
+      const next = combo + 1;
+      setCombo(next);
+      setTitle(next >= 3 ? `${next} in a row!` : PRAISE[Math.floor(Math.random() * PRAISE.length)]!);
+    } else {
+      haptics.error();
+      setCombo(0);
+      setTitle(NUDGE[Math.floor(Math.random() * NUDGE.length)]!);
+      missed.current.add(exercise.id);
+      recordMistakes(exercise.objects);
+      loseHeart();
+      if (!retried.current.has(exercise.id)) {
+        retried.current.add(exercise.id);
+        setQueue((q) => [...q, exercise]);
+      }
+    }
+  };
+
+  const finish = () => {
+    const total = built.exercises.length;
+    const correct = built.exercises.filter((e) => !missed.current.has(e.id)).length;
+    const before = useProgress.getState().xpByDay[dayKey()] ?? 0;
+    const result = completeLesson({ lessonId, review: built.lesson.review, correct, total });
+    const badges = newlyUnlocked(useProgress.getState());
+    markCelebrated(badges.map((b) => b.id));
+    streakAfter.current = result.streakExtended ? result.streak : 0;
+    summary.current = {
+      xp: result.xpEarned,
+      accuracy: result.accuracy,
+      seconds: Math.round((Date.now() - started.current) / 1000),
+      perfect: result.perfect,
+      goalReached: before < goal && before + result.xpEarned >= goal,
+      badges,
+    };
+    haptics.success();
+    setPhase('complete');
+  };
+
+  const next = () => {
+    const ranOut = checked === false && useProgress.getState().hearts <= 0;
+    setSelected([]);
+    setChecked(null);
+    if (ranOut) {
+      setPhase('nohearts');
+      return;
+    }
+    if (index + 1 >= queue.length) finish();
+    else setIndex(index + 1);
+  };
+
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+
+  if (phase === 'nohearts') {
+    return <NoHearts onLookUp={() => router.replace('/scan')} onQuit={leave} />;
+  }
+  if (phase === 'complete' && summary.current) {
+    return (
+      <LessonComplete
+        summary={summary.current}
+        onContinue={() => (streakAfter.current > 0 ? setPhase('streak') : leave())}
+      />
+    );
+  }
+  if (phase === 'streak') {
+    return <StreakCelebration streak={streakAfter.current} onContinue={leave} />;
+  }
+
+  const answerLabel = exercise.choices
+    .filter((c) => exercise.answer.includes(c.id))
+    .map((c) => c.label)
+    .join(', ');
+
+  return (
+    <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
+      <View style={styles.header}>
+        <PressableScale onPress={() => setQuitting(true)} accessibilityLabel="Quit lesson" hitSlop={t.space[2]}>
+          <Icon icon={X} size="lg" color="textTertiary" />
+        </PressableScale>
+        <ProgressBar value={progress} accessibilityLabel="Lesson progress" />
+        <View style={styles.hearts} accessibilityLabel={`${hearts} hearts left`}>
+          <Icon icon={Heart} hue="red" filled />
+          <Text variant="bodyStrong" hue="red" tabular>
+            {hearts}
+          </Text>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+        <View style={styles.column}>
+          {retried.current.has(exercise.id) && index >= built.exercises.length && (
+            <Text variant="label" hue="orange">
+              Previous mistake
+            </Text>
+          )}
+          <ExerciseView key={`${exercise.id}:${index}`} exercise={exercise} selected={selected} checked={checked} onToggle={toggle} />
+        </View>
+      </ScrollView>
+
+      {checked === null ? (
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, t.space[6]) }]}>
+          <View style={styles.column}>
+            <Button label="Check" fullWidth disabled={selected.length === 0} onPress={check} />
+          </View>
+        </View>
+      ) : (
+        <FeedbackPanel
+          correct={checked}
+          title={title}
+          answer={answerLabel}
+          explain={exercise.explain}
+          showTin={exercise.type !== 'truefalse'}
+          onContinue={next}
+        />
+      )}
+
+      {quitting && <QuitConfirm onStay={() => setQuitting(false)} onQuit={leave} />}
+    </SafeAreaView>
+  );
+}
+
+function MissingLesson() {
+  const styles = useStyles();
+  return (
+    <SafeAreaView style={[styles.root, styles.missing]}>
+      <MascotSays mood="thinking" layout="above" size="lg">
+        Hmm, that lesson does not exist. It may have moved when the course was updated.
+      </MascotSays>
+      <Button label="Back to the path" onPress={() => router.replace('/')} />
+    </SafeAreaView>
+  );
+}
+
+const useStyles = makeStyles((t) => ({
+  root: { flex: 1, backgroundColor: t.colors.bg },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: t.space[4],
+    paddingHorizontal: t.layout.gutter,
+    paddingVertical: t.space[3],
+    width: '100%',
+    maxWidth: t.layout.maxWidth,
+    alignSelf: 'center',
+  },
+  hearts: { flexDirection: 'row', alignItems: 'center', gap: t.space[1] },
+  body: { paddingTop: t.space[2], paddingBottom: t.space[8] },
+  column: { width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center', paddingHorizontal: t.layout.gutter, gap: t.space[2] },
+  footer: { paddingTop: t.space[4], borderTopWidth: t.layout.border, borderTopColor: t.colors.border },
+  missing: { alignItems: 'center', justifyContent: 'center', gap: t.space[6], padding: t.layout.gutter },
+}));

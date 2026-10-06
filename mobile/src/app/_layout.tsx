@@ -1,38 +1,55 @@
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, useFonts } from '@expo-google-fonts/inter';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold, Nunito_900Black, useFonts } from '@expo-google-fonts/nunito';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useProgress } from '@/stores/progress';
+import { useSettings } from '@/stores/settings';
 import { ThemeProvider, useTheme } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, retry: 2 } },
+  defaultOptions: { queries: { staleTime: 5 * 60_000, retry: 1 } },
 });
 
+/** Progress and settings live in AsyncStorage; wait for both so the first frame is never a reset-looking app. */
+function useHydrated() {
+  const [ready, setReady] = useState(() => useSettings.persist.hasHydrated() && useProgress.persist.hasHydrated());
+  useEffect(() => {
+    const check = () => setReady(useSettings.persist.hasHydrated() && useProgress.persist.hasHydrated());
+    const a = useSettings.persist.onFinishHydration(check);
+    const b = useProgress.persist.onFinishHydration(check);
+    check();
+    return () => {
+      a();
+      b();
+    };
+  }, []);
+  return ready;
+}
+
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
+  const [fontsLoaded, fontError] = useFonts({ Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold, Nunito_900Black });
+  const hydrated = useHydrated();
+  const ready = (fontsLoaded || !!fontError) && hydrated;
 
   useEffect(() => {
-    if (fontsLoaded || fontError) SplashScreen.hideAsync().catch(() => {});
-  }, [fontsLoaded, fontError]);
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
-            <BottomSheetModalProvider>
-              <ThemedStack />
-            </BottomSheetModalProvider>
+            <ThemedStack />
           </ThemeProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
@@ -48,7 +65,13 @@ function ThemedStack() {
   return (
     <>
       <StatusBar style={t.isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.colors.bg } }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.colors.bg } }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="lesson/[id]" options={{ presentation: 'fullScreenModal', gestureEnabled: false, animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="item/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="unit/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
+      </Stack>
     </>
   );
 }

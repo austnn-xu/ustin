@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ustin",
+    "name": "US Tin",
     "slug": "ustin",
     "scheme": "ustin",
     "version": "1.0.0",
@@ -24,7 +24,12 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      "name": "US Tin",
+      "shortName": "US Tin",
+      "themeColor": "#22A447",
+      "backgroundColor": "#FFFFFF",
+      "description": "Learn where things go, one lesson at a time — and find the nearest drop-off for anything."
     },
     "plugins": [
       "expo-router",
@@ -32,7 +37,20 @@
       "expo-font",
       "expo-secure-store",
       "expo-system-ui",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "US Tin uses your location to find the nearest place that accepts your item."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "US Tin looks at a photo to work out what the item is.",
+          "cameraPermission": "US Tin uses the camera to recognise the item you want to throw away."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

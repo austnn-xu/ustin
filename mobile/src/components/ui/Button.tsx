@@ -1,133 +1,104 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { useEffect } from 'react';
 import { View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
-import { makeStyles, useTheme, type ColorTokens } from '@/theme';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { makeStyles, useTheme, type HueName } from '@/theme';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
 import { Text } from './Text';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'neutral' | 'ghost';
+export type ButtonSize = 'md' | 'lg';
 
 export type ButtonProps = {
   label: string;
   onPress?: () => void;
   variant?: ButtonVariant;
+  /** Override the variant's hue, e.g. a red CONTINUE on the wrong-answer panel. */
+  hue?: HueName;
   size?: ButtonSize;
   icon?: LucideIcon;
-  iconPosition?: 'leading' | 'trailing';
-  /** Pending server action: keeps the button's size, swaps label for a quiet pulse, blocks presses. */
-  loading?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
   accessibilityLabel?: string;
 };
 
-const fg: Record<ButtonVariant, keyof ColorTokens> = {
-  primary: 'onAccent',
-  secondary: 'text',
-  outline: 'text',
-  ghost: 'text',
-  destructive: 'onDanger',
-};
+const variantHue: Partial<Record<ButtonVariant, HueName>> = { primary: 'green', secondary: 'blue', danger: 'red' };
 
+/**
+ * The chunky 3D button: a face sitting on a darker edge. Pressing pushes the face down into the edge, which is what
+ * makes every tap feel physical.
+ */
 export function Button({
   label,
   onPress,
   variant = 'primary',
-  size = 'md',
+  hue: hueOverride,
+  size = 'lg',
   icon,
-  iconPosition = 'leading',
-  loading = false,
   disabled = false,
   fullWidth = false,
   accessibilityLabel,
 }: ButtonProps) {
+  const t = useTheme();
   const styles = useStyles();
-  const inactive = disabled || loading;
-  const textColor = fg[variant] as 'text' | 'onAccent' | 'onDanger';
-  const iconNode = icon ? <Icon icon={icon} size={size === 'sm' ? 'sm' : 'md'} color={textColor} /> : null;
+  const depth = t.layout.depth.md;
+  const pressed = useSharedValue(0);
+  const face = useAnimatedStyle(() => ({ transform: [{ translateY: pressed.value * depth }] }));
+
+  const hueName = hueOverride ?? variantHue[variant];
+  const hue = hueName ? t.colors.hue[hueName] : null;
+  const ghost = variant === 'ghost';
+
+  const faceColor = disabled ? t.colors.fillStrong : hue ? hue.base : t.colors.surface;
+  const edgeColor = disabled ? t.colors.border : hue ? hue.depth : t.colors.borderStrong;
+  const labelColor = disabled ? t.colors.textTertiary : hue ? t.colors.onColor : ghost ? t.colors.hue.blue.text : t.colors.textSecondary;
 
   return (
     <PressableScale
+      scale={false}
       onPress={onPress}
-      disabled={inactive}
-      haptic={variant === 'primary' || variant === 'destructive' ? 'light' : undefined}
+      disabled={disabled}
+      haptic={variant === 'primary' || variant === 'danger' || variant === 'secondary' ? 'light' : 'selection'}
+      onPressIn={() => {
+        pressed.value = withSpring(1, t.motion.spring.snappy);
+      }}
+      onPressOut={() => {
+        pressed.value = withSpring(0, t.motion.spring.snappy);
+      }}
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ disabled: inactive, busy: loading }}
-      style={[
-        styles.base,
-        styles[size],
-        styles[variant],
-        fullWidth && styles.fullWidth,
-        disabled && styles.disabled,
-      ]}
+      accessibilityState={{ disabled }}
+      style={[styles.root, { height: t.layout.control[size] + (ghost ? 0 : depth) }, fullWidth && styles.fullWidth]}
     >
-      <View style={[styles.content, loading && styles.hidden]}>
-        {iconPosition === 'leading' && iconNode}
-        <Text variant={size === 'sm' ? 'callout' : 'bodyStrong'} color={textColor} numberOfLines={1}>
+      {!ghost && <View style={[styles.edge, { top: depth, backgroundColor: edgeColor }]} />}
+      <Animated.View
+        style={[
+          styles.face,
+          { height: t.layout.control[size] },
+          !ghost && { backgroundColor: faceColor },
+          !ghost && !hue && !disabled && styles.neutralFace,
+          !ghost && face,
+        ]}
+      >
+        {icon && <Icon icon={icon} size="md" color={disabled ? 'textTertiary' : hue ? 'onColor' : 'textSecondary'} hue={ghost ? 'blue' : undefined} shade="text" />}
+        <Text variant="button" numberOfLines={1} style={{ color: labelColor }}>
           {label}
         </Text>
-        {iconPosition === 'trailing' && iconNode}
-      </View>
-      {loading && <PendingDots color={textColor} />}
+      </Animated.View>
     </PressableScale>
   );
 }
 
-function PendingDots({ color }: { color: keyof ColorTokens }) {
-  const styles = useStyles();
-  return (
-    <View style={styles.dots} pointerEvents="none">
-      {[0, 1, 2].map((i) => (
-        <Dot key={i} index={i} color={color} />
-      ))}
-    </View>
-  );
-}
-
-function Dot({ index, color }: { index: number; color: keyof ColorTokens }) {
-  const t = useTheme();
-  const styles = useStyles();
-  const o = useSharedValue(0.3);
-  useEffect(() => {
-    const half = t.motion.pulseDuration / 2;
-    o.value = withDelay(
-      index * (half / 3),
-      withRepeat(withSequence(withTiming(1, { duration: half }), withTiming(0.3, { duration: half })), -1),
-    );
-  }, [index, o, t.motion.pulseDuration]);
-  const style = useAnimatedStyle(() => ({ opacity: o.value }));
-  return <Animated.View style={[styles.dot, { backgroundColor: t.colors[color] }, style]} />;
-}
-
 const useStyles = makeStyles((t) => ({
-  base: {
+  root: { alignSelf: 'flex-start', minWidth: t.space[20] },
+  fullWidth: { alignSelf: 'stretch' },
+  edge: { position: 'absolute', left: 0, right: 0, bottom: 0, borderRadius: t.radius.lg },
+  face: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'flex-start',
-    borderRadius: t.radius.md,
+    gap: t.space[2],
+    paddingHorizontal: t.space[5],
+    borderRadius: t.radius.lg,
   },
-  fullWidth: { alignSelf: 'stretch' },
-  content: { flexDirection: 'row', alignItems: 'center', gap: t.space[2] },
-  hidden: { opacity: 0 },
-  sm: { height: t.layout.control.sm, paddingHorizontal: t.space[3], borderRadius: t.radius.sm },
-  md: { height: t.layout.control.md, paddingHorizontal: t.space[4] },
-  lg: { height: t.layout.control.lg, paddingHorizontal: t.space[6] },
-  primary: { backgroundColor: t.colors.accent },
-  secondary: { backgroundColor: t.colors.fill },
-  outline: { borderWidth: 1, borderColor: t.colors.borderStrong },
-  ghost: { backgroundColor: 'transparent' },
-  destructive: { backgroundColor: t.colors.danger },
-  disabled: { opacity: t.opacity.disabled },
-  dots: { position: 'absolute', flexDirection: 'row', gap: t.space[1] },
-  dot: { width: t.layout.dot, height: t.layout.dot, borderRadius: t.radius.pill },
+  neutralFace: { borderWidth: t.layout.border, borderColor: t.colors.border },
 }));

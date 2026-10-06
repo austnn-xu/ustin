@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Fails if components or routes use raw colors or raw layout numbers instead of theme tokens.
 // Raw values belong in src/theme only. Allowed literals: 0, 1, flex values, percentages.
+// src/components/art is skipped: artwork is drawn in its own SVG viewBox, and those coordinates are geometry, not layout.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -16,9 +17,12 @@ const rules = [
   { name: 'raw style number', re: new RegExp(`\\b(${STYLE_KEYS})\\s*[:=]\\s*\\{?\\s*-?(?:[2-9]|\\d{2,})(?:\\.\\d+)?\\b`) },
 ];
 
+const SKIP = [join('src', 'components', 'art')];
+
 const files = (dir) =>
   readdirSync(dir).flatMap((f) => {
     const p = join(dir, f);
+    if (SKIP.includes(p)) return [];
     return statSync(p).isDirectory() ? files(p) : /\.tsx?$/.test(p) ? [p] : [];
   });
 

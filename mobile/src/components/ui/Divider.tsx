@@ -8,6 +8,6 @@ export function Divider({ inset = false }: { inset?: boolean }) {
 }
 
 const useStyles = makeStyles((t) => ({
-  line: { height: t.layout.hairline, backgroundColor: t.colors.border },
-  inset: { marginLeft: t.layout.gutter + t.layout.avatar.md + t.space[3] },
+  line: { height: t.layout.border, backgroundColor: t.colors.border },
+  inset: { marginLeft: t.layout.gutter + t.layout.art.sm + t.space[3] },
 }));

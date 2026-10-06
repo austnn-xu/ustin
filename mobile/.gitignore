@@ -42,3 +42,7 @@ yarn-error.*
 
 # screenshots from scripts/screenshot.mjs
 screenshots/
+
+# copied from ../public by scripts/web-assets.mjs
+/public/vendor/
+/public/models/

@@ -1,0 +1,9 @@
+// The knowledge base (catalog, rules, lessons, recognizer) lives in ../lib and is shared with the web app and the
+// Node tests. Let Metro watch and bundle it so the app never carries a second copy.
+const path = require('node:path');
+const { getDefaultConfig } = require('expo/metro-config');
+
+const config = getDefaultConfig(__dirname);
+config.watchFolders = [...(config.watchFolders ?? []), path.resolve(__dirname, '../lib')];
+
+module.exports = config;

@@ -6,6 +6,7 @@ export const space = {
   0: 0,
   0.5: 2,
   1: 4,
+  1.5: 6,
   2: 8,
   3: 12,
   4: 16,
@@ -15,45 +16,61 @@ export const space = {
   10: 40,
   12: 48,
   16: 64,
+  20: 80,
 } as const;
 
 export const layout = {
   /** Horizontal screen padding. Same on every screen. */
-  gutter: space[5],
+  gutter: space[4],
   /** Vertical rhythm between sections on a screen. */
   section: space[8],
+  /** Readable column on wide (tablet / desktop web) screens. */
+  maxWidth: 560,
   /** Minimum hit target. */
   hitTarget: 44,
   hairline: StyleSheet.hairlineWidth,
+  /** Border width of chunky cards and option tiles. */
+  border: 2,
+  /** The 3D edge under chunky buttons and cards. */
+  depth: { sm: 2, md: 4, lg: 6 },
   /** Fixed heights for controls so rows of mixed controls line up. */
-  control: { sm: 32, md: 44, lg: 52 },
-  avatar: { xs: 24, sm: 32, md: 40, lg: 56, xl: 80 },
-  icon: { sm: 16, md: 20, lg: 24 },
+  control: { sm: 36, md: 48, lg: 54 },
+  icon: { sm: 16, md: 22, lg: 28, xl: 40 },
+  /** Lesson path nodes and their ring. */
+  node: { size: 72, ring: 88 },
+  /** Mascot sizes. */
+  mascot: { sm: 56, md: 96, lg: 140, xl: 180 },
+  /** Item artwork tiles. */
+  art: { sm: 40, md: 56, lg: 88 },
+  /** Progress bars. */
+  bar: { sm: 10, md: 16 },
   /** Status / pending dots. */
-  dot: 6,
-  /** Lucide stroke width. One value for the whole app. */
-  iconStroke: 1.75,
+  dot: 8,
+  /** Lucide stroke width. One value for the whole app — chunky to match the type. */
+  iconStroke: 2.25,
+  tabBar: 64,
 } as const;
 
 export const radius = {
   none: 0,
-  xs: 4,
-  sm: 8,
-  md: 12,
+  xs: 6,
+  sm: 10,
+  md: 14,
   lg: 16,
-  xl: 24,
+  xl: 20,
+  xxl: 28,
   pill: 999,
 } as const;
 
 export const fontFamily = {
-  regular: 'Inter_400Regular',
-  medium: 'Inter_500Medium',
-  semibold: 'Inter_600SemiBold',
-  bold: 'Inter_700Bold',
+  semibold: 'Nunito_600SemiBold',
+  bold: 'Nunito_700Bold',
+  extrabold: 'Nunito_800ExtraBold',
+  black: 'Nunito_900Black',
 } as const;
 
-/** The only 6 font sizes in the app. */
-export const fontSize = { xs: 11, sm: 13, md: 15, lg: 17, xl: 22, xxl: 28 } as const;
+/** The only font sizes in the app. */
+export const fontSize = { xs: 12, sm: 14, md: 16, lg: 19, xl: 24, xxl: 30, hero: 40 } as const;
 
 const variant = (
   size: number,
@@ -64,39 +81,49 @@ const variant = (
 ): TextStyle => ({ fontSize: size, lineHeight, fontFamily: family, letterSpacing, ...extra });
 
 export const type = {
-  display: variant(fontSize.xxl, 34, fontFamily.bold, -0.6),
-  title: variant(fontSize.xl, 28, fontFamily.semibold, -0.4),
-  heading: variant(fontSize.lg, 22, fontFamily.semibold, -0.2),
-  body: variant(fontSize.md, 22, fontFamily.regular, -0.1),
-  bodyStrong: variant(fontSize.md, 22, fontFamily.semibold, -0.1),
-  callout: variant(fontSize.sm, 18, fontFamily.medium),
-  caption: variant(fontSize.sm, 18, fontFamily.regular),
-  label: variant(fontSize.xs, 14, fontFamily.semibold, 0.4, { textTransform: 'uppercase' }),
+  /** Big celebratory numbers ("+15 XP", "7"). */
+  hero: variant(fontSize.hero, 46, fontFamily.black, -0.5),
+  display: variant(fontSize.xxl, 36, fontFamily.black, -0.3),
+  title: variant(fontSize.xl, 30, fontFamily.extrabold, -0.2),
+  heading: variant(fontSize.lg, 25, fontFamily.extrabold),
+  body: variant(fontSize.md, 23, fontFamily.semibold),
+  bodyStrong: variant(fontSize.md, 23, fontFamily.extrabold),
+  callout: variant(fontSize.sm, 19, fontFamily.bold),
+  caption: variant(fontSize.sm, 19, fontFamily.semibold),
+  label: variant(fontSize.xs, 16, fontFamily.extrabold, 0.8, { textTransform: 'uppercase' }),
+  button: variant(fontSize.md, 20, fontFamily.extrabold, 0.8, { textTransform: 'uppercase' }),
 } as const;
 
 export type TypeVariant = keyof typeof type;
 
 export const opacity = {
-  disabled: 0.4,
+  disabled: 0.5,
   pressed: 0.85,
+  muted: 0.6,
 } as const;
 
-/** Spring presets. Every transition uses one of these. */
+/** Spring presets. Every state transition uses one of these. */
 export const motion = {
-  pressScale: 0.97,
+  pressScale: 0.96,
   spring: {
     /** Press-in/out, toggles. */
     snappy: { damping: 22, stiffness: 420, mass: 0.6 },
-    /** Most UI transitions (expand, slide, focus rings). */
-    standard: { damping: 24, stiffness: 260, mass: 1 },
-    /** Sheets and large surfaces. */
-    gentle: { damping: 30, stiffness: 180, mass: 1 },
+    /** Most UI transitions (expand, slide, progress). */
+    standard: { damping: 20, stiffness: 240, mass: 1 },
+    /** Panels and large surfaces. */
+    gentle: { damping: 26, stiffness: 180, mass: 1 },
+    /** Mascot reactions, celebrations, things that should feel alive. */
+    bouncy: { damping: 9, stiffness: 200, mass: 0.8 },
   },
-  /** Skeleton pulse loop duration (ms) — loops are the only timing-based motion. */
+  /** Loop durations (ms) — loops and one-shot celebrations are the only timing-based motion. */
   pulseDuration: 900,
+  idleDuration: 1600,
+  confettiDuration: 2400,
+  /** How long a reward toast stays up. */
+  toastHold: 2600,
 } as const;
 
-/** Shadows for floating elements only (sheets, sticky bars, map overlays). */
+/** Shadows for floating elements only (popovers, feedback panel, tab bar). */
 export const makeShadow = (colors: ColorTokens, isDark: boolean) => {
   const s = (y: number, blur: number, op: number, elevation: number): ViewStyle =>
     Platform.select<ViewStyle>({
@@ -112,7 +139,7 @@ export const makeShadow = (colors: ColorTokens, isDark: boolean) => {
   return {
     none: {} as ViewStyle,
     sm: s(1, 4, 0.06, 1),
-    md: s(4, 16, 0.08, 4),
-    lg: s(8, 32, 0.12, 12),
+    md: s(4, 16, 0.1, 4),
+    lg: s(8, 32, 0.16, 12),
   };
 };

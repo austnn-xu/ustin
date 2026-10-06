@@ -1,6 +1,19 @@
 # US Tin
 
-**What bin does this go in?** Point your camera at something, answer a question or two, get the right answer — down to the resin code — and the reason behind it.
+**Duolingo for putting things in the right bin.** Learn where everything goes in five-minute lessons, look up anything in the moment, and find the nearest place that takes it.
+
+The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has four tabs:
+
+| Tab | What it does |
+|---|---|
+| **Learn** | A Duolingo-style course: 11 units (one per catalog shelf), 49 lessons, XP, streaks, hearts, a daily goal, badges, and Tin the tin can, who cheers when you get it right and explains when you don't. |
+| **What bin?** | Search 177 items or snap a photo (web build). Answers a follow-up only when it changes the verdict, then shows where *each part* goes, down to the resin code, and why. |
+| **Near me** | From your ZIP code or location, the nearest places that take the item: battery bins, e-waste, hazardous waste, clothing banks, pharmacies, transfer stations… Real data from OpenStreetMap. Every place is marked as *listed as accepting this* or *usually accepts, call ahead*. |
+| **Profile** | Streak, XP, badges, daily goal, location and appearance. |
+
+Every lesson question is generated from the same catalog and decision engine the lookup uses (`lib/lessons.js`), so a lesson can never teach an answer the app would contradict.
+
+The rest of this README covers the knowledge base and recognition, which the app shares with the original single-page web app in `public/`.
 
 ## The problem
 
@@ -105,12 +118,27 @@ That is why the head is allowed to *lift* a candidate but never to *veto* one. O
 
 ## Running it
 
+### The app
+
+```bash
+cd mobile
+npm install
+npm run web             # http://localhost:8081 in a browser (photo recognition works here)
+npm start               # Expo dev server: scan the QR code with Expo Go on a phone
+npm run typecheck
+npm run publish:web     # build and publish the web version to GitHub Pages (/ustin)
+```
+
+Progress is stored on the device. Location is only sent to OpenStreetMap services (Zippopotam / Nominatim for the ZIP lookup, Overpass for nearby places) and never anywhere else.
+
+### The knowledge base and the original web app
+
 No dependencies, no install, no build step for development.
 
 ```bash
 node server.js          # http://localhost:3000
 PORT=8080 node server.js
-npm test                # 40 checks across the engine, the catalog and the recogniser
+npm test                # 53 checks across the engine, the catalog, the recogniser and the lessons
 ./build.sh              # assemble dist/ for static hosting
 ```
 
@@ -123,9 +151,11 @@ The camera needs a secure context, so `localhost` works, but testing from a phon
 ## Layout
 
 ```
-lib/catalog.js             177 objects, built from component factories  ← the substance
+mobile/                    The app (Expo). Design rules in mobile/CLAUDE.md
+lib/catalog.js             177 objects on 11 shelves, built from component factories  ← the substance
 lib/streams.js             Outcomes, material streams, follow-up questions
 lib/rules.js               The decision engine
+lib/lessons.js             The course: units, lessons and generated exercises
 lib/recognizer.js          ILSVRC classes + material head -> catalog objects
 lib/imagenet-labels.js     The 1000 class names (generated)
 public/index.html          App shell and icon set
@@ -186,8 +216,9 @@ The browser does not call these — the engine and the classifier both run clien
 
 ## Known limits
 
-- **Rules are generic, not local.** Disposal is set by your municipality, and the acceptance ratings are national averages. A real version needs postcode-level rule sets; questions like "does your program take film?" paper over this for now.
+- **Rules are generic, not local.** Disposal is set by your municipality, and the acceptance ratings are national averages. A real version needs postcode-level rule sets; questions like "does your program take film?" paper over this for now. *Near me* finds places by location, but what your own curbside bin takes is still the national picture.
+- **Near me is only as good as OpenStreetMap.** Coverage of drop-off details varies a lot by city. When the map has nothing, the app links out to Earth911 and Google Maps rather than guessing.
 - **Recognition is as good as MobileNet.** It is solid on bottles, cups, cans, cartons, packets, bags, food, electronics and clothing, and weak on everything the ILSVRC label space does not cover. The alternatives list, the material narrowing and the picker all exist because of this.
 - **The material head learned from posed photographs.** TrashNet is single objects on white posterboard. Cluttered, badly-lit real photos are harder than anything it was trained on.
 - **177 objects.** Anything outside the catalog still has no answer, though material narrowing now gets a user close.
-- **No history**, accounts, or persistence. Every scan is standalone.
+- **No accounts.** Progress (XP, streak, lessons) lives on the device and does not sync between devices.
