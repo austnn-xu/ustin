@@ -9,15 +9,20 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
+import { paintOf, type Outfit } from '@/lib/cosmetics';
+import { useProgress } from '@/stores/progress';
 import { useTheme, type HueName } from '@/theme';
+import { EyewearArt, HatArt, NeckArt } from './OutfitArt';
 
 export type Mood = 'happy' | 'cheer' | 'worried' | 'sad' | 'thinking' | 'sleepy' | 'wow';
 
 export type MascotProps = {
   mood?: Mood;
   size?: 'sm' | 'md' | 'lg' | 'xl';
-  /** Color of Tin's label band. */
+  /** Color of Tin's label band, unless the outfit paints it. */
   hue?: HueName;
+  /** What Tin wears. Omit to wear the outfit the user has equipped; pass null for bare Tin. */
+  outfit?: Outfit | null;
   /** Gentle idle bob. On by default; turn off in dense lists. */
   idle?: boolean;
   accessibilityLabel?: string;
@@ -34,13 +39,15 @@ const MOOD_LABEL: Record<Mood, string> = {
 };
 
 /**
- * Tin, the mascot: a little tin can with a face. Drawn in a 120×140 viewBox.
- * Every mood change gets a springy bounce; cheering also jumps.
+ * Tin, the mascot: a little tin can with a face. The can is drawn in a 120×140 box; the viewBox keeps 28 units of
+ * headroom above it for hats. Every mood change gets a springy bounce; cheering also jumps.
  */
-export function Mascot({ mood = 'happy', size = 'md', hue = 'green', idle = true, accessibilityLabel }: MascotProps) {
+export function Mascot({ mood = 'happy', size = 'md', hue = 'green', outfit: outfitProp, idle = true, accessibilityLabel }: MascotProps) {
   const t = useTheme();
   const c = t.colors.mascot;
-  const band = t.colors.hue[hue];
+  const equipped = useProgress((s) => s.equipped);
+  const outfit = outfitProp === undefined ? equipped : outfitProp;
+  const band = t.colors.hue[paintOf(outfit) ?? hue];
   const px = t.layout.mascot[size];
 
   const bob = useSharedValue(0);
@@ -75,11 +82,11 @@ export function Mascot({ mood = 'happy', size = 'md', hue = 'green', idle = true
 
   return (
     <Animated.View
-      style={[{ width: px, height: px * (140 / 120) }, style]}
+      style={[{ width: px, height: px * (168 / 120) }, style]}
       accessibilityRole="image"
       accessibilityLabel={accessibilityLabel ?? MOOD_LABEL[mood]}
     >
-      <Svg width="100%" height="100%" viewBox="0 0 120 140">
+      <Svg width="100%" height="100%" viewBox="0 -28 120 168">
         {/* Feet */}
         <Ellipse cx={45} cy={131} rx={10} ry={5} fill={c.outline} />
         <Ellipse cx={75} cy={131} rx={10} ry={5} fill={c.outline} />
@@ -99,7 +106,10 @@ export function Mascot({ mood = 'happy', size = 'md', hue = 'green', idle = true
         <Ellipse cx={60} cy={30} rx={31} ry={6} fill={c.bodyShade} />
         <Ellipse cx={70} cy={27} rx={8} ry={3.5} fill="none" stroke={c.outline} strokeWidth={3} />
 
+        {outfit?.neck && <NeckArt id={outfit.neck} c={t.colors} />}
         <Face mood={mood} c={c} />
+        {outfit?.eyes && <EyewearArt id={outfit.eyes} c={t.colors} />}
+        {outfit?.hat && <HatArt id={outfit.hat} c={t.colors} />}
       </Svg>
     </Animated.View>
   );

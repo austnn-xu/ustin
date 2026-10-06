@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
 import { BookOpen, Check, Flame, Lock, ScanLine, Zap } from 'lucide-react-native';
 import { useState } from 'react';
@@ -39,6 +40,7 @@ export default function Profile() {
             </Text>
           </View>
         </View>
+        <Button label={`Dress up Tin · ${progress.coins} coins`} variant="secondary" fullWidth onPress={() => router.push('/shop')} />
 
         <View style={styles.grid}>
           <Stat icon={Flame} hue="orange" value={streak.count} label="Day streak" filled />
@@ -149,7 +151,7 @@ export default function Profile() {
         {confirmReset ? (
           <Card variant="tinted" hue="red" style={styles.gap}>
             <Text variant="bodyStrong" hue="red">
-              Reset all progress? Your XP, streak, lessons and badges will be gone for good.
+              Reset all progress? Your XP, streak, lessons, badges, coins and Tin's outfits will be gone for good.
             </Text>
             <View style={styles.row}>
               <View style={styles.flex}>

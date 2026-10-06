@@ -1,7 +1,8 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Check, Clock, Flame, Target, Zap } from 'lucide-react-native';
+import { Check, Flame, Target, Zap } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { Coin } from '@/components/art/Coin';
 import { Confetti } from '@/components/art/Confetti';
 import { Mascot } from '@/components/art/Mascot';
 import { MascotSays } from '@/components/MascotSays';
@@ -29,7 +30,7 @@ function useCountUp(to: number, ms = 900) {
   return value;
 }
 
-function StatTile({ label, value, icon, hue }: { label: string; value: string; icon: LucideIcon; hue: HueName }) {
+function StatTile({ label, value, icon, hue, art }: { label: string; value: string; icon?: LucideIcon; hue: HueName; art?: React.ReactNode }) {
   const t = useTheme();
   const styles = useStyles();
   const h = t.colors.hue[hue];
@@ -39,7 +40,7 @@ function StatTile({ label, value, icon, hue }: { label: string; value: string; i
         {label}
       </Text>
       <View style={styles.tileBody}>
-        <Icon icon={icon} hue={hue} filled={icon === Zap} />
+        {art ?? (icon && <Icon icon={icon} hue={hue} filled={icon === Zap} />)}
         <Text variant="heading" hue={hue} tabular>
           {value}
         </Text>
@@ -50,6 +51,7 @@ function StatTile({ label, value, icon, hue }: { label: string; value: string; i
 
 export type LessonSummary = {
   xp: number;
+  coins: number;
   accuracy: number;
   seconds: number;
   perfect: boolean;
@@ -59,9 +61,9 @@ export type LessonSummary = {
 
 export function LessonComplete({ summary, onContinue }: { summary: LessonSummary; onContinue: () => void }) {
   const styles = useStyles();
+  const t = useTheme();
   const xp = useCountUp(summary.xp);
-  const m = Math.floor(summary.seconds / 60);
-  const s = summary.seconds % 60;
+  const coins = useCountUp(summary.coins);
   const title = summary.perfect ? 'Perfect lesson!' : summary.accuracy >= 0.8 ? 'Lesson complete!' : 'You made it!';
   const line = summary.perfect
     ? 'Not a single mistake. You really know your bins.'
@@ -81,8 +83,8 @@ export function LessonComplete({ summary, onContinue }: { summary: LessonSummary
         </Text>
         <View style={styles.tiles}>
           <StatTile label="Total XP" value={`${xp}`} icon={Zap} hue="yellow" />
+          <StatTile label="Coins" value={`${coins}`} hue="orange" art={<Coin size={t.layout.icon.md} />} />
           <StatTile label="Accuracy" value={`${Math.round(summary.accuracy * 100)}%`} icon={Target} hue="green" />
-          <StatTile label="Time" value={`${m}:${String(s).padStart(2, '0')}`} icon={Clock} hue="blue" />
         </View>
         {summary.goalReached && (
           <Card variant="tinted" hue="yellow" style={styles.note}>

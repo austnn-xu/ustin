@@ -1,6 +1,6 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import type { LucideIcon } from 'lucide-react-native';
-import { House, MapPin, ScanSearch, UserRound } from 'lucide-react-native';
+import { House, MapPin, ScanSearch, Store, UserRound } from 'lucide-react-native';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, PressableScale, Text } from '@/components/ui';
@@ -10,6 +10,7 @@ const TABS: Record<string, { icon: LucideIcon; label: string }> = {
   index: { icon: House, label: 'Learn' },
   scan: { icon: ScanSearch, label: 'What bin?' },
   nearby: { icon: MapPin, label: 'Near me' },
+  shop: { icon: Store, label: 'Shop' },
   profile: { icon: UserRound, label: 'Profile' },
 };
 
@@ -39,7 +40,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               style={[styles.tab, focused && styles.active]}
             >
               <Icon icon={tab.icon} size="lg" hue={focused ? 'blue' : undefined} color="textTertiary" />
-              <Text variant="label" hue={focused ? 'blue' : undefined} color="textTertiary" numberOfLines={1}>
+              <Text variant="label" hue={focused ? 'blue' : undefined} color="textTertiary" numberOfLines={1} style={styles.label}>
                 {tab.label}
               </Text>
             </PressableScale>
@@ -70,10 +71,12 @@ const useStyles = makeStyles((t) => ({
     alignItems: 'center',
     gap: t.space[0.5],
     paddingVertical: t.space[1.5],
-    marginHorizontal: t.space[1],
+    marginHorizontal: t.space[0.5],
     borderRadius: t.radius.md,
     borderWidth: t.layout.border,
     borderColor: 'transparent',
   },
+  /** Five tabs share the bar, so labels drop the label variant's caps and tracking to fit. */
+  label: { textTransform: 'none', letterSpacing: 0 },
   active: { borderColor: t.colors.hue.blue.base, backgroundColor: t.colors.hue.blue.subtle },
 }));

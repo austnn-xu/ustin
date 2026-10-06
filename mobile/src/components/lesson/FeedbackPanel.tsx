@@ -4,6 +4,7 @@ import { ScrollView, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BIN } from '@/components/art/Bin';
+import { Coin } from '@/components/art/Coin';
 import { Mascot } from '@/components/art/Mascot';
 import { Button, Chip, Icon, Text } from '@/components/ui';
 import type { Exercise } from '@/lib/engine';
@@ -16,6 +17,8 @@ export type FeedbackPanelProps = {
   answer: string;
   explain: Exercise['explain'];
   showTin: boolean;
+  /** Coins the answer earned, if it was right. */
+  payout?: { total: number; bonus: number } | null;
   onContinue: () => void;
 };
 
@@ -23,7 +26,7 @@ export type FeedbackPanelProps = {
  * The panel that slides up after CHECK. Green and cheering when right; red, gentle and explaining when wrong —
  * the explanation is the actual lesson, so it is shown either way.
  */
-export function FeedbackPanel({ correct, title, answer, explain, showTin, onContinue }: FeedbackPanelProps) {
+export function FeedbackPanel({ correct, title, answer, explain, showTin, payout, onContinue }: FeedbackPanelProps) {
   const t = useTheme();
   const styles = useStyles();
   const insets = useSafeAreaInsets();
@@ -57,6 +60,14 @@ export function FeedbackPanel({ correct, title, answer, explain, showTin, onCont
               <Text variant="bodyStrong" hue={hueName}>
                 {`Answer: ${answer}`}
               </Text>
+            )}
+            {payout && (
+              <View style={styles.payout}>
+                <Coin size={t.layout.icon.md} />
+                <Text variant="bodyStrong" hue="yellow">
+                  {payout.bonus ? `+${payout.total} coins (+${payout.bonus} bonus!)` : `+${payout.total} coin`}
+                </Text>
+              </View>
             )}
           </View>
           {showTin && <Mascot mood={correct ? 'cheer' : 'worried'} size="sm" idle={false} />}
@@ -99,6 +110,7 @@ const useStyles = makeStyles((t) => ({
     justifyContent: 'center',
   },
   flex: { flex: 1 },
+  payout: { flexDirection: 'row', alignItems: 'center', gap: t.space[1], marginTop: t.space[0.5] },
   why: { gap: t.space[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space[2] },
 }));

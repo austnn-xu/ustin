@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { DEFAULT_OWNED, findCosmetic, type Outfit, type Slot } from '@/lib/cosmetics';
 import { addDays, dayKey } from '@/lib/dates';
 
 export const XP = {
@@ -35,11 +36,22 @@ export type ProgressState = {
   mistakes: Record<string, number>;
   /** Achievements already celebrated, so each is announced once. */
   celebrated: Record<string, number>;
+  /** Coins earned in lessons, spent in the shop. */
+  coins: number;
+  /** Cosmetics owned, by id → when bought. */
+  owned: Record<string, number>;
+  /** What Tin is wearing. */
+  equipped: Outfit;
 
   completeLesson: (input: { lessonId: string; review: boolean; correct: number; total: number }) => LessonResult;
   recordSort: (objectId: string) => SortResult;
   recordMistakes: (objectIds: string[]) => void;
   markCelebrated: (ids: string[]) => void;
+  earnCoins: (amount: number) => void;
+  /** Buy and put on a cosmetic. */
+  buy: (id: string) => 'bought' | 'owned' | 'short' | 'unknown';
+  /** Put on an owned cosmetic, or take a slot off with null (paint can only be swapped). */
+  equip: (slot: Slot, id: string | null) => void;
   reset: () => void;
 };
 
@@ -65,6 +77,9 @@ const initial = {
   sorted: {} as Record<string, number>,
   mistakes: {} as Record<string, number>,
   celebrated: {} as Record<string, number>,
+  coins: 0,
+  owned: Object.fromEntries(DEFAULT_OWNED.map((id) => [id, 0])) as Record<string, number>,
+  equipped: { paint: 'paint-green' } as Outfit,
 };
 
 /** The streak after doing something today. */
@@ -154,6 +169,34 @@ export const useProgress = create<ProgressState>()(
         set({ celebrated });
       },
 
+      earnCoins: (amount) => {
+        if (amount > 0) set({ coins: get().coins + amount });
+      },
+
+      buy: (id) => {
+        const item = findCosmetic(id);
+        const state = get();
+        if (!item) return 'unknown';
+        if (state.owned[id] !== undefined) return 'owned';
+        if (state.coins < item.price) return 'short';
+        set({
+          coins: state.coins - item.price,
+          owned: { ...state.owned, [id]: Date.now() },
+          equipped: { ...state.equipped, [item.slot]: id },
+        });
+        return 'bought';
+      },
+
+      equip: (slot, id) => {
+        const state = get();
+        if (id && state.owned[id] === undefined) return;
+        if (!id && slot === 'paint') return;
+        const equipped = { ...state.equipped };
+        if (id) equipped[slot] = id;
+        else delete equipped[slot];
+        set({ equipped });
+      },
+
       reset: () => set({ ...initial }),
     }),
     {
@@ -174,6 +217,9 @@ export const useProgress = create<ProgressState>()(
         sorted: s.sorted,
         mistakes: s.mistakes,
         celebrated: s.celebrated,
+        coins: s.coins,
+        owned: s.owned,
+        equipped: s.equipped,
       }),
     },
   ),

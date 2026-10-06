@@ -1,27 +1,27 @@
 import { router } from 'expo-router';
-import { Trophy, Zap } from 'lucide-react-native';
-import { Fragment, useEffect, useRef, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { SECTION_HUE } from '@/components/art/ItemArt';
-import { Mascot, type Mood } from '@/components/art/Mascot';
-import { LessonCard } from '@/components/learn/LessonCard';
-import { PathNode } from '@/components/learn/PathNode';
-import { UnitHeader } from '@/components/learn/UnitHeader';
+import { Zap } from 'lucide-react-native';
+import { useRef, useState } from 'react';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { SceneryProp, SortingCenterArt } from '@/components/art/RouteArt';
+import { RouteUnit } from '@/components/learn/RouteUnit';
 import { StatsBar } from '@/components/StatsBar';
 import { Button, Card, Icon, ProgressBar, Screen, Text } from '@/components/ui';
-import { lessonState, nextLesson, unitProgress } from '@/lib/course';
+import { nextLesson } from '@/lib/course';
 import { dayKey } from '@/lib/dates';
 import { lessons } from '@/lib/engine';
 import { currentStreak, useProgress } from '@/stores/progress';
 import { useSettings } from '@/stores/settings';
 import { makeStyles, useTheme } from '@/theme';
 
-/** The path winds: each lesson node is nudged left or right of center by this many steps. */
-const PATTERN = [0, 1, 1.5, 1, 0, -1, -1.5, -1];
-
+/**
+ * Learn: the course as a recycling route through town. Each unit is a neighbourhood with its own road sign; each
+ * lesson is a wheelie bin by the road; Tin's truck waits at the next stop.
+ */
 export default function Learn() {
   const t = useTheme();
   const styles = useStyles();
+  const { width: screen } = useWindowDimensions();
+  const width = Math.min(screen, t.layout.maxWidth);
   const records = useProgress((s) => s.lessons);
   const streak = useProgress((s) => s.streak);
   const xpToday = useProgress((s) => s.xpByDay[dayKey()] ?? 0);
@@ -29,99 +29,76 @@ export default function Learn() {
   const current = nextLesson(records);
   const [selected, setSelected] = useState<string | null>(current?.id ?? null);
 
-  // Scroll so the current lesson is in view on open.
+  // Scroll so the truck (the current stop) is in view on open.
   const scroll = useRef<ScrollView>(null);
   const unitY = useRef<Record<string, number>>({});
   const scrolled = useRef(false);
-  const scrollToCurrent = (unitId: string, rowY: number) => {
+  const scrollToCurrent = (unitId: string, y: number) => {
     if (scrolled.current) return;
     const base = unitY.current[unitId];
     if (base === undefined) return;
     scrolled.current = true;
-    const y = Math.max(0, base + rowY - t.space[20] * 2);
-    requestAnimationFrame(() => scroll.current?.scrollTo({ y, animated: false }));
+    requestAnimationFrame(() => scroll.current?.scrollTo({ y: Math.max(0, base + y - t.space[20] * 3), animated: false }));
   };
 
   const { count, doneToday } = currentStreak(streak);
-  // Tin is happy once you have done something today, and a little worried while a streak is waiting on you.
-  const mood: Mood = doneToday || count === 0 ? 'happy' : 'worried';
+  const truckSays = doneToday ? 'Nice haul today!' : count > 0 ? `Your ${count}-day streak is waiting!` : "Hop in, let's sort!";
 
   return (
-    <Screen gutter={false} header={<StatsBar />}>
-      <ScrollView ref={scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.column}>
-          <DailyGoal xp={xpToday} goal={goal} />
-
-          {lessons.UNITS.map((unit) => {
-            const progress = unitProgress(unit, records);
-            const hue = SECTION_HUE[unit.id] ?? 'green';
-            let regularIndex = -1;
-            return (
-              <View
-                key={unit.id}
-                style={styles.unit}
-                onLayout={(e) => {
-                  unitY.current[unit.id] = e.nativeEvent.layout.y;
-                }}
-              >
-                <UnitHeader unit={unit} done={progress.done} total={progress.total} />
-                {unit.lessons.map((lesson, i) => {
-                  if (!lesson.review) regularIndex += 1;
-                  const index = regularIndex;
-                  const state = lessonState(lesson.id, records);
-                  const offset = (PATTERN[i % PATTERN.length] ?? 0) * t.space[10];
-                  const isCurrent = current?.id === lesson.id;
-                  return (
-                    <Fragment key={lesson.id}>
-                      <View
-                        style={[styles.row, i === 0 && styles.firstRow, isCurrent && i > 0 && styles.currentRow]}
-                        onLayout={isCurrent ? (e) => scrollToCurrent(unit.id, e.nativeEvent.layout.y) : undefined}
-                      >
-                        <View style={{ transform: [{ translateX: offset }] }}>
-                          <PathNode
-                            state={state}
-                            hue={hue}
-                            review={lesson.review}
-                            stars={records[lesson.id]?.stars ?? 0}
-                            label={`${lesson.review ? 'Unit review' : `Lesson ${index + 1}`}, ${unit.title}, ${state}`}
-                            selected={selected === lesson.id}
-                            onPress={() => setSelected((s) => (s === lesson.id ? null : lesson.id))}
-                          />
-                        </View>
-                        {isCurrent && (
-                          <View style={[styles.tin, offset > 0 ? styles.tinLeft : styles.tinRight]} pointerEvents="none">
-                            <Mascot mood={mood} size="md" hue={hue} />
-                          </View>
-                        )}
-                      </View>
-                      {selected === lesson.id && (
-                        <View style={styles.card}>
-                          <LessonCard unit={unit} lesson={lesson} index={index} state={state} />
-                        </View>
-                      )}
-                    </Fragment>
-                  );
-                })}
-              </View>
-            );
-          })}
-
-          <Finish done={!current} />
+    <Screen gutter={false} header={<StatsBar />} background={t.colors.scene.sky}>
+      <ScrollView
+        ref={scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.sky}>
+          <View style={[styles.cloud, styles.cloudLeft]}>
+            <SceneryProp kind="cloud" size={t.layout.route.prop * 1.4} hue="blue" />
+          </View>
+          <View style={[styles.cloud, styles.cloudRight]}>
+            <SceneryProp kind="cloud" size={t.layout.route.prop} hue="blue" />
+          </View>
+          <View style={styles.column}>
+            <TodaysHaul xp={xpToday} goal={goal} />
+          </View>
         </View>
+
+        {lessons.UNITS.map((unit) => (
+          <View
+            key={unit.id}
+            onLayout={(e) => {
+              unitY.current[unit.id] = e.nativeEvent.layout.y;
+            }}
+          >
+            <RouteUnit
+              unit={unit}
+              width={width}
+              records={records}
+              currentId={current?.id ?? null}
+              selectedId={selected}
+              onSelect={setSelected}
+              truckSays={truckSays}
+              onCurrentLayout={(y) => scrollToCurrent(unit.id, y)}
+            />
+          </View>
+        ))}
+
+        <EndOfTheRoad done={!current} />
       </ScrollView>
     </Screen>
   );
 }
 
-function DailyGoal({ xp, goal }: { xp: number; goal: number }) {
+/** The daily goal, as today's haul. */
+function TodaysHaul({ xp, goal }: { xp: number; goal: number }) {
   const styles = useStyles();
   const reached = xp >= goal;
   return (
     <Card style={styles.goal}>
       <View style={styles.goalRow}>
         <Icon icon={Zap} hue="yellow" filled />
-        <Text variant="bodyStrong" style={styles.goalTitle}>
-          {reached ? 'Daily goal reached!' : 'Daily goal'}
+        <Text variant="bodyStrong" style={styles.flex}>
+          {reached ? "Today's haul: done!" : "Today's haul"}
         </Text>
         <Text variant="bodyStrong" hue="yellow" tabular>
           {`${Math.min(xp, goal)} / ${goal} XP`}
@@ -132,38 +109,39 @@ function DailyGoal({ xp, goal }: { xp: number; goal: number }) {
   );
 }
 
-function Finish({ done }: { done: boolean }) {
+function EndOfTheRoad({ done }: { done: boolean }) {
+  const t = useTheme();
   const styles = useStyles();
   return (
-    <Card style={styles.finish}>
-      <Icon icon={Trophy} size="xl" hue="yellow" filled={done} />
-      <Text variant="heading" align="center">
-        {done ? 'You finished the whole course!' : 'Every shelf, mastered'}
-      </Text>
-      <Text variant="body" color="textSecondary" align="center">
-        {done
-          ? 'Keep the streak alive by sorting real things with What bin?'
-          : 'Finish all 11 units to master the full catalog: 177 everyday items.'}
-      </Text>
-      {done && <Button label="What bin?" variant="secondary" onPress={() => router.push('/scan')} />}
-    </Card>
+    <View style={styles.end}>
+      <View style={styles.column}>
+        <Card style={styles.finish}>
+          <SortingCenterArt hue="green" locked={!done} done={done} size={t.layout.route.truck * 1.2} />
+          <Text variant="heading" align="center">
+            {done ? 'You finished the whole route!' : 'The end of the route'}
+          </Text>
+          <Text variant="body" color="textSecondary" align="center">
+            {done
+              ? 'Keep your streak going by sorting real things with What bin?'
+              : 'Finish all 11 routes to master the full catalog: 177 everyday items.'}
+          </Text>
+          {done && <Button label="What bin?" variant="secondary" onPress={() => router.push('/scan')} />}
+        </Card>
+      </View>
+    </View>
   );
 }
 
 const useStyles = makeStyles((t) => ({
-  content: { paddingBottom: t.space[16] },
-  column: { width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center', paddingHorizontal: t.layout.gutter, gap: t.space[6] },
+  content: { paddingBottom: 0 },
+  sky: { paddingTop: t.space[3], paddingBottom: t.space[6] },
+  cloud: { position: 'absolute' },
+  cloudLeft: { top: t.space[16], left: -t.space[3] },
+  cloudRight: { top: t.space[2], right: t.space[4] },
+  column: { width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center', paddingHorizontal: t.layout.gutter },
   goal: { gap: t.space[3] },
   goalRow: { flexDirection: 'row', alignItems: 'center', gap: t.space[2] },
-  goalTitle: { flex: 1 },
-  unit: { gap: t.space[4] },
-  row: { alignItems: 'center', justifyContent: 'center', minHeight: t.layout.node.ring + t.space[4] },
-  firstRow: { marginTop: t.space[10] },
-  /** Room for the START bubble above the current node. */
-  currentRow: { marginTop: t.space[8] },
-  tin: { position: 'absolute', top: -t.space[2] },
-  tinLeft: { left: t.space[2] },
-  tinRight: { right: t.space[2] },
-  card: { marginTop: -t.space[2] },
+  flex: { flex: 1 },
+  end: { backgroundColor: t.colors.bgSubtle, paddingVertical: t.space[8] },
   finish: { alignItems: 'center', gap: t.space[3], padding: t.space[6] },
 }));

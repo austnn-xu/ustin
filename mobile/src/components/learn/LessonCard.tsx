@@ -7,7 +7,7 @@ import { rules, type Lesson, type Unit } from '@/lib/engine';
 import { XP } from '@/stores/progress';
 import { makeStyles, useTheme } from '@/theme';
 
-/** The popover under a tapped path node: what the lesson covers, and the button to start it. */
+/** The popover under a tapped stop on the route: what the lesson covers, and the button to start it. */
 export function LessonCard({ unit, lesson, index, state }: { unit: Unit; lesson: Lesson; index: number; state: NodeState }) {
   const t = useTheme();
   const styles = useStyles();
@@ -22,10 +22,10 @@ export function LessonCard({ unit, lesson, index, state }: { unit: Unit; lesson:
   return (
     <View style={[styles.card, locked ? styles.lockedCard : { backgroundColor: hue.base, borderBottomColor: hue.depth }]}>
       <Text variant="heading" style={!locked && styles.onColor} color="textSecondary">
-        {lesson.review ? 'Unit review' : `Lesson ${index + 1} of ${regular}`}
+        {lesson.review ? 'Sorting center: unit review' : `Stop ${index + 1} of ${regular}`}
       </Text>
       <Text variant="callout" style={!locked && styles.onColor} color="textTertiary" numberOfLines={3}>
-        {locked ? 'Finish the lessons before this one to unlock it.' : shown}
+        {locked ? 'Finish the stops before this one to unlock it.' : shown}
       </Text>
       {!locked && (
         <View style={styles.cta}>
@@ -48,6 +48,7 @@ const useStyles = makeStyles((t) => ({
     borderRadius: t.radius.lg,
     padding: t.space[4],
     borderBottomWidth: t.layout.depth.md,
+    ...t.shadow.lg,
   },
   lockedCard: { backgroundColor: t.colors.fill, borderBottomColor: t.colors.fillStrong },
   onColor: { color: t.colors.onColor },

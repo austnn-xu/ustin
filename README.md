@@ -2,13 +2,14 @@
 
 **Learn where everything goes, one short lesson at a time.** Then look up anything in the moment, and find the nearest place that takes it.
 
-The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has four tabs:
+The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has five tabs:
 
 | Tab | What it does |
 |---|---|
-| **Learn** | A course of five-minute lessons: 11 units (one per catalog shelf), 49 lessons, XP, streaks, a daily goal, badges, and Tin the tin can, who cheers when you get it right and explains when you don't. No hearts or lives: a wrong answer is explained and comes back once at the end of the lesson. |
+| **Learn** | A course of five-minute lessons laid out as a cartoon recycling route: 11 neighbourhoods (one per catalog shelf), 49 wheelie-bin stops, a sorting centre at the end of each unit, and Tin driving the truck to your next stop. XP, streaks, a daily goal, badges and coins. No hearts or lives: a wrong answer is explained and comes back once at the end of the lesson. |
 | **What bin?** | Search 177 items or snap a photo (web build). Answers a follow-up only when it changes the verdict, then shows where *each part* goes, down to the resin code, and why. |
 | **Near me** | From your ZIP code or location, the nearest places that take the item: battery bins, e-waste, hazardous waste, clothing banks, pharmacies, transfer stations… Real data from OpenStreetMap. Every place is marked as *listed as accepting this* or *usually accepts, call ahead*. |
+| **Shop** | Spend coins (1 per right answer, +5 for 5 in a row, +10 for 10 in a row) on hats, glasses, neckwear and paint jobs for Tin, who then wears them all over the app. |
 | **Profile** | Streak, XP, badges, daily goal, location and appearance. |
 
 Every lesson question is generated from the same catalog and decision engine the lookup uses (`lib/lessons.js`), so a lesson can never teach an answer the app would contradict.

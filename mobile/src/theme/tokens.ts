@@ -38,6 +38,8 @@ export const layout = {
   icon: { sm: 16, md: 22, lg: 28, xl: 40 },
   /** Lesson path nodes and their ring. */
   node: { size: 72, ring: 88 },
+  /** The Learn route: row height per stop, the road, the overhead unit sign, and the art that sits on it. */
+  route: { row: 132, road: 52, sign: 150, bin: 64, truck: 96, prop: 56 },
   /** Mascot sizes. */
   mascot: { sm: 56, md: 96, lg: 140, xl: 180 },
   /** Item artwork tiles. */
