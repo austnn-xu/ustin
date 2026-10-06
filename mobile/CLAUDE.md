@@ -2,112 +2,120 @@
 
 # ustin — design & engineering rules
 
-The bar is "looks like a funded startup shipped it" (Airbnb / Uber / DoorDash), not "looks AI generated".
+The bar is **"Duolingo, but for putting things in the right bin"**: playful, warm, a little bit emotional, and
+genuinely educational. It should feel like a game you want to open every day, built with the polish of a funded
+startup — not like a template.
 These rules apply to **every screen and component**. If a rule blocks you, change the rule here first — don't quietly break it.
 
 ## Product — read this first
 
-ustin (US Tin) answers one question: **"What bin does this go in?"** Point the camera at something, answer a question
-or two only if it changes the answer, and get where **each part** goes, down to the resin code, with the reason why.
-It is **not** a delivery, booking, or marketplace app. We borrow the *UX quality* of Uber / DoorDash / Airbnb
-(camera + bottom sheet, sheets for choices, rich detail pages, skeletons, springs), not their business model.
-Never write sample copy about drivers, orders, pickups, prices, or bookings.
+ustin (US Tin) teaches people **where things go** and answers **"What bin does this go in?"** in the moment.
+Three jobs, one app:
 
-Core flow (same as the web app in `../`): Camera → Identify object → Follow-up questions → Per-component verdict + stream → Explanation.
-The knowledge base and decision engine live in `../lib/rules.js`; the app reuses it rather than reimplementing it.
+1. **Learn** — a Duolingo-style course. One unit per catalog shelf, short lessons of generated exercises, XP, streaks,
+   hearts, a daily goal, and a mascot who reacts to how you do.
+2. **What bin?** — look up a real item (search, or a photo on the web build), answer a follow-up only if it changes the
+   answer, and get where **each part** goes, down to the resin code, with the reason why.
+3. **Near me** — from a ZIP code or your location, find the nearest place that takes the item: drop-off sites,
+   recycling centres, transfer stations, donation shops. Real data from OpenStreetMap, never invented places.
 
-Outcomes: Curbside recycling · Special drop-off · Compost · Reuse/donate · Trash. Each has a Lucide icon
-(`Recycle`, `MapPin`, `Sprout`, `Repeat2`, `Trash`). Outcomes are told apart by **icon + label, not color**: accent marks
-"Widely accepted", `danger` only marks genuinely hazardous items (batteries, HHW). No emoji (the web app's emoji stay on the web).
+It is **not** a delivery, booking or marketplace app. Never write copy about drivers, orders, pickups, prices or bookings.
 
-Screens:
-1. **Scan (home)** — full-screen camera, shutter, Uber-style draggable sheet with recent scans + "Pick from list".
-2. **Identify** — sheet over the frozen photo: "Looks like a disposable coffee cup", confirm or correct.
-3. **Questions** — one follow-up per sheet, option rows, skippable.
-4. **Result** — Airbnb-detail-style page: photo, headline verdict, one row per component (outcome, stream badge,
-   acceptance, why), tip, sticky bottom CTA ("Scan another" / "Find a drop-off" when needed).
-5. **Drop-off finder** — map + draggable sheet of nearby sites, only reached from drop-off verdicts.
-6. **History + settings** — past scans, location/local program, appearance.
+The knowledge base lives in `../lib` (`rules.js`, `catalog.js`, `streams.js`, `lessons.js`, `recognizer.js`) and is
+shared with the web app and the Node tests. The app imports it through `src/lib/engine.ts`; it never reimplements a
+verdict or invents a lesson answer.
+
+Outcomes ("bins") and their hue + Lucide icon — the same everywhere, because consistency is how people learn them:
+
+| Outcome | Hue | Icon |
+|---|---|---|
+| Curbside recycling | blue | `Recycle` |
+| Compost | brown | `Sprout` |
+| Trash | slate | `Trash2` |
+| Special drop-off | orange | `MapPin` |
+| Reuse / donate | purple | `Repeat2` |
+
+Always pair the hue with the icon and the label; color is never the only signal.
+
+## The mascot
+
+**Tin** is a little tin can with a face (`src/components/art/Mascot.tsx`). Tin carries the emotion of the app:
+happy on the path, cheering on a correct answer and at the end of a lesson, worried on a wrong one, sad when you run out of
+hearts, sleepy when the streak is at risk, thinking while a photo is analysed. Use Tin wherever a moment has a feeling —
+never more than one Tin on screen.
 
 ## Stack
 
 - Expo SDK 57 + React Native + TypeScript (strict). Expo Router, routes in `src/app/`.
-- `react-native-reanimated` + `react-native-gesture-handler` for all animation and gestures.
-- `@gorhom/bottom-sheet` for sheets, `@shopify/flash-list` for lists, `expo-image` for images.
-- `react-native-maps` for maps, `expo-haptics` for feedback (always through `src/lib/haptics.ts`).
-- Supabase (auth, db, realtime). Zustand for client state (`src/stores/`), TanStack Query for server state.
+- `react-native-reanimated` + `react-native-gesture-handler` for animation and gestures.
+- `react-native-svg` for the mascot and illustrations. `expo-haptics` for feedback (always through `src/lib/haptics.ts`).
+- `expo-location` for location, `expo-image-picker` for photos. OpenStreetMap (Overpass) for places, Zippopotam / Nominatim
+  for ZIP lookup. TanStack Query for anything fetched, Zustand + AsyncStorage for progress and settings (`src/stores/`).
+- Recognition: MobileNet + the TrashNet material head, in the browser through the vendored TensorFlow.js
+  (`src/lib/vision.web.ts`). Native builds fall back to search.
 - Icons: **Lucide only** (`lucide-react-native`), always rendered through `<Icon />`, which fixes the stroke weight.
-- Font: Inter (400/500/600/700), loaded in the root layout.
+- Font: Nunito (600/700/800/900) — rounded and friendly. Loaded in the root layout.
 - Install packages with `EXPO_OFFLINE=1 npx expo install <pkg>` in this sandbox (api.expo.dev is blocked).
 
 ## Layout
 
 ```
-src/app/              routes only (Expo Router)
+src/app/              routes only (Expo Router): (tabs)/ learn · what-bin · near me · profile, plus lesson/ and item/
 src/theme/            tokens + ThemeProvider + makeStyles — the only place raw values live
-src/components/ui/    primitives: Text, Button, Input, Card, ListRow, Avatar, Badge, Sheet, Skeleton (+ Icon, Divider, Screen, PressableScale)
+src/components/ui/    primitives: Text, Button, ChoiceCard, ProgressBar, Input, Chip, Skeleton, Icon, Screen, PressableScale
+src/components/art/   the mascot, confetti, bins, item artwork — the only place SVG coordinates live
 src/components/       product components, composed from primitives
-src/lib/              haptics, supabase client, utils
-src/stores/           zustand stores
+src/lib/              engine bridge, places, vision, haptics, dates
+src/stores/           zustand stores (progress, settings)
 ```
 
 ## Design system (`src/theme`)
 
 - **No hardcoded values in components, ever.** No hex colors, no raw numbers for spacing/radius/font size/shadow.
   Use `makeStyles((t) => ...)` or `useTheme()` and read `t.colors`, `t.space`, `t.radius`, `t.type`, `t.shadow`, `t.motion`.
-  Exceptions: `0`, `1` / `StyleSheet.hairlineWidth` borders, `flex` values, percentages, and opacity values defined in `t.opacity`.
-- **Spacing is a 4pt grid.** `t.space[1]=4 … t.space[16]=64`. Screen gutter is always `t.layout.gutter` — never pick a per-screen padding.
-- **Type scale has 6 sizes** (28 / 22 / 17 / 15 / 13 / 11) exposed as variants: `display, title, heading, body, bodyStrong, callout, caption, label`.
-  Hierarchy comes from weight and color (`text`, `textSecondary`, `textTertiary`), not from adding sizes. Only `<Text>` renders text.
-- **Color:** neutral palette (near-black, grays, off-white) + **one accent** (`accent`, green). Accent is for the primary action on a screen,
-  selected states, and the occasional key number. Never decorative, never for backgrounds of large areas.
-  `danger` exists only for errors and destructive actions. No other hues.
+  Exceptions: `0`, `1` / `StyleSheet.hairlineWidth` borders, `flex` values, percentages, and SVG geometry inside
+  `src/components/art/` (artwork is drawn in its own viewBox).
+- **Spacing is a 4pt grid.** Screen gutter is always `t.layout.gutter`. Content is capped at `t.layout.maxWidth` and centered
+  on wide screens.
+- **Type:** Nunito, variants `hero, display, title, heading, body, bodyStrong, callout, caption, label, button`. Buttons and
+  labels are uppercase and extra-bold. Only `<Text>` renders text.
+- **Color:** white (or deep blue-grey in dark mode) surfaces, and named hues from `t.colors.hue` that each carry a meaning —
+  see `src/theme/colors.ts`. Hues are for actions, feedback, bins and rewards, never decoration. No gradients.
+- **Chunky and tactile.** Buttons, option cards and path nodes are 3D: a `depth` edge in the hue's `depth` shade that the face
+  presses down into. Cards are flat with a 2px border, not shadows. Shadows only for things that float (feedback panel,
+  popovers, tab bar).
 - **Light and dark mode** are both first-class. Every color comes from `t.colors`; check every screen in both.
-- **Elevation is rare.** Cards are flat (border or subtle fill). Shadows (`t.shadow`) are only for things that float above content:
-  sheets, the sticky CTA bar, map overlays. In dark mode, elevation = lighter surface + border, not shadow.
 
-## Never do (screams "vibecoded")
+## Feel
 
-- Purple/blue gradients, glowing shadows, glassmorphism.
-- Everything in a rounded card with a shadow. Prefer lists, dividers and whitespace.
-- Centered text blocks and giant hero headers on app screens. App screens are left-aligned with a normal title.
-- Spinners for loading content. Use `<Skeleton>` shaped like the real content.
-- "Lorem ipsum", "John Doe", placeholder.com, or obviously fake data.
-- Inconsistent padding between screens (use `<Screen>` and `t.layout.gutter`).
-- `Alert.alert` / system alerts for errors. Errors are inline (field errors, error states with retry) or a toast.
-- Pressables with no feedback. Everything tappable uses `PressableScale` (or a primitive built on it).
+- **Celebrate.** A correct answer gets the green panel, Tin cheering and a success haptic. Finishing a lesson gets confetti,
+  the XP count-up and the streak. Wrong answers are gentle: red panel, the right answer, and *why* — that is the lesson.
+- **Teach in every verdict.** Every answer shows the reason from the catalog. A verdict with no why teaches nothing.
+- **Streaks, hearts, XP and the daily goal are real** (persisted), never decorative numbers.
+- Springs (`t.motion.spring.*`) for every state change. Timing-based motion only for loops (idle bob, skeleton pulse) and
+  one-shot celebrations (confetti).
+- Every tap gives feedback: `PressableScale` or a primitive built on it. Light haptic on primary actions, selection haptic on
+  choices, success/error haptics on answers.
+- Safe areas on every screen (`<Screen>`). Keyboard avoidance on every screen with an input.
+- Fetched data (places) has skeleton loading, a real empty state with something useful to do, and an error state with retry.
+
+## Never do
+
+- Gradients, glassmorphism, glowing shadows.
+- Spinners for loading content — use `<Skeleton>` or Tin thinking with a progress bar.
+- Invented data: no fake drop-off sites, no made-up stats, no lorem ipsum. Places come from OpenStreetMap or are links out.
+- `Alert.alert` / system alerts. Errors are inline or shown by Tin.
 - Emoji as icons. Mixing icon sets. Changing icon stroke width per screen.
-
-## Motion & feel
-
-- All state/gesture-driven animation uses springs (`withSpring` with `t.motion.spring.*`). No linear `withTiming` for transitions.
-  The only timing-based animations allowed are continuous loops (skeleton pulse, progress indicators).
-- Every tap gives feedback: press scale `t.motion.pressScale` (0.97). Light haptic on primary actions (`haptics.light()`),
-  selection haptic on toggles/segments, success/error notification haptics on completed/failed actions.
-- Bottom sheets have snap points and drag-to-dismiss (Uber ride sheet). Use `<Sheet>`.
-- Optimistic UI for saving a scan, deleting from history, correcting an identification: update the TanStack Query cache
-  in `onMutate`, roll back in `onError`, show a toast.
-- History item / photo → Result uses a shared/smooth transition, never a hard cut.
-- Lists: FlashList, images sized to their container via expo-image with `recyclingKey`. Hold 60fps.
-- Safe areas respected on every screen (`<Screen>`). Keyboard avoidance on every screen with an input.
-- Every data screen has: pull-to-refresh, a real empty state (with a helpful action), a real error state with retry, skeleton loading.
-
-## Data
-
-- Seed data must be realistic and come from the real catalog in `../lib/rules.js` (objects, materials, streams, why-text),
-  with real Unsplash photos of those objects. Real-sounding names for accounts, real places for drop-off sites.
-- Never ship placeholder copy. Write the actual microcopy.
+- More than one primary (green) action on a screen.
 
 ## Process (per screen)
 
 1. Build one screen at a time, composed only from primitives + product components.
 2. Run it and screenshot it (iOS simulator when on macOS; in the Linux cloud sandbox use Expo web + Playwright at iPhone viewport,
    see `scripts/screenshot.mjs`). Critique against this file before moving on.
-3. Definition of done checklist:
-   - [ ] Spacing consistent, gutter = `t.layout.gutter`, all values on the 4pt grid
+3. Definition of done:
    - [ ] Only tokens used (`npm run check:tokens` passes)
-   - [ ] Loading (skeleton), empty, and error (with retry) states handled
+   - [ ] Loading, empty and error states handled where data is fetched
    - [ ] Dark mode checked
    - [ ] Every tappable has press feedback; primary action has haptics
-   - [ ] Safe areas + keyboard avoidance
-   - [ ] `npm run typecheck` passes
+   - [ ] `npm run typecheck` passes, and `npm test` in `../` passes

@@ -1,6 +1,19 @@
 # US Tin
 
-**What bin does this go in?** Point your phone at something, answer a question or two, get the right answer — down to the resin code — and the reason behind it.
+**Duolingo for putting things in the right bin.** Learn where everything goes in five-minute lessons, look up anything in the moment, and find the nearest place that takes it.
+
+The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has four tabs:
+
+| Tab | What it does |
+|---|---|
+| **Learn** | A Duolingo-style course: 11 units (one per catalog shelf), 49 lessons, XP, streaks, hearts, a daily goal, badges, and Tin the tin can, who cheers when you get it right and explains when you don't. |
+| **What bin?** | Search 177 items or snap a photo (web build). Answers a follow-up only when it changes the verdict, then shows where *each part* goes, down to the resin code, and why. |
+| **Near me** | From your ZIP code or location, the nearest places that take the item: battery bins, e-waste, hazardous waste, clothing banks, pharmacies, transfer stations… Real data from OpenStreetMap. Every place is marked as *listed as accepting this* or *usually accepts, call ahead*. |
+| **Profile** | Streak, XP, badges, daily goal, location and appearance. |
+
+Every lesson question is generated from the same catalog and decision engine the lookup uses (`lib/lessons.js`), so a lesson can never teach an answer the app would contradict.
+
+The rest of this README covers the knowledge base and recognition, which the app shares with the original single-page web app in `public/`.
 
 ## The problem
 
@@ -14,21 +27,22 @@ People want to dispose of things correctly and mostly can't. Looking up each ite
 US Tin breaks an object into **components**, and gives each one both a destination and a **stream** — the specific resin code or material class that decides whether it's genuinely accepted.
 
 ```
-Open App → Camera → Identify Object → Determine Material
-         → Follow-Up Questions → Disposal Method → Explanation
+Camera → Classify on device ─┬─ recognised → Confirm the match ─┐
+                             ├─ material only → Narrowed picker ─┤
+                             └─ nothing → Full picker ───────────┴→ Questions → Verdict
 ```
 
 Follow-up questions are asked only when the answer actually changes the outcome. A greasy pizza box goes somewhere different from a clean one, so it's worth one tap to ask.
 
 ### Disposal outcomes
 
-| | Outcome | |
-|---|---|---|
-| ♻️ | Curbside Recycling | Goes in your recycling bin |
-| 📍 | Special Drop-Off | Needs a specific collection point |
-| 🌱 | Compost | Organics / green bin |
-| 🔄 | Reuse / Donate | Still has life in it |
-| 🗑️ | Trash | Landfill, no better route |
+| Outcome | Meaning |
+|---|---|
+| Curbside Recycling | Goes in your recycling bin |
+| Special Drop-Off | Needs a specific collection point |
+| Compost | Organics / green bin |
+| Reuse / Donate | Still has life in it |
+| Trash | Landfill, no better route |
 
 ### Recycling streams
 
@@ -52,50 +66,123 @@ Plus drop-off destinations: `WEEE` e-waste, `BATT` batteries, `HHW` hazardous, `
 
 **A trash verdict still names its material.** A foam takeout tray returns Trash *and* a `#6 PS · Rarely accepted curbside` chip — the material is the explanation, not a footnote. The same product in rigid form returns `#5 PP · Widely accepted` and recycles.
 
+## Recognition
+
+Recognition is real and runs **on the device**. MobileNet v2 executes in the browser through TensorFlow.js: the weights travel to the phone, the photo never leaves it. There is no inference server, no API key and no upload.
+
+Two models run on every photo, from a single forward pass:
+
+**1. The object model** is MobileNet's 1000-way ILSVRC-2012 classifier. Its label space only partly overlaps with household waste, so `lib/recognizer.js` translates:
+
+- An ILSVRC class maps to one or more catalog objects with a weight. `pizza` leans towards the pizza box but keeps food scraps on offer.
+- Scores are summed across the whole distribution rather than read off the top class. `beer bottle` + `wine bottle` + `goblet` at 12% each is a much stronger glass verdict than any one of them looks.
+- Below the recognition floor the app says so rather than guessing.
+
+**2. The material head** is a linear classifier over MobileNet's 1280-dimensional embedding, trained here on [TrashNet](https://github.com/garythung/trashnet) — 2,527 photographs of real household waste labelled cardboard / glass / metal / paper / plastic / trash. It ships as a 63 KB JSON file and runs in plain JavaScript, so it never touches the WebGL path.
+
+The two are **fused**: material agreement lifts a candidate, but never vetoes one (see below for why). `water bottle` is genuinely ambiguous between a plastic bottle and a metal flask, and the object model splits it — the material head breaks the tie.
+
+And when the object model has nothing confident, the material head usually still does, so instead of a dead end the picker opens pre-filtered and ranked: *"Not certain what it is, but the material reads as glass. These are the closest matches — the likeliest first."* The ordering comes from the object model's own scores, because failing to clear the naming threshold is not the same as having no opinion. That turns a failed guess into two taps.
+
+The confirm screen shows the match, the score, the raw class the model read, and the runner-up catalog objects, so a wrong guess is one tap from being corrected.
+
+### The bug this all started with
+
+The first version of this was, in the user's words, *insanely inaccurate*. The cause was one line: this MobileNet graph emits **1001** logits — a leading "background" class, then the 1000 real ones — and the code read index *i* as class *i*. Every lookup landed one class off, which turns a classifier into a random number generator. It was invisible in casual testing because the neighbouring class is often plausible: a photo of an espresso cup returned "cup" instead of "espresso", and both point at a coffee cup.
+
+`interpret()` now refuses a vector that is not exactly 1000 long, and a test pins that. Silent nonsense is worse than a crash.
+
+### Measured
+
+The numbers come from evaluating against 506 held-out [TrashNet](https://github.com/garythung/trashnet) photographs, scoring whether the material family of the object the app would show matches what the photograph actually is. The material head evaluated is trained only on the other 80%.
+
+| | Names an item | Of those, correct | Confidently wrong | Useful answer |
+|---|---|---|---|---|
+| As first shipped (off-by-one bug) | 37.2% | 14.9% | 31.6% | **5.5%** |
+| Off-by-one fixed | 54.9% | 24.1% | 41.7% | **13.2%** |
+| + material head, retuned | 14.0% | 69.0% | 4.3% | **77.1%** |
+
+"Useful answer" counts a correct named item *or* a correct material narrowing. The material head scores 79.8% on the same held-out split.
+
+Two things worth reading off that table. The bug was real and severe — but **fixing it was not sufficient**. The object model on its own, pointed at photographs of actual waste, gets its own answers right about a quarter of the time. It was never going to carry this product. What made the app usable was adding a second model trained on the right data, and then *answering far less often*: naming an item dropped from 55% of photos to 14%, and that is the point. A confident wrong answer is what made the first version feel broken.
+
+### What the benchmark cannot see
+
+TrashNet photographs are single objects on a white posterboard, so they are kinder than a real kitchen counter. Treat these as an upper bound.
+
+More importantly, **every TrashNet image is one of the six materials the head knows**, and most of what people actually photograph is not. The head has no "none of the above" to reach for, so off its distribution it is confidently wrong: a cat reads 58% plastic, a rocket 82% cardboard, a ceramic espresso cup 91% metal.
+
+That is why the head is allowed to *lift* a candidate but never to *veto* one. On the benchmark a veto scores better — 77.5% against 77.1% useful, and named answers 70.8% correct against 69.0%. It is not worth it: the benchmark is blind to exactly the case where a veto does damage, and the failure it causes is deleting a correct answer. The test suite pins the no-veto behaviour with that reasoning attached, so it does not get "optimised" back in.
+
+**About half the catalog is reachable from the camera.** The rest — anything with no ILSVRC counterpart — is reachable by search, by the picker and by material narrowing. A test asserts a floor on camera coverage so a careless edit cannot quietly gut the mapping.
+
 ## Running it
 
-No dependencies, no build step, no install.
+### The app
+
+```bash
+cd mobile
+npm install
+npm run web             # http://localhost:8081 in a browser (photo recognition works here)
+npm start               # Expo dev server: scan the QR code with Expo Go on a phone
+npm run typecheck
+npm run publish:web     # build and publish the web version to GitHub Pages (/ustin)
+```
+
+Progress is stored on the device. Location is only sent to OpenStreetMap services (Zippopotam / Nominatim for the ZIP lookup, Overpass for nearby places) and never anywhere else.
+
+### The knowledge base and the original web app
+
+No dependencies, no install, no build step for development.
 
 ```bash
 node server.js          # http://localhost:3000
 PORT=8080 node server.js
-npm test                # 25 rules-engine checks
+npm test                # 53 checks across the engine, the catalog, the recogniser and the lessons
+./build.sh              # assemble dist/ for static hosting
 ```
 
 Node 18+. Tested on Node 22.
 
-The camera needs a secure context, so `localhost` works, but testing from a phone on your LAN over plain `http://` will not — the browser blocks `getUserMedia`. Use a tunnel, or the **Upload a photo** / **Pick from list** paths, which work everywhere.
+First load fetches ~14 MB of model weights, reported as a progress bar on the capture screen, and the browser caches them afterwards. The library itself is vendored, so the only third-party runtime requests are the weights and the webfonts.
 
-## Recognition is stubbed
-
-**This is the one faked piece.** It is deliberately isolated in `lib/identify.js`.
-
-The stub hashes the image bytes and picks a catalog object, so the same photo always returns the same guess — repeatable for demos, and the "wrong guess → correct it" path is easy to show. Confidence is cosmetic.
-
-Everything downstream is real: materials, streams, follow-up logic, per-component verdicts, explanations.
-
-To make it real, replace the body of `identify()` with a vision call returning `{ label, confidence }`. `matchObject()` already maps free text onto the catalog, so nothing else changes:
-
-```js
-function identify(imageBuffer, hint) {
-  const label = await callVisionModel(imageBuffer);  // <- the only new part
-  return { object: matchObject(label), confidence: 0.9, source: 'model' };
-}
-```
+The camera needs a secure context, so `localhost` works, but testing from a phone on your LAN over plain `http://` will not — the browser blocks `getUserMedia`. Use a tunnel, or the **Upload a photo** / **Choose from the list** paths, which work everywhere.
 
 ## Layout
 
 ```
-server.js          HTTP server, three JSON endpoints, static files
-lib/rules.js       Knowledge base + decision engine  ← the actual substance
-lib/identify.js    Object recognition (STUBBED)
-public/            Camera UI, one screen per workflow step
-test/rules.test.js Engine checks
+mobile/                    The app (Expo). Design rules in mobile/CLAUDE.md
+lib/catalog.js             177 objects on 11 shelves, built from component factories  ← the substance
+lib/streams.js             Outcomes, material streams, follow-up questions
+lib/rules.js               The decision engine
+lib/lessons.js             The course: units, lessons and generated exercises
+lib/recognizer.js          ILSVRC classes + material head -> catalog objects
+lib/imagenet-labels.js     The 1000 class names (generated)
+public/index.html          App shell and icon set
+public/assets/app.js       Screen flow and rendering
+public/assets/vision.js    MobileNet loading and inference
+public/assets/material-head.json  The trained material classifier
+public/vendor/             TensorFlow.js, vendored
+server.js                  Dev server: static files + two JSON endpoints
+test/                      Engine, catalog and recognizer checks
 ```
 
-### `lib/rules.js`
+### `lib/catalog.js`
 
-The file that matters. Each catalog object lists its components; each component has a base outcome and stream, plus optional `rules` that override either one based on answers. Later matching rules win.
+The file that matters. Each object lists its components; each component has a base outcome and stream, plus optional `rules` that override either one based on answers. Later matching rules win.
+
+The same physical part turns up on dozens of objects — a PET bottle body, a paperboard sleeve, a lithium cell — so components are built by factories rather than copied:
+
+```js
+{
+  id: 'shampoo-bottle', label: 'Shampoo bottle',
+  match: ['shampoo bottle', 'conditioner bottle', 'body wash'],
+  components: [part.hdpe('Bottle', 'Bathroom bottles are ordinary #2 HDPE…'), cap.plastic()],
+  tip: 'Bathroom plastics are the most commonly missed recyclables in the house.',
+}
+```
+
+Every factory takes an explanation, because the reason is the product: a verdict with a generic sentence under it teaches nothing. Where an object needs real nuance, it is written out longhand instead:
 
 ```js
 {
@@ -112,22 +199,26 @@ The file that matters. Each catalog object lists its components; each component 
 }
 ```
 
-Adding an object is a data edit — no engine changes. 20 objects currently, chosen for the ones people actually get wrong.
+Adding an object is a data edit — no engine changes. 177 objects currently, spanning kitchen packaging, organics, paper, bathroom, electronics, hazardous household chemicals, textiles and durables.
 
 The headline verdict is the component needing the **most** care, so a summary never understates a hazard: a battery inside a toy makes the whole thing a drop-off.
 
-Test guards enforce the invariants that matter: anything routed to recycling or drop-off **must** name a stream, rules can only key off questions their component actually asks, and every defined stream has to be reachable from some object.
+Test guards enforce the invariants that matter: anything routed to recycling or drop-off **must** name a stream, rules can only key off questions their component actually asks, every defined stream has to be reachable from some object, and every mapped ILSVRC class has to be one the model can actually emit.
 
 ## API
+
+The browser does not call these — the engine and the classifier both run client-side, which is why the app deploys as static files. `server.js` exposes them for local experimentation.
 
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/catalog` | Objects for the manual picker |
-| `POST /api/identify` | `{ image }` or `{ hint }` → object + required questions |
 | `POST /api/resolve` | `{ objectId, answers }` → per-component verdicts + streams |
 
 ## Known limits
 
-- **Rules are generic, not local.** Disposal is set by your municipality, and the acceptance ratings are national averages. A real version needs postcode-level rule sets; questions like "does your program take film?" paper over this for now.
-- **20 objects.** Anything outside the catalog has no answer — no graceful degradation to a material-level guess yet.
-- **No history**, accounts, or persistence. Every scan is standalone.
+- **Rules are generic, not local.** Disposal is set by your municipality, and the acceptance ratings are national averages. A real version needs postcode-level rule sets; questions like "does your program take film?" paper over this for now. *Near me* finds places by location, but what your own curbside bin takes is still the national picture.
+- **Near me is only as good as OpenStreetMap.** Coverage of drop-off details varies a lot by city. When the map has nothing, the app links out to Earth911 and Google Maps rather than guessing.
+- **Recognition is as good as MobileNet.** It is solid on bottles, cups, cans, cartons, packets, bags, food, electronics and clothing, and weak on everything the ILSVRC label space does not cover. The alternatives list, the material narrowing and the picker all exist because of this.
+- **The material head learned from posed photographs.** TrashNet is single objects on white posterboard. Cluttered, badly-lit real photos are harder than anything it was trained on.
+- **177 objects.** Anything outside the catalog still has no answer, though material narrowing now gets a user close.
+- **No accounts.** Progress (XP, streak, lessons) lives on the device and does not sync between devices.

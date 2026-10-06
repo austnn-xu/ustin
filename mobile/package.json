@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/nunito": "^0.4.2",
     "@expo/metro-runtime": "~57.0.16",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -15,7 +16,9 @@
     "expo-font": "~57.0.4",
     "expo-haptics": "~57.0.3",
     "expo-image": "~57.0.5",
+    "expo-image-picker": "~57.0.20",
     "expo-linking": "~57.0.11",
+    "expo-location": "~57.0.20",
     "expo-router": "~57.0.24",
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
@@ -44,11 +47,11 @@
     "start": "expo start",
     "ios": "expo start --ios",
     "android": "expo start --android",
-    "web": "expo start --web",
+    "web": "node scripts/web-assets.mjs && expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "check:tokens": "node scripts/check-tokens.mjs",
-    "export:web": "EXPO_OFFLINE=1 EXPO_BASE_URL=/ustin expo export --platform web",
+    "export:web": "node scripts/web-assets.mjs && EXPO_OFFLINE=1 EXPO_BASE_URL=/ustin expo export --platform web",
     "publish:web": "./scripts/publish-web.sh"
   },
   "private": true

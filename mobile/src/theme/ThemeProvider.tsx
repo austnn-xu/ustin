@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
-import { usePreferences } from '@/stores/preferences';
-import { dark, light } from './colors';
+import { useSettings } from '@/stores/settings';
+import { dark, light, type HueName } from './colors';
 import { layout, makeShadow, motion, opacity, radius, space, type } from './tokens';
 
 const buildTheme = (scheme: 'light' | 'dark') => {
@@ -27,12 +27,15 @@ const ThemeContext = createContext<Theme>(themes.light);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const system = useColorScheme();
-  const preference = usePreferences((s) => s.colorScheme);
+  const preference = useSettings((s) => s.colorScheme);
   const scheme = preference === 'system' ? (system === 'dark' ? 'dark' : 'light') : preference;
   return <ThemeContext.Provider value={themes[scheme]}>{children}</ThemeContext.Provider>;
 }
 
 export const useTheme = () => useContext(ThemeContext);
+
+/** Shorthand for one hue's four shades. */
+export const useHue = (name: HueName) => useTheme().colors.hue[name];
 
 /**
  * Define styles as a function of the theme. Styles are computed once per scheme.

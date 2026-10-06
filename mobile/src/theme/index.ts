@@ -1,3 +1,3 @@
-export { ThemeProvider, useTheme, makeStyles, type Theme } from './ThemeProvider';
+export { ThemeProvider, useTheme, useHue, makeStyles, type Theme } from './ThemeProvider';
 export { fontFamily, type TypeVariant } from './tokens';
-export type { ColorTokens } from './colors';
+export type { ColorTokens, Hue, HueName } from './colors';

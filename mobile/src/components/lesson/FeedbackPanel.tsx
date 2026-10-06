@@ -1,0 +1,104 @@
+import { Check, X } from 'lucide-react-native';
+import { useEffect } from 'react';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BIN } from '@/components/art/Bin';
+import { Mascot } from '@/components/art/Mascot';
+import { Button, Chip, Icon, Text } from '@/components/ui';
+import type { Exercise } from '@/lib/engine';
+import { makeStyles, useTheme } from '@/theme';
+
+export type FeedbackPanelProps = {
+  correct: boolean;
+  title: string;
+  /** The right answer, spelled out — shown when the user got it wrong. */
+  answer: string;
+  explain: Exercise['explain'];
+  showTin: boolean;
+  onContinue: () => void;
+};
+
+/**
+ * The panel that slides up after CHECK. Green and cheering when right; red, gentle and explaining when wrong —
+ * the explanation is the actual lesson, so it is shown either way.
+ */
+export function FeedbackPanel({ correct, title, answer, explain, showTin, onContinue }: FeedbackPanelProps) {
+  const t = useTheme();
+  const styles = useStyles();
+  const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const hueName = correct ? 'green' : 'red';
+  const hue = t.colors.hue[hueName];
+  const rise = useSharedValue(1);
+
+  useEffect(() => {
+    rise.value = withSpring(0, t.motion.spring.gentle);
+  }, [rise, t.motion.spring.gentle]);
+
+  const style = useAnimatedStyle(() => ({ transform: [{ translateY: rise.value * height * 0.5 }] }));
+  const bin = explain.outcome ? BIN[explain.outcome] : null;
+
+  return (
+    <Animated.View
+      style={[styles.panel, { backgroundColor: hue.subtle, paddingBottom: Math.max(insets.bottom, t.space[4]) }, style]}
+      accessibilityLiveRegion="polite"
+    >
+      <View style={styles.column}>
+        <View style={styles.head}>
+          <View style={[styles.badge, { backgroundColor: hue.base }]}>
+            <Icon icon={correct ? Check : X} size="lg" color="onColor" />
+          </View>
+          <View style={styles.flex}>
+            <Text variant="title" hue={hueName}>
+              {title}
+            </Text>
+            {!correct && (
+              <Text variant="bodyStrong" hue={hueName}>
+                {`Answer: ${answer}`}
+              </Text>
+            )}
+          </View>
+          {showTin && <Mascot mood={correct ? 'cheer' : 'worried'} size="sm" idle={false} />}
+        </View>
+
+        <ScrollView style={{ maxHeight: height * 0.26 }} contentContainerStyle={styles.why}>
+          {(bin || explain.stream) && (
+            <View style={styles.chips}>
+              {bin && <Chip label={BIN[explain.outcome!].short} icon={bin.icon} hue={bin.hue} onTint />}
+              {explain.stream && <Chip label={`${explain.stream.code} · ${explain.stream.label}`} onTint />}
+              {explain.stream && (
+                <Chip
+                  onTint
+                  label={explain.stream.acceptance}
+                  hue={explain.stream.acceptance.startsWith('Widely') ? 'green' : explain.stream.acceptance.startsWith('Rarely') ? 'red' : 'orange'}
+                />
+              )}
+            </View>
+          )}
+          <Text variant="body" hue={hueName}>
+            {explain.text}
+          </Text>
+        </ScrollView>
+
+        <Button label="Continue" hue={hueName} fullWidth onPress={onContinue} />
+      </View>
+    </Animated.View>
+  );
+}
+
+const useStyles = makeStyles((t) => ({
+  panel: { paddingTop: t.space[5] },
+  column: { width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center', paddingHorizontal: t.layout.gutter, gap: t.space[3] },
+  head: { flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
+  badge: {
+    width: t.layout.control.md,
+    height: t.layout.control.md,
+    borderRadius: t.radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flex: { flex: 1 },
+  why: { gap: t.space[2] },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space[2] },
+}));

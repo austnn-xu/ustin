@@ -29,8 +29,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
 
   const frame = useAnimatedStyle(() => ({
     borderColor: error
-      ? t.colors.danger
-      : interpolateColor(focus.value, [0, 1], [t.colors.border, t.colors.text]),
+      ? t.colors.hue.red.base
+      : interpolateColor(focus.value, [0, 1], [t.colors.border, t.colors.hue.blue.base]),
   }));
 
   const showClear = clearable && !!value && editable;
@@ -51,8 +51,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           editable={editable}
           secureTextEntry={secureTextEntry && !revealed}
           placeholderTextColor={t.colors.textTertiary}
-          selectionColor={t.colors.accent}
-          cursorColor={t.colors.accent}
+          selectionColor={t.colors.hue.blue.base}
+          cursorColor={t.colors.hue.blue.base}
           keyboardAppearance={t.isDark ? 'dark' : 'light'}
           onFocus={(e) => {
             focus.value = withSpring(1, t.motion.spring.standard);
@@ -88,7 +88,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         )}
       </Animated.View>
       {(error || hint) && (
-        <Text variant="caption" color={error ? 'danger' : 'textTertiary'}>
+        <Text variant="caption" color="textTertiary" hue={error ? 'red' : undefined}>
           {error ?? hint}
         </Text>
       )}
@@ -104,9 +104,9 @@ const useStyles = makeStyles((t) => ({
     gap: t.space[3],
     height: t.layout.control.lg,
     paddingHorizontal: t.space[4],
-    borderRadius: t.radius.md,
-    borderWidth: 1,
-    backgroundColor: t.colors.surface,
+    borderRadius: t.radius.lg,
+    borderWidth: t.layout.border,
+    backgroundColor: t.colors.bgSubtle,
   },
   readOnly: { backgroundColor: t.colors.fill },
   input: {

@@ -8,8 +8,9 @@ SRC=$(git rev-parse --short HEAD)
 WT=$(mktemp -d)
 
 rm -rf dist
+node scripts/web-assets.mjs
 EXPO_OFFLINE=1 EXPO_BASE_URL=/ustin npx expo export --platform web
-sed -i 's#<title>ustin</title>#<title>US Tin — What bin does this go in?</title>#' dist/index.html
+sed -i 's#<title>US Tin</title>#<title>US Tin — learn where things go</title>#' dist/index.html
 cp dist/index.html dist/404.html   # SPA fallback so deep links survive a refresh
 touch dist/.nojekyll               # Pages' Jekyll would drop the _expo/ folder
 

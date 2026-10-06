@@ -46,13 +46,13 @@ export function ListRow({
     <>
       {icon ? (
         <View style={styles.iconTile}>
-          <Icon icon={icon} color={destructive ? 'danger' : 'text'} />
+          <Icon icon={icon} color="text" hue={destructive ? 'red' : undefined} />
         </View>
       ) : (
         leading
       )}
       <View style={styles.text}>
-        <Text variant="body" color={destructive ? 'danger' : 'text'} numberOfLines={1}>
+        <Text variant="bodyStrong" hue={destructive ? 'red' : undefined} numberOfLines={1}>
           {title}
         </Text>
         {subtitle && (
@@ -98,8 +98,8 @@ const useStyles = makeStyles((t) => ({
   },
   pressed: { backgroundColor: t.colors.fill },
   iconTile: {
-    width: t.layout.avatar.md,
-    height: t.layout.avatar.md,
+    width: t.layout.art.sm,
+    height: t.layout.art.sm,
     borderRadius: t.radius.md,
     backgroundColor: t.colors.fill,
     alignItems: 'center',

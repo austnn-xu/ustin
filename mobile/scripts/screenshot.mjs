@@ -5,7 +5,7 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { chromium } from 'playwright';
 
-const route = process.argv[2] ?? '/primitives';
+const route = process.argv[2] ?? '/';
 const out = process.argv[3] ?? 'screenshots';
 const base = process.env.EXPO_WEB_URL ?? 'http://localhost:8081';
 mkdirSync(out, { recursive: true });

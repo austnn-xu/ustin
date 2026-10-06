@@ -7,7 +7,6 @@ const {
   OBJECTS, OUTCOMES, STREAMS, ACCEPTANCE, QUESTIONS,
   findObject, matchObject, questionsFor, resolve,
 } = require('../lib/rules');
-const { identify } = require('../lib/identify');
 
 const outcomesOf = (result) => result.components.map((c) => c.outcome.id);
 const streamsOf = (result) => result.components.map((c) => (c.stream ? c.stream.id : null));
@@ -75,7 +74,7 @@ test('questions are deduplicated across components', () => {
 
 test('an object with no conditional rules asks nothing', () => {
   assert.deepStrictEqual(questionsFor(findObject('receipt')), []);
-  assert.deepStrictEqual(questionsFor(findObject('styrofoam')), []);
+  assert.deepStrictEqual(questionsFor(findObject('foam-takeout-tray')), []);
 });
 
 test('coffee cup splits three materials across two destinations', () => {
@@ -103,7 +102,7 @@ test('a part-full aerosol becomes hazardous drop-off', () => {
 });
 
 test('working electronics are routed to reuse over recycling', () => {
-  const device = findObject('electronics');
+  const device = findObject('smartphone');
   assert.strictEqual(resolve(device, { condition: 'good' }).components[0].outcome.id, 'reuse');
   assert.strictEqual(resolve(device, { condition: 'broken' }).components[0].outcome.id, 'dropoff');
 });
@@ -151,21 +150,21 @@ test('every stream is actually reachable from some object', () => {
 });
 
 test('resolve expands a stream with its resin code and acceptance', () => {
-  const bottle = resolve(findObject('plastic-bottle'));
+  const bottle = resolve(findObject('water-bottle'));
   const [body, cap] = bottle.components;
 
   assert.strictEqual(body.stream.code, '#1');
   assert.strictEqual(body.stream.short, 'PET');
   assert.strictEqual(body.stream.family, 'Plastic');
   assert.strictEqual(body.stream.acceptance.id, 'widely');
-  assert.strictEqual(cap.stream.code, '#2');
+  assert.strictEqual(cap.stream.code, '#5');
 });
 
 test('the same outcome can still mean different streams', () => {
-  // Every part of a carton "recycles", but into three different streams.
+  // Both parts of a carton "recycle", but into two different streams.
   const carton = resolve(findObject('milk-carton'));
-  assert.deepStrictEqual(outcomesOf(carton), ['recycle', 'recycle', 'trash']);
-  assert.deepStrictEqual(streamsOf(carton), ['carton', 'hdpe', null]);
+  assert.deepStrictEqual(outcomesOf(carton), ['recycle', 'recycle']);
+  assert.deepStrictEqual(streamsOf(carton), ['carton', 'hdpe']);
   assert.strictEqual(carton.split, true, 'differing streams should count as a split');
 });
 
@@ -203,7 +202,7 @@ test('a trash verdict still names the material that caused it', () => {
 });
 
 test('film routes to store drop-off unless the program takes it curbside', () => {
-  const bag = findObject('plastic-bag');
+  const bag = findObject('produce-bag');
   const dropoff = resolve(bag, { filmPlastic: 'no' }).components[0];
   assert.strictEqual(dropoff.outcome.id, 'dropoff');
   assert.strictEqual(dropoff.stream.id, 'filmDropoff');
@@ -230,20 +229,23 @@ test('acceptance is honest about low-value plastics', () => {
 });
 
 test('matchObject prefers the most specific term', () => {
-  assert.strictEqual(matchObject('plastic bottle').id, 'plastic-bottle');
+  assert.strictEqual(matchObject('plastic bottle').id, 'water-bottle');
   assert.strictEqual(matchObject('Pizza Box').id, 'pizza-box');
   assert.strictEqual(matchObject(''), null);
-  assert.strictEqual(matchObject('quantum toaster'), null);
+  assert.strictEqual(matchObject('xylophone'), null);
 });
 
-test('recognition stub is deterministic and prefers a user hint', () => {
-  const image = Buffer.from('a fixed test image');
-  assert.strictEqual(identify(image).object.id, identify(image).object.id);
-
-  const hinted = identify(image, 'battery');
-  assert.strictEqual(hinted.object.id, 'battery');
-  assert.strictEqual(hinted.source, 'user');
-  assert.strictEqual(hinted.confidence, 1);
-
-  assert.strictEqual(identify(null), null);
+test('no part says compost once the user has said there is no compost pickup', () => {
+  // Every combination of answers, for every object that asks about composting.
+  for (const obj of OBJECTS) {
+    const qs = questionsFor(obj);
+    if (!qs.some((q) => q.id === 'composting')) continue;
+    let combos = [{}];
+    for (const q of qs) combos = combos.flatMap((c) => q.options.map((o) => ({ ...c, [q.id]: o.value })));
+    for (const answers of combos.filter((a) => a.composting === 'no')) {
+      for (const c of resolve(obj, answers).components) {
+        assert.notStrictEqual(c.outcome.id, 'compost', `${obj.id} / ${c.label} with ${JSON.stringify(answers)}`);
+      }
+    }
+  }
 });
