@@ -21,6 +21,8 @@ export type ScreenProps = {
   refreshControl?: React.ReactElement<RefreshControlProps>;
   /** Paint the whole screen, safe areas included, with this color instead of `bg` (scene screens). Pass a token. */
   background?: string;
+  /** Let the body run edge to edge on wide screens instead of the readable column (scene screens lay out their own). */
+  wide?: boolean;
 };
 
 /** Every screen's root: safe areas, background, gutter, readable max width, keyboard avoidance. */
@@ -35,11 +37,12 @@ export function Screen({
   bareFooter = false,
   refreshControl,
   background,
+  wide = false,
 }: ScreenProps) {
   const t = useTheme();
   const styles = useStyles();
   const insets = useSafeAreaInsets();
-  const column = [styles.column, gutter && styles.gutter];
+  const column = [wide ? styles.full : styles.column, gutter && styles.gutter];
   const content = scroll ? (
     <ScrollView
       contentContainerStyle={styles.scrollContent}
@@ -48,7 +51,7 @@ export function Screen({
       refreshControl={refreshControl}
       showsVerticalScrollIndicator={false}
     >
-      <View style={column}>{children}</View>
+      <View style={[column, styles.grow]}>{children}</View>
     </ScrollView>
   ) : (
     <View style={[styles.fill, ...column]}>{children}</View>
@@ -88,8 +91,11 @@ const useStyles = makeStyles((t) => ({
   root: { flex: 1, backgroundColor: t.colors.bg },
   fill: { flex: 1 },
   column: { width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center' },
+  full: { width: '100%' },
+  grow: { flexGrow: 1 },
   gutter: { paddingHorizontal: t.layout.gutter },
-  scrollContent: { paddingBottom: t.space[16] },
+  // flexGrow lets a short scrolling screen still centre its content (onboarding, celebrations) when it fits.
+  scrollContent: { flexGrow: 1, paddingBottom: t.space[16] },
   footer: {
     paddingTop: t.space[4],
     backgroundColor: t.colors.bg,

@@ -3,14 +3,16 @@ import { ItemArt } from '@/components/art/ItemArt';
 import { Card, Chip, Text } from '@/components/ui';
 import type { ExerciseItem } from '@/lib/engine';
 import { makeStyles } from '@/theme';
+import { useScreenSize } from '@/lib/useScreenSize';
 
 /** The thing being asked about: its picture, name, which part, what it is made of, and the situation it is in. */
 export function ItemCard({ item }: { item: ExerciseItem }) {
   const styles = useStyles();
+  const { short } = useScreenSize();
   return (
     <Card style={styles.card}>
       <View style={styles.row}>
-        <ItemArt objectId={item.objectId} size="lg" />
+        <ItemArt objectId={item.objectId} size={short ? 'md' : 'lg'} />
         <View style={styles.text}>
           <Text variant="title">{item.part ?? item.label}</Text>
           {item.part && (

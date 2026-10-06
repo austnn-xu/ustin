@@ -6,6 +6,7 @@ import type { Mood } from '@/components/art/Mascot';
 import { MascotSays } from '@/components/MascotSays';
 import { ChoiceCard, Chip, Icon, Text, type ChoiceState } from '@/components/ui';
 import type { Exercise, ExerciseChoice } from '@/lib/engine';
+import { useScreenSize } from '@/lib/useScreenSize';
 import { makeStyles, useTheme } from '@/theme';
 import { ItemCard } from './ItemCard';
 
@@ -21,6 +22,7 @@ export type ExerciseViewProps = {
 export function ExerciseView({ exercise, selected, checked, onToggle }: ExerciseViewProps) {
   const t = useTheme();
   const styles = useStyles();
+  const { short } = useScreenSize();
 
   const stateOf = (c: ExerciseChoice): ChoiceState => {
     const isSelected = selected.includes(c.id);
@@ -80,7 +82,7 @@ export function ExerciseView({ exercise, selected, checked, onToggle }: Exercise
                 tile(
                   c,
                   <View style={styles.center}>
-                    <BinArt outcome={c.outcome!} size={t.layout.art.md} />
+                    <BinArt outcome={c.outcome!} size={short ? t.layout.art.sm : t.layout.art.md} />
                     <Text variant="bodyStrong" align="center">
                       {BIN[c.outcome!].short}
                     </Text>
@@ -172,7 +174,7 @@ export function ExerciseView({ exercise, selected, checked, onToggle }: Exercise
 }
 
 const useStyles = makeStyles((t) => ({
-  root: { gap: t.space[5] },
+  root: { gap: t.space[4] },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space[3] },
   half: { flexBasis: '46%', flexGrow: 1 },
   list: { gap: t.space[3] },

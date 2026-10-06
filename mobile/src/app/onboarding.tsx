@@ -10,6 +10,7 @@ import { lessons } from '@/lib/engine';
 import { GOALS } from '@/lib/goals';
 import { useSettings } from '@/stores/settings';
 import { makeStyles, useTheme } from '@/theme';
+import { useScreenSize } from '@/lib/useScreenSize';
 
 const STEPS = 3;
 
@@ -22,6 +23,7 @@ export default function Onboarding() {
   const setGoal = useSettings((s) => s.setDailyGoal);
   const place = useSettings((s) => s.place);
   const finish = useSettings((s) => s.finishOnboarding);
+  const { short } = useScreenSize();
 
   const start = () => {
     finish();
@@ -42,6 +44,7 @@ export default function Onboarding() {
   if (step === 0) {
     return (
       <Screen
+        scroll
         footer={
           <View style={styles.buttons}>
             <Button label="Get started" fullWidth onPress={() => setStep(1)} />
@@ -58,7 +61,7 @@ export default function Onboarding() {
         }
       >
         <View style={styles.center}>
-          <Mascot mood="wow" size="xl" />
+          <Mascot mood="wow" size={short ? 'md' : 'xl'} />
           <Text variant="display" hue="green" align="center">
             US Tin
           </Text>

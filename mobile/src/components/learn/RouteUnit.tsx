@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { SECTION_HUE } from '@/components/art/ItemArt';
 import { PROPS, SceneryProp, TruckArt } from '@/components/art/RouteArt';
-import { Text } from '@/components/ui';
 import { lessonState, unitProgress } from '@/lib/course';
 import type { Unit } from '@/lib/engine';
 import type { LessonRecord } from '@/stores/progress';
@@ -25,12 +25,12 @@ export type RouteUnitProps = {
   unit: Unit;
   /** Width of the road's column in px. */
   width: number;
+  /** Width of the whole screen; on wide screens the margins either side of the column get scenery too. */
+  screenWidth: number;
   records: Record<string, LessonRecord>;
   currentId: string | null;
   selectedId: string | null;
   onSelect: (lessonId: string | null) => void;
-  /** What Tin calls out from the truck at the current stop. */
-  truckSays: string;
   /** Reports the current stop's y within this block, for scrolling to it. */
   onCurrentLayout?: (y: number) => void;
 };
@@ -39,25 +39,39 @@ export type RouteUnitProps = {
  * One unit of the course as a neighbourhood: a tinted patch of ground, an overhead road sign, a winding road with
  * wheelie-bin stops along it, scenery on the verges, and Tin's truck parked at the current stop.
  */
-export function RouteUnit({ unit, width, records, currentId, selectedId, onSelect, truckSays, onCurrentLayout }: RouteUnitProps) {
+export function RouteUnit({ unit, width, screenWidth, records, currentId, selectedId, onSelect, onCurrentLayout }: RouteUnitProps) {
   const t = useTheme();
   const styles = useStyles();
   const hue = SECTION_HUE[unit.id] ?? 'green';
-  const { route } = t.layout;
   const progress = unitProgress(unit, records);
+
+  // Everything on the route scales with the screen: tighter on a 320px phone, roomier on a tablet. The tokens are
+  // sized for a 390px phone.
+  const k = Math.min(1.15, Math.max(0.8, width / 390));
+  const route = {
+    row: t.layout.route.row * k,
+    road: t.layout.route.road * k,
+    bin: t.layout.route.bin * k,
+    truck: t.layout.route.truck * k,
+    prop: t.layout.route.prop * k,
+  };
+  // The sign wraps on narrow screens, so lay the road out under its measured height.
+  const [signHeight, setSignHeight] = useState<number>(t.layout.route.sign);
+
   const cx = width / 2;
-  const amp = Math.min(width * 0.24, t.space[20] + t.space[4]);
-  const height = route.sign + unit.lessons.length * route.row + t.space[8];
+  const amp = Math.min(width * 0.22, t.space[20] + t.space[4]);
+  const height = signHeight + unit.lessons.length * route.row + t.space[8];
 
   const stops = unit.lessons.map((lesson, i) => ({
     lesson,
     i,
+    off: PATTERN[i % PATTERN.length] ?? 0,
     x: cx + (PATTERN[i % PATTERN.length] ?? 0) * amp,
-    y: route.sign + route.row * i + route.row / 2,
+    y: signHeight + route.row * i + route.row / 2,
   }));
 
   // Road: down from the sign, through every stop, and out the bottom to meet the next unit.
-  const points = [{ x: cx, y: 0 }, { x: cx, y: route.sign * 0.8 }, ...stops.map((s) => ({ x: s.x, y: s.y })), { x: cx, y: height }];
+  const points = [{ x: cx, y: 0 }, { x: cx, y: signHeight * 0.85 }, ...stops.map((s) => ({ x: s.x, y: s.y })), { x: cx, y: height }];
   let d = `M${points[0]!.x},${points[0]!.y}`;
   for (let k = 1; k < points.length; k += 1) {
     const a = points[k - 1]!;
@@ -67,7 +81,10 @@ export function RouteUnit({ unit, width, records, currentId, selectedId, onSelec
   }
 
   const current = stops.find((s) => s.lesson.id === currentId) ?? null;
-  const truckSide = current ? (current.x >= cx ? -1 : 1) : 0;
+  // The truck parks on the verge away from the current stop. A stop on the centre line takes the side away from the
+  // stop before it, so the truck never sits on top of that stop's bin or stars.
+  const prevOff = current ? (stops[current.i - 1]?.off ?? 0) : 0;
+  const truckSide = !current ? 0 : current.off > 0 ? -1 : current.off < 0 ? 1 : prevOff > 0 ? -1 : 1;
 
   // Scenery on the verge away from each stop: a big piece out by the edge and a small one nearer the road, skipping
   // the spot where the truck is parked.
@@ -92,11 +109,42 @@ export function RouteUnit({ unit, width, records, currentId, selectedId, onSelec
       );
   });
 
+  // Tablets and desktop: fill the margins beside the column with more of the town.
+  const margin = (screenWidth - width) / 2;
+  const marginProps =
+    margin > route.prop * 1.5
+      ? stops.flatMap((s) =>
+          [-1, 1].map((side) => {
+            const n = noise(`${unit.id}:${s.i}:m${side}`);
+            const size = route.prop * (1 + n * 0.5);
+            const x = t.space[2] + n * Math.max(0, margin - size - t.space[4]);
+            return {
+              key: `m${s.i}:${side}`,
+              kind: PROPS[Math.floor(noise(`${unit.id}:${s.i}:m${side}:k`) * PROPS.length)]!,
+              size,
+              left: side < 0 ? x : screenWidth - size - x,
+              top: s.y - size + (n - 0.5) * route.row * 0.5,
+            };
+          }),
+        )
+      : [];
+
   const selected = stops.find((s) => s.lesson.id === selectedId) ?? null;
-  const truckLeft = current ? (truckSide < 0 ? current.x - route.bin * 0.6 - route.truck : current.x + route.bin * 0.6) : 0;
+  const truckGap = route.bin * 0.6;
+  const truckLeft = current
+    ? Math.min(
+        width - route.truck - t.space[1],
+        Math.max(t.space[1], truckSide < 0 ? current.x - truckGap - route.truck : current.x + truckGap),
+      )
+    : 0;
 
   return (
     <View style={[styles.ground, { backgroundColor: t.colors.hue[hue].subtle }]}>
+      {marginProps.map((p) => (
+        <View key={p.key} style={[styles.abs, { left: p.left, top: p.top }]} pointerEvents="none">
+          <SceneryProp kind={p.kind} size={p.size} hue={hue} />
+        </View>
+      ))}
       <View style={{ width, height, alignSelf: 'center' }}>
         {/* Tapping the open ground closes a stop's card. */}
         <Pressable accessible={false} onPress={() => onSelect(null)} style={styles.fill} />
@@ -113,21 +161,16 @@ export function RouteUnit({ unit, width, records, currentId, selectedId, onSelec
           </View>
         ))}
 
-        <View style={[styles.abs, styles.signRow]}>
+        <View style={[styles.abs, styles.signRow]} onLayout={(e) => setSignHeight(Math.max(t.layout.route.sign, e.nativeEvent.layout.height))}>
           <RouteSign unit={unit} hue={hue} done={progress.done} total={progress.total} />
         </View>
 
         {current && (
           <View
-            style={[styles.abs, { left: truckLeft, top: current.y - route.truck * 0.3 }]}
+            style={[styles.abs, { left: truckLeft, top: current.y - route.truck * 0.25 }]}
             pointerEvents="none"
             onLayout={() => onCurrentLayout?.(current.y)}
           >
-            <View style={[styles.bubble, truckSide < 0 ? styles.bubbleLeft : styles.bubbleRight]}>
-              <Text variant="callout" align="center">
-                {truckSays}
-              </Text>
-            </View>
             <TruckArt hue="green" size={route.truck} flip={truckSide > 0} />
           </View>
         )}
@@ -144,6 +187,7 @@ export function RouteUnit({ unit, width, records, currentId, selectedId, onSelec
                 review={s.lesson.review}
                 stars={records[s.lesson.id]?.stars ?? 0}
                 label={`${s.lesson.review ? 'Sorting center, unit review' : `Stop ${regular}`}, ${unit.title}, ${state}`}
+                size={route.bin}
                 onPress={() => onSelect(selectedId === s.lesson.id ? null : s.lesson.id)}
               />
             </View>
@@ -166,25 +210,10 @@ export function RouteUnit({ unit, width, records, currentId, selectedId, onSelec
 }
 
 const useStyles = makeStyles((t) => ({
-  ground: { width: '100%' },
+  ground: { width: '100%', overflow: 'hidden' },
   fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   abs: { position: 'absolute' },
   signRow: { top: 0, left: 0, right: 0 },
   stop: { alignItems: 'center' },
   card: { left: t.layout.gutter, right: t.layout.gutter, zIndex: 10 },
-  bubble: {
-    position: 'absolute',
-    bottom: '100%',
-    width: t.layout.route.truck + t.space[8],
-    marginBottom: t.space[1],
-    backgroundColor: t.colors.surface,
-    borderRadius: t.radius.md,
-    borderWidth: t.layout.border,
-    borderColor: t.colors.border,
-    paddingHorizontal: t.space[2],
-    paddingVertical: t.space[1],
-  },
-  /** The bubble hangs off the truck's outer side, out over the grass, away from the road and the stops. */
-  bubbleLeft: { right: t.layout.route.truck * 0.45 },
-  bubbleRight: { left: t.layout.route.truck * 0.45 },
 }));

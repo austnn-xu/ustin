@@ -32,6 +32,7 @@ export function LessonCard({ unit, lesson, index, state }: { unit: Unit; lesson:
           <Button
             label={state === 'done' ? `Practice +${xp} XP` : `Start +${xp} XP`}
             variant="neutral"
+            labelHue={hueName}
             fullWidth
             onPress={() => router.push({ pathname: '/lesson/[id]', params: { id: lesson.id } })}
           />

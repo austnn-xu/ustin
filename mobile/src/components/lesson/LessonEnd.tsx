@@ -11,6 +11,7 @@ import type { Achievement } from '@/lib/achievements';
 import { dayKey, lastWeek, weekdayLetter } from '@/lib/dates';
 import { useProgress } from '@/stores/progress';
 import { makeStyles, useTheme, type HueName } from '@/theme';
+import { useScreenSize } from '@/lib/useScreenSize';
 
 /** Counts up to `to` once, for celebratory numbers. */
 function useCountUp(to: number, ms = 900) {
@@ -62,6 +63,7 @@ export type LessonSummary = {
 export function LessonComplete({ summary, onContinue }: { summary: LessonSummary; onContinue: () => void }) {
   const styles = useStyles();
   const t = useTheme();
+  const { short } = useScreenSize();
   const xp = useCountUp(summary.xp);
   const coins = useCountUp(summary.coins);
   const title = summary.perfect ? 'Perfect lesson!' : summary.accuracy >= 0.8 ? 'Lesson complete!' : 'You made it!';
@@ -74,7 +76,7 @@ export function LessonComplete({ summary, onContinue }: { summary: LessonSummary
   return (
     <Screen scroll footer={<Button label="Continue" fullWidth onPress={onContinue} />}>
       <View style={styles.center}>
-        <Mascot mood="cheer" size={summary.badges.length ? 'lg' : 'xl'} />
+        <Mascot mood="cheer" size={short ? 'md' : summary.badges.length ? 'lg' : 'xl'} />
         <Text variant="display" hue="yellow" align="center">
           {title}
         </Text>
@@ -120,7 +122,7 @@ export function StreakCelebration({ streak, onContinue }: { streak: number; onCo
   const count = useCountUp(streak, 700);
   const today = dayKey();
   return (
-    <Screen footer={<Button label="Continue" fullWidth onPress={onContinue} />}>
+    <Screen scroll footer={<Button label="Continue" fullWidth onPress={onContinue} />}>
       <View style={styles.center}>
         <View style={styles.flame}>
           <Flame size={t.layout.mascot.lg} color={t.colors.hue.orange.depth} fill={t.colors.hue.orange.base} strokeWidth={t.layout.iconStroke} />
@@ -167,7 +169,7 @@ export function QuitConfirm({ onStay, onQuit }: { onStay: () => void; onQuit: ()
         </MascotSays>
         <View style={styles.buttons}>
           <Button label="Keep learning" variant="secondary" fullWidth onPress={onStay} />
-          <Button label="End session" variant="ghost" hue="red" fullWidth onPress={onQuit} />
+          <Button label="End session" variant="ghost" hue="orange" fullWidth onPress={onQuit} />
         </View>
       </Card>
     </View>

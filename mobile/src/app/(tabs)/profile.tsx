@@ -183,7 +183,7 @@ function Stat({ icon, hue, value, label, filled }: { icon: LucideIcon; hue: HueN
   return (
     <Card style={styles.stat}>
       <Icon icon={icon} size="lg" hue={hue} filled={filled} />
-      <View>
+      <View style={styles.flex}>
         <Text variant="title" tabular>
           {value}
         </Text>
