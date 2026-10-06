@@ -234,3 +234,18 @@ test('matchObject prefers the most specific term', () => {
   assert.strictEqual(matchObject(''), null);
   assert.strictEqual(matchObject('xylophone'), null);
 });
+
+test('no part says compost once the user has said there is no compost pickup', () => {
+  // Every combination of answers, for every object that asks about composting.
+  for (const obj of OBJECTS) {
+    const qs = questionsFor(obj);
+    if (!qs.some((q) => q.id === 'composting')) continue;
+    let combos = [{}];
+    for (const q of qs) combos = combos.flatMap((c) => q.options.map((o) => ({ ...c, [q.id]: o.value })));
+    for (const answers of combos.filter((a) => a.composting === 'no')) {
+      for (const c of resolve(obj, answers).components) {
+        assert.notStrictEqual(c.outcome.id, 'compost', `${obj.id} / ${c.label} with ${JSON.stringify(answers)}`);
+      }
+    }
+  }
+});
