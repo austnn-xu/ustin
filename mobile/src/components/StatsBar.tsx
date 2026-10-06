@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
+import { Coin } from '@/components/art/Coin';
 import { Flame, Zap } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Icon, PressableScale, Text } from '@/components/ui';
 import { dayKey } from '@/lib/dates';
 import { currentStreak, useProgress } from '@/stores/progress';
-import { makeStyles } from '@/theme';
+import { makeStyles, useTheme } from '@/theme';
 
 /** Re-render every `ms` so the streak flips over at midnight without a reload. */
 function useNow(ms = 1000) {
@@ -17,12 +18,14 @@ function useNow(ms = 1000) {
   return now;
 }
 
-/** Streak · XP. The header of the Learn tab. */
+/** Streak · coins · XP. The header of the Learn tab. */
 export function StatsBar({ title }: { title?: string }) {
+  const t = useTheme();
   const styles = useStyles();
   const now = useNow(30_000);
   const streak = useProgress((s) => s.streak);
   const xp = useProgress((s) => s.xp);
+  const coins = useProgress((s) => s.coins);
   const { count, doneToday } = currentStreak(streak, dayKey(new Date(now)));
 
   return (
@@ -42,6 +45,12 @@ export function StatsBar({ title }: { title?: string }) {
         <Icon icon={Flame} hue={doneToday ? 'orange' : undefined} color="textTertiary" filled={doneToday} />
         <Text variant="bodyStrong" hue={doneToday ? 'orange' : undefined} color="textTertiary" tabular>
           {count}
+        </Text>
+      </PressableScale>
+      <PressableScale onPress={() => router.push('/shop')} accessibilityLabel={`${coins} coins. Open the shop`} style={styles.pill}>
+        <Coin size={t.layout.icon.md} />
+        <Text variant="bodyStrong" hue="yellow" tabular>
+          {coins}
         </Text>
       </PressableScale>
       <PressableScale onPress={() => router.push('/profile')} accessibilityLabel={`${xp} XP`} style={styles.pill}>

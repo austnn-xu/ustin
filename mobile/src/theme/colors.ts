@@ -61,7 +61,27 @@ export type MascotColors = {
   tear: string;
 };
 
-export type Palette = ColorTokens & { hue: Record<HueName, Hue>; mascot: MascotColors };
+/** The cartoon town the Learn route runs through. Artwork only — never for text or controls. */
+export type SceneColors = {
+  sky: string;
+  cloud: string;
+  asphalt: string;
+  asphaltEdge: string;
+  lane: string;
+  kerb: string;
+  leaf: string;
+  leafDark: string;
+  trunk: string;
+  wall: string;
+  window: string;
+  pole: string;
+  rock: string;
+  flower: string;
+  cone: string;
+  shadow: string;
+};
+
+export type Palette = ColorTokens & { hue: Record<HueName, Hue>; mascot: MascotColors; scene: SceneColors };
 
 const mascot: MascotColors = {
   body: '#CDD7DD',
@@ -104,6 +124,24 @@ export const light: Palette = {
     slate: { base: '#5B6470', depth: '#434A54', subtle: '#E9ECEF', text: '#434A54' },
   },
   mascot,
+  scene: {
+    sky: '#E2F4FD',
+    cloud: '#FFFFFF',
+    asphalt: '#6E7682',
+    asphaltEdge: '#585F6A',
+    lane: '#FFD84D',
+    kerb: '#F4F4F2',
+    leaf: '#5DBB4A',
+    leafDark: '#3F9A35',
+    trunk: '#9A6B3F',
+    wall: '#FFF6E5',
+    window: '#9ED8F5',
+    pole: '#7C8794',
+    rock: '#BAC2CA',
+    flower: '#FF8FA3',
+    cone: '#FF8A3D',
+    shadow: 'rgba(0, 0, 0, 0.12)',
+  },
 };
 
 export const dark: Palette = {
@@ -134,4 +172,22 @@ export const dark: Palette = {
     slate: { base: '#8A96A3', depth: '#5F6A76', subtle: '#26313A', text: '#A9B4BF' },
   },
   mascot,
+  scene: {
+    sky: '#10222B',
+    cloud: '#2A3F4A',
+    asphalt: '#3E4954',
+    asphaltEdge: '#2D363F',
+    lane: '#E6B800',
+    kerb: '#56636D',
+    leaf: '#3E9442',
+    leafDark: '#2E7332',
+    trunk: '#7A5531',
+    wall: '#2E3D45',
+    window: '#3F7590',
+    pole: '#5A6672',
+    rock: '#4A5660',
+    flower: '#C96B7D',
+    cone: '#D9752F',
+    shadow: 'rgba(0, 0, 0, 0.3)',
+  },
 };

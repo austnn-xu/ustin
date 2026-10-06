@@ -19,6 +19,8 @@ export type ScreenProps = {
   /** Draw the footer without its divider and fill, for panels that color themselves. */
   bareFooter?: boolean;
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  /** Paint the whole screen, safe areas included, with this color instead of `bg` (scene screens). Pass a token. */
+  background?: string;
 };
 
 /** Every screen's root: safe areas, background, gutter, readable max width, keyboard avoidance. */
@@ -32,6 +34,7 @@ export function Screen({
   footer,
   bareFooter = false,
   refreshControl,
+  background,
 }: ScreenProps) {
   const t = useTheme();
   const styles = useStyles();
@@ -69,7 +72,7 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView style={styles.root} edges={edges}>
+    <SafeAreaView style={[styles.root, background ? { backgroundColor: background } : null]} edges={edges}>
       {keyboard ? (
         <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           {body}

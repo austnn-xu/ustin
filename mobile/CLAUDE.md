@@ -12,13 +12,17 @@ These rules apply to **every screen and component**. If a rule blocks you, chang
 ustin (US Tin) teaches people **where things go** and answers **"What bin does this go in?"** in the moment.
 Three jobs, one app:
 
-1. **Learn** — a course of short lessons. One unit per catalog shelf, generated exercises, XP, streaks, a daily goal,
-   and a mascot who reacts to how you do. **No hearts or lives:** mistakes never cost anything — a wrong answer is
+1. **Learn** — a course of short lessons, drawn as a cartoon **recycling route** through town: each unit is a
+   neighbourhood with an overhead road sign, each lesson a wheelie bin by the road, each unit review a sorting centre,
+   and Tin drives the recycling truck to your next stop. Generated exercises, XP, streaks, a daily goal, coins, and a
+   mascot who reacts to how you do. **No hearts or lives:** mistakes never cost anything — a wrong answer is
    explained and comes back once at the end of the lesson. Learning where things go should never feel like a penalty.
 2. **What bin?** — look up a real item (search, or a photo on the web build), answer a follow-up only if it changes the
    answer, and get where **each part** goes, down to the resin code, with the reason why.
 3. **Near me** — from a ZIP code or your location, find the nearest place that takes the item: drop-off sites,
    recycling centres, transfer stations, donation shops. Real data from OpenStreetMap, never invented places.
+4. **Shop** — coins earned in lessons (1 per right answer, +5 at 5 in a row, +10 at 10 in a row; see
+   `src/lib/cosmetics.ts`) buy hats, glasses, neckwear and paint jobs for Tin. Try anything on before buying.
 
 It is **not** a delivery, booking or marketplace app. Never write copy about drivers, orders, pickups, prices or bookings.
 
@@ -40,7 +44,8 @@ Always pair the hue with the icon and the label; color is never the only signal.
 
 ## The mascot
 
-**Tin** is a little tin can with a face (`src/components/art/Mascot.tsx`). Tin carries the emotion of the app:
+**Tin** is a little tin can with a face (`src/components/art/Mascot.tsx`), wearing whatever the user has dressed Tin in
+(cosmetics are drawn in `OutfitArt.tsx`, in the mascot's own coordinates). Tin carries the emotion of the app:
 happy on the path, cheering on a correct answer and at the end of a lesson, worried on a wrong one or when the streak is
 waiting on you, sad when a lesson is abandoned, thinking while a photo is analysed. Use Tin wherever a moment has a feeling —
 never more than one Tin on screen.
@@ -62,10 +67,11 @@ never more than one Tin on screen.
 ## Layout
 
 ```
-src/app/              routes only (Expo Router): (tabs)/ learn · what-bin · near me · profile, plus lesson/ and item/
+src/app/              routes only (Expo Router): (tabs)/ learn · what-bin · near me · shop · profile, plus lesson/ and item/
 src/theme/            tokens + ThemeProvider + makeStyles — the only place raw values live
 src/components/ui/    primitives: Text, Button, ChoiceCard, ProgressBar, Input, Chip, Skeleton, Icon, Screen, PressableScale
-src/components/art/   the mascot, confetti, bins, item artwork — the only place SVG coordinates live
+src/components/art/   the mascot and its outfits, coins, confetti, bins, item artwork, the route's town — the only place SVG
+                      coordinates live
 src/components/       product components, composed from primitives
 src/lib/              engine bridge, places, vision, haptics, dates
 src/stores/           zustand stores (progress, settings)
@@ -84,6 +90,7 @@ src/stores/           zustand stores (progress, settings)
   small `label` variant is uppercase. Only `<Text>` renders text.
 - **Color:** white (or deep blue-grey in dark mode) surfaces, and named hues from `t.colors.hue` that each carry a meaning —
   see `src/theme/colors.ts`. Hues are for actions, feedback, bins and rewards, never decoration. No gradients.
+  The Learn route is the one scene: sky, tinted ground per unit and town colors from `t.colors.scene`, for artwork only.
 - **Chunky and tactile.** Buttons, option cards and path nodes are 3D: a `depth` edge in the hue's `depth` shade that the face
   presses down into. Cards are flat with a 2px border, not shadows. Shadows only for things that float (feedback panel,
   popovers, tab bar).

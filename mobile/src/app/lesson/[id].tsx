@@ -3,12 +3,14 @@ import { X } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Coin } from '@/components/art/Coin';
 import { MascotSays } from '@/components/MascotSays';
 import { ExerciseView } from '@/components/lesson/ExerciseView';
 import { FeedbackPanel } from '@/components/lesson/FeedbackPanel';
 import { LessonComplete, QuitConfirm, StreakCelebration, type LessonSummary } from '@/components/lesson/LessonEnd';
 import { Button, Icon, PressableScale, ProgressBar, Text } from '@/components/ui';
 import { newlyUnlocked } from '@/lib/achievements';
+import { coinsForCorrect } from '@/lib/cosmetics';
 import { dayKey } from '@/lib/dates';
 import { lessons, type Exercise } from '@/lib/engine';
 import { haptics } from '@/lib/haptics';
@@ -36,6 +38,7 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
   const recordMistakes = useProgress((s) => s.recordMistakes);
   const completeLesson = useProgress((s) => s.completeLesson);
   const markCelebrated = useProgress((s) => s.markCelebrated);
+  const earnCoins = useProgress((s) => s.earnCoins);
   const goal = useSettings((s) => s.dailyGoal);
 
   // Mistakes cost nothing: a wrong answer just comes back once at the end of the lesson, so it gets a second go.
@@ -47,6 +50,9 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
   const [quitting, setQuitting] = useState(false);
   const [combo, setCombo] = useState(0);
   const [title, setTitle] = useState('');
+  /** Coins this lesson, and what the last right answer paid. */
+  const [coins, setCoins] = useState(0);
+  const [payout, setPayout] = useState<{ total: number; bonus: number } | null>(null);
   const missed = useRef(new Set<string>());
   const retried = useRef(new Set<string>());
   const started = useRef(Date.now());
@@ -74,9 +80,15 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
       const next = combo + 1;
       setCombo(next);
       setTitle(next >= 3 ? `${next} in a row!` : PRAISE[Math.floor(Math.random() * PRAISE.length)]!);
+      // A coin for every right answer, and a bonus for landing 5 or 10 in a row.
+      const paid = coinsForCorrect(next);
+      earnCoins(paid.total);
+      setCoins((c) => c + paid.total);
+      setPayout(paid);
     } else {
       haptics.error();
       setCombo(0);
+      setPayout(null);
       setTitle(NUDGE[Math.floor(Math.random() * NUDGE.length)]!);
       missed.current.add(exercise.id);
       recordMistakes(exercise.objects);
@@ -97,6 +109,7 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
     streakAfter.current = result.streakExtended ? result.streak : 0;
     summary.current = {
       xp: result.xpEarned,
+      coins,
       accuracy: result.accuracy,
       seconds: Math.round((Date.now() - started.current) / 1000),
       perfect: result.perfect,
@@ -140,9 +153,12 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
           <Icon icon={X} size="lg" color="textTertiary" />
         </PressableScale>
         <ProgressBar value={progress} accessibilityLabel="Lesson progress" />
-        <Text variant="callout" color="textSecondary" tabular accessibilityLabel={`Question ${index + 1} of ${queue.length}`}>
-          {`${index + 1}/${queue.length}`}
-        </Text>
+        <View style={styles.coins} accessibilityLabel={`${coins} coins earned this lesson`}>
+          <Coin size={t.layout.icon.md} />
+          <Text variant="bodyStrong" hue="yellow" tabular>
+            {coins}
+          </Text>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
@@ -168,6 +184,7 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
           title={title}
           answer={answerLabel}
           explain={exercise.explain}
+          payout={checked ? payout : null}
           showTin={exercise.type !== 'truefalse'}
           onContinue={next}
         />
@@ -202,6 +219,7 @@ const useStyles = makeStyles((t) => ({
     maxWidth: t.layout.maxWidth,
     alignSelf: 'center',
   },
+  coins: { flexDirection: 'row', alignItems: 'center', gap: t.space[1] },
   body: { paddingTop: t.space[2], paddingBottom: t.space[8] },
   column: { width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center', paddingHorizontal: t.layout.gutter, gap: t.space[2] },
   footer: { paddingTop: t.space[4], borderTopWidth: t.layout.border, borderTopColor: t.colors.border },

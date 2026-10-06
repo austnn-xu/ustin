@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Award, Crown, Flame, Footprints, Gem, ScanLine, ShieldCheck, Sparkles, Star, Trophy } from 'lucide-react-native';
+import { Award, Crown, Flame, Footprints, Gem, ScanLine, ShieldCheck, Shirt, Sparkles, Star, Trophy } from 'lucide-react-native';
 import type { HueName } from '@/theme';
 import type { ProgressState } from '@/stores/progress';
 import { unitsCompleted } from './course';
@@ -21,6 +21,16 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'first-lesson', title: 'First steps', description: 'Finish your first lesson', icon: Footprints, hue: 'green', goal: 1, value: lessonsDone },
   { id: 'first-real', title: 'Out in the wild', description: 'Look up a real item in What bin?', icon: ScanLine, hue: 'blue', goal: 1, value: itemsSorted },
   { id: 'streak-3', title: 'On a roll', description: 'Reach a 3-day streak', icon: Flame, hue: 'orange', goal: 3, value: (s) => s.streak.best },
+  {
+    id: 'dressed',
+    title: 'Dressed up',
+    description: 'Buy something for Tin in the shop',
+    icon: Shirt,
+    hue: 'purple',
+    goal: 1,
+    // Classic green paint comes free, so it does not count.
+    value: (s) => (Object.keys(s.owned).some((id) => id !== 'paint-green') ? 1 : 0),
+  },
   { id: 'perfect', title: 'Flawless', description: 'Finish a lesson without a mistake', icon: Sparkles, hue: 'yellow', goal: 1, value: (s) => s.perfectLessons },
   { id: 'xp-100', title: 'Century', description: 'Earn 100 XP', icon: Star, hue: 'yellow', goal: 100, value: (s) => s.xp },
   { id: 'unit', title: 'Shelf cleared', description: 'Finish every lesson in a unit', icon: Trophy, hue: 'purple', goal: 1, value: (s) => unitsCompleted(s.lessons).length },
