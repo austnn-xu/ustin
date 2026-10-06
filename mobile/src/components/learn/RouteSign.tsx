@@ -27,7 +27,7 @@ export function RouteSign({ unit, hue: hueName, done, total }: { unit: Unit; hue
                 {`${done}/${total} stops`}
               </Text>
             </View>
-            <Text variant="title" style={styles.onColor} numberOfLines={1}>
+            <Text variant="title" style={styles.onColor} numberOfLines={2}>
               {unit.title}
             </Text>
             <Text variant="callout" style={styles.onColor} numberOfLines={2}>
@@ -49,7 +49,7 @@ export function RouteSign({ unit, hue: hueName, done, total }: { unit: Unit; hue
 }
 
 const useStyles = makeStyles((t) => ({
-  wrap: { paddingHorizontal: t.layout.gutter, paddingTop: t.space[6], height: t.layout.route.sign },
+  wrap: { paddingHorizontal: t.layout.gutter, paddingTop: t.space[6], paddingBottom: t.space[6], minHeight: t.layout.route.sign },
   post: {
     position: 'absolute',
     top: t.space[16],

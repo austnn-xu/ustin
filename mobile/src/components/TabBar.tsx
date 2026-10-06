@@ -4,6 +4,7 @@ import { House, MapPin, ScanSearch, Store, UserRound } from 'lucide-react-native
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, PressableScale, Text } from '@/components/ui';
+import { useScreenSize } from '@/lib/useScreenSize';
 import { makeStyles, useTheme } from '@/theme';
 
 const TABS: Record<string, { icon: LucideIcon; label: string }> = {
@@ -19,6 +20,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const t = useTheme();
   const styles = useStyles();
   const insets = useSafeAreaInsets();
+  // Five labels do not fit under 360px; the icons carry it there (each tab keeps its accessible name).
+  const { narrow } = useScreenSize();
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, t.space[2]) }]}>
       <View style={styles.row}>
@@ -40,9 +43,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               style={[styles.tab, focused && styles.active]}
             >
               <Icon icon={tab.icon} size="lg" hue={focused ? 'blue' : undefined} color="textTertiary" />
-              <Text variant="label" hue={focused ? 'blue' : undefined} color="textTertiary" numberOfLines={1} style={styles.label}>
-                {tab.label}
-              </Text>
+              {!narrow && (
+                <Text variant="label" hue={focused ? 'blue' : undefined} color="textTertiary" numberOfLines={1} style={styles.label}>
+                  {tab.label}
+                </Text>
+              )}
             </PressableScale>
           );
         })}

@@ -29,23 +29,26 @@ export default function Learn() {
   const current = nextLesson(records);
   const [selected, setSelected] = useState<string | null>(current?.id ?? null);
 
-  // Scroll so the truck (the current stop) is in view on open.
+  // Scroll so the truck (the current stop) is in view on open. The stop inside a unit and the unit inside the list
+  // report their positions in either order, so try again whenever either arrives.
   const scroll = useRef<ScrollView>(null);
   const unitY = useRef<Record<string, number>>({});
+  const currentAt = useRef<{ unitId: string; y: number } | null>(null);
   const scrolled = useRef(false);
-  const scrollToCurrent = (unitId: string, y: number) => {
-    if (scrolled.current) return;
-    const base = unitY.current[unitId];
+  const tryScroll = () => {
+    const at = currentAt.current;
+    if (scrolled.current || !at) return;
+    const base = unitY.current[at.unitId];
     if (base === undefined) return;
     scrolled.current = true;
-    requestAnimationFrame(() => scroll.current?.scrollTo({ y: Math.max(0, base + y - t.space[20] * 3), animated: false }));
+    requestAnimationFrame(() => scroll.current?.scrollTo({ y: Math.max(0, base + at.y - t.space[20] * 3), animated: false }));
   };
 
   const { count, doneToday } = currentStreak(streak);
-  const truckSays = doneToday ? 'Nice haul today!' : count > 0 ? `Your ${count}-day streak is waiting!` : "Hop in, let's sort!";
+  const nudge = doneToday ? 'Nice haul today! Tin is proud of you.' : count > 0 ? `Your ${count}-day streak is waiting!` : "Hop in, let's sort!";
 
   return (
-    <Screen gutter={false} header={<StatsBar />} background={t.colors.scene.sky}>
+    <Screen gutter={false} wide header={<StatsBar />} background={t.colors.scene.sky}>
       <ScrollView
         ref={scroll}
         contentContainerStyle={styles.content}
@@ -59,7 +62,7 @@ export default function Learn() {
             <SceneryProp kind="cloud" size={t.layout.route.prop} hue="blue" />
           </View>
           <View style={styles.column}>
-            <TodaysHaul xp={xpToday} goal={goal} />
+            <TodaysHaul xp={xpToday} goal={goal} nudge={nudge} />
           </View>
         </View>
 
@@ -68,17 +71,21 @@ export default function Learn() {
             key={unit.id}
             onLayout={(e) => {
               unitY.current[unit.id] = e.nativeEvent.layout.y;
+              tryScroll();
             }}
           >
             <RouteUnit
               unit={unit}
               width={width}
+              screenWidth={screen}
               records={records}
               currentId={current?.id ?? null}
               selectedId={selected}
               onSelect={setSelected}
-              truckSays={truckSays}
-              onCurrentLayout={(y) => scrollToCurrent(unit.id, y)}
+              onCurrentLayout={(y) => {
+                currentAt.current = { unitId: unit.id, y };
+                tryScroll();
+              }}
             />
           </View>
         ))}
@@ -90,7 +97,7 @@ export default function Learn() {
 }
 
 /** The daily goal, as today's haul. */
-function TodaysHaul({ xp, goal }: { xp: number; goal: number }) {
+function TodaysHaul({ xp, goal, nudge }: { xp: number; goal: number; nudge: string }) {
   const styles = useStyles();
   const reached = xp >= goal;
   return (
@@ -105,6 +112,9 @@ function TodaysHaul({ xp, goal }: { xp: number; goal: number }) {
         </Text>
       </View>
       <ProgressBar value={xp / goal} hue="yellow" accessibilityLabel="Daily goal progress" />
+      <Text variant="caption" color="textSecondary">
+        {nudge}
+      </Text>
     </Card>
   );
 }
@@ -136,7 +146,7 @@ const useStyles = makeStyles((t) => ({
   content: { paddingBottom: 0 },
   sky: { paddingTop: t.space[3], paddingBottom: t.space[6] },
   cloud: { position: 'absolute' },
-  cloudLeft: { top: t.space[16], left: -t.space[3] },
+  cloudLeft: { top: t.space[16], left: 0 },
   cloudRight: { top: t.space[2], right: t.space[4] },
   column: { width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center', paddingHorizontal: t.layout.gutter },
   goal: { gap: t.space[3] },

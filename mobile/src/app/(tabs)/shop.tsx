@@ -9,6 +9,7 @@ import { COINS, COSMETICS, findCosmetic, SLOTS, type Cosmetic, type Slot } from 
 import { haptics } from '@/lib/haptics';
 import { useProgress } from '@/stores/progress';
 import { makeStyles, useTheme } from '@/theme';
+import { useScreenSize } from '@/lib/useScreenSize';
 
 /** The shop: spend lesson coins on things for Tin to wear, and try anything on before buying it. */
 export default function Shop() {
@@ -23,6 +24,7 @@ export default function Shop() {
   const [trying, setTrying] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(0);
   const [mood, setMood] = useState<Mood>('happy');
+  const { short, narrow } = useScreenSize();
 
   const item = findCosmetic(trying ?? undefined);
   // Tin on the stand wears the current outfit, with whatever is being tried on swapped in.
@@ -110,7 +112,7 @@ export default function Shop() {
           </View>
 
           <View style={styles.stage}>
-            <Mascot mood={mood} size="xl" outfit={preview} />
+            <Mascot mood={mood} size={short ? 'md' : 'xl'} outfit={preview} />
             <View style={styles.podium} />
             <Text variant="heading" align="center">
               {item ? item.name : 'Your Tin'}
@@ -134,7 +136,13 @@ export default function Shop() {
                 }}
                 style={[styles.tab, s.id === slot && styles.tabOn]}
               >
-                <Text variant="callout" hue={s.id === slot ? 'purple' : undefined} color="textSecondary">
+                <Text
+                  variant={narrow ? 'label' : 'callout'}
+                  hue={s.id === slot ? 'purple' : undefined}
+                  color="textSecondary"
+                  numberOfLines={1}
+                  style={narrow && styles.tabSmall}
+                >
                   {s.label}
                 </Text>
               </PressableScale>
@@ -228,6 +236,8 @@ const useStyles = makeStyles((t) => ({
     borderWidth: t.layout.border,
     borderColor: t.colors.border,
   },
+  /** The label variant, minus its caps and tracking, so four tabs fit on a 320px screen. */
+  tabSmall: { textTransform: 'none', letterSpacing: 0 },
   tabOn: { borderColor: t.colors.hue.purple.base, backgroundColor: t.colors.hue.purple.subtle },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space[3] },
   cell: { flexBasis: '30%', flexGrow: 1, maxWidth: '32%' },

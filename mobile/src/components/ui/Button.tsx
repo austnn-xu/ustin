@@ -13,8 +13,13 @@ export type ButtonProps = {
   label: string;
   onPress?: () => void;
   variant?: ButtonVariant;
-  /** Override the variant's hue, e.g. a red CONTINUE on the wrong-answer panel. */
+  /**
+   * Override the variant's hue, e.g. a red Continue on the wrong-answer panel. On a ghost button this colors the label
+   * (there is no face to color).
+   */
   hue?: HueName;
+  /** Neutral (white) buttons only: color the label, e.g. to match the colored card the button sits on. */
+  labelHue?: HueName;
   size?: ButtonSize;
   icon?: LucideIcon;
   disabled?: boolean;
@@ -33,6 +38,7 @@ export function Button({
   onPress,
   variant = 'primary',
   hue: hueOverride,
+  labelHue,
   size = 'lg',
   icon,
   disabled = false,
@@ -45,13 +51,21 @@ export function Button({
   const pressed = useSharedValue(0);
   const face = useAnimatedStyle(() => ({ transform: [{ translateY: pressed.value * depth }] }));
 
-  const hueName = hueOverride ?? variantHue[variant];
-  const hue = hueName ? t.colors.hue[hueName] : null;
   const ghost = variant === 'ghost';
+  const hueName = hueOverride ?? variantHue[variant];
+  // A ghost button has no face: its hue is the label's, never a fill.
+  const hue = hueName && !ghost ? t.colors.hue[hueName] : null;
+  const textHue = ghost ? (hueName ?? 'blue') : !hue ? labelHue : undefined;
 
   const faceColor = disabled ? t.colors.fillStrong : hue ? hue.base : t.colors.surface;
   const edgeColor = disabled ? t.colors.border : hue ? hue.depth : t.colors.borderStrong;
-  const labelColor = disabled ? t.colors.textTertiary : hue ? t.colors.onColor : ghost ? t.colors.hue.blue.text : t.colors.textSecondary;
+  const labelColor = disabled
+    ? t.colors.textTertiary
+    : hue
+      ? t.colors.onColor
+      : textHue
+        ? t.colors.hue[textHue].text
+        : t.colors.textSecondary;
 
   return (
     <PressableScale
@@ -79,7 +93,15 @@ export function Button({
           !ghost && face,
         ]}
       >
-        {icon && <Icon icon={icon} size="md" color={disabled ? 'textTertiary' : hue ? 'onColor' : 'textSecondary'} hue={ghost ? 'blue' : undefined} shade="text" />}
+        {icon && (
+          <Icon
+            icon={icon}
+            size="md"
+            color={disabled ? 'textTertiary' : hue ? 'onColor' : 'textSecondary'}
+            hue={!disabled && textHue ? textHue : undefined}
+            shade="text"
+          />
+        )}
         <Text variant="button" numberOfLines={1} style={{ color: labelColor }}>
           {label}
         </Text>

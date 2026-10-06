@@ -12,6 +12,8 @@ export type RouteStopProps = {
   review: boolean;
   stars: number;
   label: string;
+  /** Width of a bin stop in px; the sorting centre is drawn wider. */
+  size: number;
   onPress: () => void;
 };
 
@@ -19,7 +21,7 @@ export type RouteStopProps = {
  * One lesson on the route: a wheelie bin at the roadside (or the sorting centre, for a unit review). Pressing it
  * squashes it down onto its shadow.
  */
-export function RouteStop({ state, hue, review, stars, label, onPress }: RouteStopProps) {
+export function RouteStop({ state, hue, review, stars, label, size, onPress }: RouteStopProps) {
   const t = useTheme();
   const styles = useStyles();
   const pressed = useSharedValue(0);
@@ -27,7 +29,7 @@ export function RouteStop({ state, hue, review, stars, label, onPress }: RouteSt
     transform: [{ translateY: pressed.value * t.layout.depth.md }, { scaleY: 1 - pressed.value * 0.06 }],
   }));
   const locked = state === 'locked';
-  const width = review ? t.layout.route.bin * 1.6 : t.layout.route.bin;
+  const width = review ? size * 1.6 : size;
 
   return (
     <View style={styles.wrap}>
