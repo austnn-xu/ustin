@@ -112,6 +112,12 @@ src/stores/           zustand stores (progress, settings)
 - More than one primary (green) action on a screen.
 - Hearts, lives, energy or any other limit on how much someone can learn. Copying Duolingo's mechanics wholesale.
 
+## Shipping
+
+The owner wants every finished update live: once a change passes its checks, open a PR into the default branch, merge
+it, and publish the web build to GitHub Pages (`npm run publish:web`, served at https://austnn-xu.github.io/ustin/).
+Don't leave finished work sitting on a feature branch.
+
 ## Process (per screen)
 
 1. Build one screen at a time, composed only from primitives + product components.
