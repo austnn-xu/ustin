@@ -36,6 +36,30 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     x.value = withSpring(state.index, t.motion.spring.standard);
   }, [state.index, x, t.motion.spring.standard]);
 
+  // Build the other tabs quietly in the background once the app settles, one at a time and only when the browser is idle
+  // (never during a scroll or a tap), so the first visit to each is instant.
+  useEffect(() => {
+    const names = state.routes.map((r) => r.name).filter((n) => TABS[n] && n !== state.routes[state.index]?.name);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const whenIdle = (fn: () => void) =>
+      typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, { timeout: t.motion.preloadAfter * 4 }) : fn();
+    const next = (i: number) => {
+      if (cancelled || i >= names.length) return;
+      whenIdle(() => {
+        if (cancelled) return;
+        navigation.preload(names[i]!);
+        timer = setTimeout(() => next(i + 1), t.motion.preloadGap);
+      });
+    };
+    timer = setTimeout(() => next(0), t.motion.preloadAfter);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // Once per app start: preloaded tabs stay built.
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value * slot }] }));
 
   return (
@@ -55,7 +79,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityLabel={tab.label}
               onPress={() => {
                 const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-                if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+                if (focused || event.defaultPrevented) return;
+                // Slide the highlight now, in the same frame as the tap, rather than after the screen has switched.
+                x.value = withSpring(index, t.motion.spring.standard);
+                navigation.navigate(route.name);
               }}
               style={styles.tab}
             >

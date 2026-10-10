@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform, Pressable, View, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { SECTION_HUE } from '@/components/art/ItemArt';
 import { PROPS, SceneryProp, TruckArt } from '@/components/art/RouteArt';
-import { Appear, Float } from '@/components/ui';
+import { Appear } from '@/components/ui';
 import { lessonState, unitProgress } from '@/lib/course';
 import type { Unit } from '@/lib/engine';
 import type { LessonRecord } from '@/stores/progress';
@@ -130,6 +130,13 @@ export function RouteUnit({ unit, width, screenWidth, records, currentId, select
         )
       : [];
 
+  // The current stop's position is computed, not measured, so report it straight away: a unit that starts off screen is
+  // skipped by the browser (see offscreenSkip) and would never report a layout.
+  const currentY = current?.y ?? null;
+  useEffect(() => {
+    if (currentY !== null) onCurrentLayout?.(currentY);
+  }, [currentY]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const selected = stops.find((s) => s.lesson.id === selectedId) ?? null;
   const truckGap = route.bin * 0.6;
   const truckLeft = current
@@ -140,7 +147,7 @@ export function RouteUnit({ unit, width, screenWidth, records, currentId, select
     : 0;
 
   return (
-    <View style={[styles.ground, { backgroundColor: t.colors.hue[hue].subtle }]}>
+    <View style={[styles.ground, { backgroundColor: t.colors.hue[hue].subtle }, offscreenSkip(height)]}>
       {marginProps.map((p) => (
         <View key={p.key} style={[styles.abs, { left: p.left, top: p.top }]} pointerEvents="none">
           <SceneryProp kind={p.kind} size={p.size} hue={hue} />
@@ -170,12 +177,8 @@ export function RouteUnit({ unit, width, screenWidth, records, currentId, select
           <View
             style={[styles.abs, { left: truckLeft, top: current.y - route.truck * 0.25 }]}
             pointerEvents="none"
-            onLayout={() => onCurrentLayout?.(current.y)}
           >
-            {/* The engine is running: the truck idles with a little bounce while it waits for you. */}
-            <Float distance={0.5} duration={t.motion.pulseDuration / 3}>
-              <TruckArt hue="green" size={route.truck} flip={truckSide > 0} />
-            </Float>
+            <TruckArt hue="green" size={route.truck} flip={truckSide > 0} />
           </View>
         )}
 
@@ -217,6 +220,14 @@ export function RouteUnit({ unit, width, screenWidth, records, currentId, select
     </View>
   );
 }
+
+/**
+ * The route is long — eleven neighbourhoods of SVG scenery — and only one or two are ever on screen. On the web, let the
+ * browser skip styling, laying out and painting the ones that are off screen. The unit's height is known, so the
+ * scrollbar never jumps.
+ */
+const offscreenSkip = (height: number) =>
+  Platform.OS === 'web' ? ({ contentVisibility: 'auto', containIntrinsicSize: `auto ${height}px` } as unknown as ViewStyle) : null;
 
 const useStyles = makeStyles((t) => ({
   ground: { width: '100%', overflow: 'hidden' },

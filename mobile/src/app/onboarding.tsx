@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
-import { ChevronLeft, House, MapPin, ScanSearch } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { ChevronLeft, House, MapPin, ScanSearch, Store } from 'lucide-react-native';
+import { useMemo, useState, useTransition } from 'react';
 import { View } from 'react-native';
 import { BIN, BinArt } from '@/components/art/Bin';
 import { Confetti } from '@/components/art/Confetti';
@@ -13,6 +13,7 @@ import { Appear, Button, Card, ChoiceCard, Icon, PressableScale, ProgressBar, Sc
 import { lessons, rules, type OutcomeId } from '@/lib/engine';
 import { GOALS } from '@/lib/goals';
 import { haptics } from '@/lib/haptics';
+import { visionSupported } from '@/lib/vision';
 import { useScreenSize } from '@/lib/useScreenSize';
 import { XP } from '@/stores/progress';
 import { useSettings, type DailyGoal } from '@/stores/settings';
@@ -47,9 +48,14 @@ export default function Onboarding() {
   const finish = useSettings((s) => s.finishOnboarding);
   const step: Step = STEPS[index]!;
 
+  // Each step builds as a transition, so the button press and the slide never stall behind the render.
+  const [pending, startTransition] = useTransition();
   const go = (to: number) => {
-    setDir(to > index ? 1 : -1);
-    setIndex(to);
+    if (pending) return;
+    startTransition(() => {
+      setDir(to > index ? 1 : -1);
+      setIndex(to);
+    });
   };
 
   const start = () => {
@@ -246,13 +252,21 @@ const WAYS: { icon: LucideIcon; hue: HueName; title: string; body: string }[] = 
     icon: ScanSearch,
     hue: 'blue',
     title: 'What bin?',
-    body: 'Holding something right now? Look it up and I will tell you where each part goes.',
+    body: visionSupported
+      ? 'Holding something right now? Type it or snap a photo, and I will tell you where each part goes.'
+      : 'Holding something right now? Look it up and I will tell you where each part goes.',
   },
   {
     icon: MapPin,
     hue: 'orange',
     title: 'Near me',
-    body: 'Batteries, paint, old phones: I will find the nearest place that takes them.',
+    body: 'Batteries, paint, old phones: I will find the nearest place that takes them, on a map.',
+  },
+  {
+    icon: Store,
+    hue: 'purple',
+    title: 'Shop',
+    body: 'Right answers earn coins. Spend them on hats, glasses and paint jobs for me.',
   },
 ];
 
@@ -262,7 +276,7 @@ function HowItWorks() {
   return (
     <View style={styles.stack}>
       <MascotSays mood="happy" size="sm" typing>
-        Here is how I can help, every day.
+        Here is what is inside. I will show you around each one the first time you open it.
       </MascotSays>
       {WAYS.map((w, i) => (
         <Appear key={w.title} index={2 + i * 2}>
@@ -279,7 +293,7 @@ function HowItWorks() {
           </Card>
         </Appear>
       ))}
-      <Appear index={9}>
+      <Appear index={10}>
         <Card variant="tinted" hue="green">
           <Text variant="bodyStrong" hue="green">
             Mistakes are free.

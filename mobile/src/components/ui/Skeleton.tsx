@@ -1,13 +1,6 @@
-import { useEffect } from 'react';
 import { View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
-import { makeStyles, useTheme, type Theme } from '@/theme';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
+import { easing, keyframes, makeStyles, useTheme, type Theme } from '@/theme';
 
 export type SkeletonProps = {
   width?: DimensionValue;
@@ -26,17 +19,17 @@ export function Skeleton({ width = '100%', height: heightProp, radius = 'xs', ci
   const t = useTheme();
   const height = heightProp ?? t.space[4];
   const styles = useStyles();
-  const pulse = useSharedValue(1);
-
-  useEffect(() => {
-    pulse.value = withRepeat(
-      withTiming(0.45, { duration: t.motion.pulseDuration, easing: Easing.inOut(Easing.quad) }),
-      -1,
-      true,
-    );
-  }, [pulse, t.motion.pulseDuration]);
-
-  const animated = useAnimatedStyle(() => ({ opacity: pulse.value }));
+  const reduced = useReducedMotion();
+  // A CSS loop, so a screenful of placeholders costs no JavaScript per frame.
+  const animated = reduced
+    ? null
+    : {
+        animationName: keyframes.pulse,
+        animationDuration: t.motion.pulseDuration,
+        animationTimingFunction: easing.sine,
+        animationIterationCount: 'infinite' as const,
+        animationDirection: 'alternate' as const,
+      };
 
   return (
     <Animated.View

@@ -3,6 +3,7 @@ export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from '.
 export { Card, type CardProps } from './Card';
 export { ChoiceCard, type ChoiceCardProps, type ChoiceState } from './ChoiceCard';
 export { Chip, type ChipProps } from './Chip';
+export { Deferred } from './Deferred';
 export { Divider } from './Divider';
 export { Float, type FloatProps } from './Float';
 export { Icon, type IconProps } from './Icon';

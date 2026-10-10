@@ -8,6 +8,7 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { FocusedScene } from '@/components/FocusedScene';
 import { useProgress } from '@/stores/progress';
 import { useSettings } from '@/stores/settings';
 import { ThemeProvider, useTheme } from '@/theme';
@@ -72,7 +73,11 @@ function ThemedStack() {
   return (
     <>
       <StatusBar style={t.isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.colors.bg } }}>
+      <Stack
+        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.colors.bg } }}
+        // The screen under a lesson or an item stays mounted; let the browser skip it while it is covered.
+        screenLayout={({ children, navigation }) => <FocusedScene navigation={navigation}>{children}</FocusedScene>}
+      >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="lesson/[id]" options={{ presentation: 'fullScreenModal', gestureEnabled: false, animation: 'slide_from_bottom' }} />
         <Stack.Screen name="item/[id]" options={{ animation: 'slide_from_right' }} />

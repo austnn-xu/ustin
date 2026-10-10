@@ -85,7 +85,7 @@ export function FeedbackPanel({ correct, title, answer, explain, showTin, payout
               </Appear>
             )}
           </View>
-          {showTin && <Mascot mood={correct ? 'cheer' : 'worried'} size="sm" idle={false} />}
+          {showTin && <Mascot mood={correct ? 'cheer' : 'worried'} size="sm" />}
         </View>
 
         <ScrollView style={{ maxHeight: height * 0.26 }} contentContainerStyle={styles.why}>

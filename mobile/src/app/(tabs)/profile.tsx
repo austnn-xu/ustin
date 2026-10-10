@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
-import { BookOpen, Check, Flame, Lock, ScanLine, Zap } from 'lucide-react-native';
+import { BookOpen, Check, Flame, Lock, Map as MapIcon, ScanLine, Zap } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Mascot } from '@/components/art/Mascot';
@@ -171,7 +171,20 @@ export default function Profile() {
             </View>
           </Card>
         ) : (
-          <Button label="Reset progress" variant="ghost" hue="red" fullWidth onPress={() => setConfirmReset(true)} />
+          <>
+            <Button
+              label="Replay the tour"
+              icon={MapIcon}
+              variant="neutral"
+              fullWidth
+              onPress={() => {
+                // Every tab's tour shows again on its next visit, starting with the route.
+                useSettings.getState().replayTours();
+                router.navigate('/');
+              }}
+            />
+            <Button label="Reset progress" variant="ghost" hue="red" fullWidth onPress={() => setConfirmReset(true)} />
+          </>
         )}
       </View>
     </Screen>
