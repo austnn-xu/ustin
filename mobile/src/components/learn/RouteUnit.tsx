@@ -205,7 +205,7 @@ export function RouteUnit({ unit, width, screenWidth, records, currentId, select
           <Appear
             key={selected.lesson.id}
             from="pop"
-            spring="bouncy"
+            spring="quick"
             style={[styles.abs, styles.card, { top: selected.y + route.bin * 0.75 }]}
           >
             <LessonCard

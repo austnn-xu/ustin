@@ -19,8 +19,7 @@ export type ChoiceCardProps = {
 
 /**
  * A chunky, selectable answer tile: 2px border with a thicker bottom edge it presses into. Selected turns blue,
- * then correct/wrong turn green/red once the answer is checked. Each change is felt as well as seen: choosing hops,
- * a right answer bounces, a wrong one shakes its head.
+ * then correct/wrong turn green/red once the answer is checked. A wrong pick shakes its head once.
  */
 export function ChoiceCard({ children, state = 'idle', onPress, disabled, accessibilityLabel, style, padding = 'md' }: ChoiceCardProps) {
   const t = useTheme();
@@ -28,16 +27,13 @@ export function ChoiceCard({ children, state = 'idle', onPress, disabled, access
   const depth = t.layout.depth.md;
   const pressed = useSharedValue(0);
   const face = useAnimatedStyle(() => ({ transform: [{ translateY: pressed.value * (depth - t.layout.border) }] }));
-  // Each change of state plays its reaction once, as a CSS animation (no JavaScript per frame).
+  // Picking and getting it right are shown by colour and the panel; the one tile that moves is a wrong pick, which
+  // shakes its head once (a CSS animation, no JavaScript per frame).
   const reduced = useReducedMotion();
   const reaction =
-    reduced || state === 'idle' || state === 'dimmed'
+    reduced || state !== 'wrong'
       ? null
-      : {
-          animationName: state === 'wrong' ? keyframes.nope : state === 'correct' ? keyframes.cheer : keyframes.hop,
-          animationDuration: t.motion.react,
-          animationTimingFunction: easing.out,
-        };
+      : { animationName: keyframes.nope, animationDuration: t.motion.react, animationTimingFunction: easing.out };
 
   const tone =
     state === 'selected'

@@ -43,15 +43,15 @@ export function StatsBar({ title }: { title?: string }) {
         style={styles.pill}
       >
         <Icon icon={Flame} hue={doneToday ? 'orange' : undefined} color="textTertiary" filled={doneToday} />
-        <RollingNumber value={count} hue={doneToday ? 'orange' : undefined} color="textTertiary" bump />
+        <RollingNumber value={count} hue={doneToday ? 'orange' : undefined} color="textTertiary" />
       </PressableScale>
       <PressableScale onPress={() => router.push('/shop')} accessibilityLabel={`${coins} coins. Open the shop`} style={styles.pill}>
         <Coin size={t.layout.icon.md} />
-        <RollingNumber value={coins} hue="yellow" bump />
+        <RollingNumber value={coins} hue="yellow" />
       </PressableScale>
       <PressableScale onPress={() => router.push('/profile')} accessibilityLabel={`${xp} XP`} style={styles.pill}>
         <Icon icon={Zap} hue="yellow" filled />
-        <RollingNumber value={xp} hue="yellow" bump />
+        <RollingNumber value={xp} hue="yellow" />
       </PressableScale>
     </View>
   );

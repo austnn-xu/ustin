@@ -126,12 +126,12 @@ export const motion = {
     gentle: { damping: 26, stiffness: 180, mass: 1 },
     /** Mascot reactions, celebrations, things that should feel alive. */
     bouncy: { damping: 9, stiffness: 200, mass: 0.8 },
-    /** Cartoon squash-and-stretch and the "nope" shake: a stiff spring that rings a few times before it settles. */
-    wobble: { damping: 5, stiffness: 520, mass: 0.6 },
   },
   /** Entrance durations (ms): `enter` for content, `enterBouncy` for things that pop (rewards, bubbles). */
   enter: 420,
   enterBouncy: 520,
+  /** For things that happen constantly (the next question, a popover): short enough never to be waited on. */
+  enterQuick: 220,
   /**
    * Cubic-bezier curves for CSS animations. `out` settles softly; `back` overshoots a touch, like a spring; `sine` is the
    * smooth back-and-forth of a loop; `fall` is confetti slowing as it drops.

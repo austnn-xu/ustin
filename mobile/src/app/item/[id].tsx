@@ -6,7 +6,7 @@ import { BIN, BinArt } from '@/components/art/Bin';
 import { ItemArt } from '@/components/art/ItemArt';
 import { MascotSays } from '@/components/MascotSays';
 import { Toast, type ToastProps } from '@/components/Toast';
-import { Appear, Button, Card, ChoiceCard, Divider, Icon, PressableScale, ProgressBar, Screen, Text } from '@/components/ui';
+import { Button, Card, ChoiceCard, Divider, Icon, PressableScale, ProgressBar, Screen, Text } from '@/components/ui';
 import { ComponentRow } from '@/components/verdict/ComponentRow';
 import { rules, type Answers, type CatalogObject } from '@/lib/engine';
 import { haptics } from '@/lib/haptics';
@@ -179,11 +179,10 @@ function Verdict({ object, answers, record, header, onRedo }: VerdictProps) {
 
         <Card style={styles.parts}>
           {verdict.components.map((c, i) => (
-            // Each part arrives on its own beat: one object, several destinations, read in order.
-            <Appear key={`${c.label}-${i}`} index={2 + i} style={styles.stack}>
+            <View key={`${c.label}-${i}`} style={styles.stack}>
               {i > 0 && <Divider />}
               <ComponentRow component={c} showPart={verdict.components.length > 1} />
-            </Appear>
+            </View>
           ))}
         </Card>
 

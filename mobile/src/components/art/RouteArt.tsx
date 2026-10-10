@@ -3,7 +3,7 @@ import { Recycle } from 'lucide-react-native';
 import { View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
-import { drift, easing, keyframes, useTheme, type Hue, type HueName } from '@/theme';
+import { drift, easing, useTheme, type Hue, type HueName } from '@/theme';
 
 /**
  * The cartoon town the Learn route runs through: wheelie-bin stops, the sorting centre at the end of each unit,
@@ -32,16 +32,9 @@ export function BinStopArt({ hue: hueName, locked, open, icon: Glyph, iconFilled
     ? { base: t.colors.borderStrong, depth: t.colors.textTertiary, subtle: t.colors.fill, text: t.colors.textTertiary }
     : t.colors.hue[hueName];
   const height = size * (76 / 64);
-  const reduced = useReducedMotion();
-  // The open (current) stop flaps its lid on a CSS loop: no JavaScript per frame.
-  const lidStyle =
-    open && !reduced
-      ? {
-          animationName: keyframes.lidFlap,
-          animationDuration: t.motion.idleDuration * 1.5,
-          animationIterationCount: 'infinite' as const,
-        }
-      : null;
+  // The current stop's lid stands open. It does not flap: the floating Start tag above it is already the one thing on
+  // the route asking for attention.
+  const lidStyle = open ? { transform: [{ rotate: '-28deg' }] } : null;
 
   return (
     <View style={{ width: size, height }} aria-hidden>
@@ -63,7 +56,7 @@ export function BinStopArt({ hue: hueName, locked, open, icon: Glyph, iconFilled
         />
       </View>
       {/* The lid hinges at its back-left corner. */}
-      <Animated.View
+      <View
         style={[{ position: 'absolute', left: 0, top: 0, width: size, height, transformOrigin: `${size * 0.1}px ${height * 0.3}px` }, lidStyle]}
       >
         <Svg width="100%" height="100%" viewBox="0 0 64 76">
@@ -71,7 +64,7 @@ export function BinStopArt({ hue: hueName, locked, open, icon: Glyph, iconFilled
           <Rect x={5} y={14} width={54} height={12} rx={5} fill={hue.depth} />
           <Rect x={8} y={15.5} width={48} height={4} rx={2} fill={t.colors.shine} />
         </Svg>
-      </Animated.View>
+      </View>
     </View>
   );
 }

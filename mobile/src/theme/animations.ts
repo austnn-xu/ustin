@@ -33,29 +33,8 @@ export const keyframes = {
   }),
   fadeIn: css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } }),
   pop: css.keyframes({
-    from: { opacity: 0, transform: [{ scale: 0.6 }] },
+    from: { opacity: 0, transform: [{ scale: 0.85 }] },
     to: { opacity: 1, transform: [{ scale: 1 }] },
-  }),
-  /** The current stop's bin lid: flips open with a little overshoot, holds, drops shut, rests. One cycle per loop. */
-  lidFlap: css.keyframes({
-    '0%': { transform: [{ rotate: '0deg' }], animationTimingFunction: easing.back },
-    '17%': { transform: [{ rotate: '-28deg' }] },
-    '50%': { transform: [{ rotate: '-28deg' }], animationTimingFunction: easing.out },
-    '67%': { transform: [{ rotate: '0deg' }] },
-    '100%': { transform: [{ rotate: '0deg' }] },
-  }),
-  /** A tile hopping when it is picked. */
-  hop: css.keyframes({
-    '0%': { transform: [{ scale: 1 }] },
-    '35%': { transform: [{ scale: 1.03 }] },
-    '100%': { transform: [{ scale: 1 }] },
-  }),
-  /** A right answer bouncing. */
-  cheer: css.keyframes({
-    '0%': { transform: [{ scale: 1 }] },
-    '30%': { transform: [{ scale: 1.07 }] },
-    '60%': { transform: [{ scale: 0.98 }] },
-    '100%': { transform: [{ scale: 1 }] },
   }),
   /** A wrong answer shaking its head. */
   nope: css.keyframes({

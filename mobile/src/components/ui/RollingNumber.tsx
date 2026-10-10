@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { makeStyles, useTheme, type ColorTokens, type HueName, type TypeVariant } from '@/theme';
 import { Text } from './Text';
 
@@ -11,8 +11,6 @@ export type RollingNumberProps = {
   color?: keyof ColorTokens;
   /** Text after the number, e.g. "%" or " XP". It does not roll. */
   suffix?: string;
-  /** Hop when the number goes up, for counters that pay out (coins, XP). */
-  bump?: boolean;
   accessibilityLabel?: string;
 };
 
@@ -23,28 +21,14 @@ const COLUMN = '0\n1\n2\n3\n4\n5\n6\n7\n8\n9';
  * A number whose digits roll to their new value like an odometer, instead of snapping. Every counter in the app
  * (streak, coins, XP, the lesson's score) uses it, so numbers always move the way they changed.
  */
-export function RollingNumber({ value, variant = 'bodyStrong', hue, color, suffix, bump = false, accessibilityLabel }: RollingNumberProps) {
+export function RollingNumber({ value, variant = 'bodyStrong', hue, color, suffix, accessibilityLabel }: RollingNumberProps) {
   const t = useTheme();
   const styles = useStyles();
   const chars = String(Math.max(0, Math.round(value))).split('');
   const lineHeight = t.type[variant].lineHeight ?? t.type.body.lineHeight!;
-  const hop = useSharedValue(0);
-  const last = useRef(value);
-
-  useEffect(() => {
-    if (bump && value > last.current) {
-      hop.value = withSequence(withSpring(1, t.motion.spring.snappy), withSpring(0, t.motion.spring.bouncy));
-    }
-    last.current = value;
-  }, [value, bump, hop, t.motion.spring.snappy, t.motion.spring.bouncy]);
-
-  const hopStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -hop.value * t.space[1.5] }, { scale: 1 + hop.value * 0.18 }],
-  }));
-
   return (
-    <Animated.View
-      style={[styles.row, hopStyle]}
+    <View
+      style={styles.row}
       accessible
       accessibilityLabel={accessibilityLabel ?? `${value}${suffix ?? ''}`}
     >
@@ -57,7 +41,7 @@ export function RollingNumber({ value, variant = 'bodyStrong', hue, color, suffi
           {suffix}
         </Text>
       ) : null}
-    </Animated.View>
+    </View>
   );
 }
 

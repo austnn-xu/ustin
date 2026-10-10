@@ -50,10 +50,9 @@ happy on the path, cheering on a correct answer and at the end of a lesson, worr
 waiting on you, sad when a lesson is abandoned, thinking while a photo is analysed. Use Tin wherever a moment has a feeling —
 never more than one Tin on screen (a sheet over a dimmed screen, like a tab's tour, counts as its own screen).
 
-Tin is a cartoon and moves like one: it blinks, every mood change lands with a squash-and-stretch, cheering jumps, a
-wrong answer makes it shiver, it can `wave` hello, its mouth flaps while `MascotSays` is `typing`, and where it is the
-star of the screen it is `pokeable` (tap it: it hops, grins and waves). Keep `typing` for moments where Tin explains
-something (onboarding, empty states), not for every bubble.
+Tin is a cartoon and moves like one, within the motion budget below: it breathes and blinks, jumps when it cheers, can
+`wave` hello, its mouth flaps while `MascotSays` is `typing`, and where it is the star of the screen it is `pokeable`
+(tap it: it hops, grins and waves).
 
 ## Stack
 
@@ -117,20 +116,31 @@ src/stores/           zustand stores (progress, settings)
 
 ## Motion
 
-Family (family.co) is the reference for *how things move*: fluid, physical, and never abrupt. The rules:
+Family (family.co) is the reference for *how things move*: fluid, physical, never abrupt — and never busy. Motion has
+to earn its place; when in doubt, leave it out.
 
-- **Nothing appears from nowhere.** Content arrives with `<Appear>` (fade + a short slide or pop, on a spring). Siblings
-  arriving together stagger with `index` so the eye reads them in order: question → item → answers; headline → stats.
-- **Direction means something.** Moving forward (next onboarding step, next exercise) slides in from the right; going back
-  slides in from the left. Sheets rise from the bottom over a fading scrim.
-- **Things move from where they were.** The tab highlight slides to the new tab; progress bars spring to their new value and
-  swell when they fill; numbers roll digit by digit with `<RollingNumber>` instead of snapping.
-- **Feel the answer.** Choosing a tile hops it, a right answer bounces, a wrong one shakes its head (`spring.wobble`), and
-  the feedback badge lands after its panel.
-- **Alive at rest, sparingly.** `<Float>` for the one thing that is waiting for you (the route's Start tag, a coach tip,
-  the idling truck). Never more than one or two floating things on a screen.
-- **The rarer the moment, the bigger the delight.** Everyday taps get a press and a haptic; finishing onboarding, a lesson
-  or a streak gets the full build-up with confetti.
+**The budget: the more often something happens, the less it moves.**
+
+| How often | Examples | Allowed |
+|---|---|---|
+| Constantly | every question, every answer, tab switches, lookups, popovers, presses | **One** motion per action, short (`spring="quick"`, ≤ ~250ms), no overshoot, no stagger |
+| Now and then | finishing a lesson, an onboarding step, a tab's tour, the quit sheet | One choreographed beat that lands in under a second |
+| Rarely | the first run's coffee-cup reveal, a new streak day, a purchase | The full show: sequence, bounce, confetti |
+
+What that means in practice:
+
+- **Answering.** Check → the feedback panel rises; Tin reacts. That is all. A wrong pick also shakes its tile once.
+  No bouncing tiles, spinning badges, popping coin lines or swelling bars on top.
+- **Next question.** The exercise slides in as one piece, quickly. Nothing inside it staggers, so you can answer at once.
+- **Tabs.** The highlight slides. Icons do not hop. Utility screens (What bin?, a verdict, Near me) do not animate their
+  content in: people use them in the moment and want the answer, not a show.
+- **Numbers** roll digit by digit (`RollingNumber`); they do not also jump.
+- **Tin** breathes and blinks, jumps (with a small squash) only when it cheers or is amazed, waves on the very first
+  screen, and talks only on the first run's coffee-cup question. Worry and sadness show in the face, not in motion.
+- **Loops: one thing per screen may ask for attention** — the route's Start tag, the first lesson's coach tip, the streak
+  flame. Ambient breathing (Tin's bob, the idling truck) does not count; a second attention loop does.
+- **Direction means something.** Forward slides in from the right, back from the left; sheets rise from the bottom.
+- **Confetti is for finishing something**: a lesson, a purchase. Not for setup screens.
 - Motion respects the system's reduce-motion setting (`useReducedMotion`): entrances and loops are skipped, content just shows.
 
 ## Performance (the web build is what most people use)
@@ -140,7 +150,7 @@ Smooth beats showy. Measure with Playwright at 4× and 8× CPU throttle before a
 - **CSS for anything that plays by itself.** Entrances (`Appear`), loops (`Float`, Tin's bob, the truck, the bin lid, the
   flame, skeletons) and confetti are Reanimated 4 CSS animations built from `src/theme/animations.ts`. On the web they run
   on the compositor; on native, on the UI thread. Never `withRepeat` or a JS-driven loop.
-- **Springs only for a direct response to a touch**, one element at a time (press, the tab highlight, a mood change).
+- **Springs only for a direct response to a touch**, one element at a time (press, the tab highlight, Tin's cheer).
 - **No per-frame React renders.** Nothing calls `setState` on a fast timer except the smallest possible leaf (the typed text
   in `MascotSays`). Tin's drawing is memoised in parts so a blink redraws only the face; a Tin with `idle={false}` (and not
   talking, waving or pokeable) is a still drawing with no hooks at all — use that for grids.

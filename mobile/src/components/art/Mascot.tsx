@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
@@ -41,8 +41,8 @@ const MOOD_LABEL: Record<Mood, string> = {
   wow: 'Tin the tin can, amazed',
 };
 
-/** Moods worth a reaction when Tin first appears (a quiet `happy` Tin just arrives). */
-const EXPRESSIVE: Mood[] = ['cheer', 'wow', 'worried', 'sad'];
+/** The moods Tin physically reacts to (a jump with a squash on landing). Every other mood just changes Tin's face. */
+const BIG: Mood[] = ['cheer', 'wow'];
 
 /** How many swings make one wave. */
 const WAVE_SWINGS = 6;
@@ -51,8 +51,9 @@ const WAVE_SWINGS = 6;
  * Tin, the mascot: a little tin can with a face. The can is drawn in a 120×140 box; the viewBox keeps 28 units of
  * headroom above it for hats.
  *
- * Tin is a cartoon, so it moves like one: it blinks, its mouth flaps while it talks, every mood change lands with a
- * squash-and-stretch, cheering jumps, a wrong answer makes it shiver, and it waves hello.
+ * Tin is a cartoon, so it moves like one, but only as much as the moment deserves: it breathes and blinks, its mouth
+ * flaps while it talks, it jumps (and squashes as it lands) when it cheers, and it waves hello. Worry and sadness show
+ * in its face, not in motion.
  *
  * Built to stay cheap: the idle bob is a CSS loop (no JS per frame), reactions are a brief spring on one view, and the
  * drawing is split so a blink or a mouth flap redraws only the face, never the whole can.
@@ -104,24 +105,12 @@ function LiveTin({
 
   const squash = useSharedValue(0);
   const jump = useSharedValue(0);
-  const shake = useSharedValue(0);
-  const first = useRef(true);
 
   useEffect(() => {
-    const arriving = first.current;
-    first.current = false;
-    if (reduced) return;
-    // A quiet Tin just arrives; an expressive one (or any change of mood) lands like a cartoon.
-    if (arriving && !EXPRESSIVE.includes(mood)) return;
+    if (reduced || !BIG.includes(mood)) return;
+    jump.value = withSequence(withSpring(-1, t.motion.spring.snappy), withSpring(0, t.motion.spring.bouncy));
     squash.value = 1;
-    squash.value = withSpring(0, t.motion.spring.wobble);
-    if (mood === 'cheer' || mood === 'wow') {
-      jump.value = withSequence(withSpring(-1, t.motion.spring.snappy), withSpring(0, t.motion.spring.bouncy));
-    }
-    if (mood === 'worried' || mood === 'sad') {
-      shake.value = 1;
-      shake.value = withSpring(0, t.motion.spring.wobble);
-    }
+    squash.value = withSpring(0, t.motion.spring.bouncy);
     // Only a change of mood replays the reaction; the shared values and springs are stable.
   }, [mood]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -142,13 +131,12 @@ function LiveTin({
   }, [poked, t.motion.waveBeat]);
 
   const react = useAnimatedStyle(() => {
-    const sy = 1 - squash.value * 0.14;
+    const sy = 1 - squash.value * 0.08;
     return {
       transform: [
         // Squash about the feet, not the middle, so Tin stays planted on the ground.
         { translateY: jump.value * px * 0.14 + ((1 - sy) * height) / 2 },
-        { translateX: shake.value * px * 0.06 },
-        { scaleX: 1 + squash.value * 0.1 },
+        { scaleX: 1 + squash.value * 0.06 },
         { scaleY: sy },
       ],
     };

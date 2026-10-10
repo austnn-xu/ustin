@@ -4,7 +4,7 @@ import { BIN, BinArt } from '@/components/art/Bin';
 import { ItemArt } from '@/components/art/ItemArt';
 import type { Mood } from '@/components/art/Mascot';
 import { MascotSays } from '@/components/MascotSays';
-import { Appear, ChoiceCard, Chip, Icon, Text, type ChoiceState } from '@/components/ui';
+import { ChoiceCard, Chip, Icon, Text, type ChoiceState } from '@/components/ui';
 import type { Exercise, ExerciseChoice } from '@/lib/engine';
 import { useScreenSize } from '@/lib/useScreenSize';
 import { makeStyles, useTheme } from '@/theme';
@@ -19,8 +19,8 @@ export type ExerciseViewProps = {
 };
 
 /**
- * Renders any generated exercise: its prompt, the item, and the right kind of answer tiles for its type. The item pops
- * in, then the answers arrive one after another, so the eye goes question → item → choices.
+ * Renders any generated exercise: its prompt, the item, and the right kind of answer tiles for its type. It arrives as
+ * one piece (the lesson slides it in); nothing inside staggers, so the answers are tappable straight away.
  */
 export function ExerciseView({ exercise, selected, checked, onToggle }: ExerciseViewProps) {
   const t = useTheme();
@@ -36,7 +36,7 @@ export function ExerciseView({ exercise, selected, checked, onToggle }: Exercise
   };
 
   const tile = (c: ExerciseChoice, children: React.ReactNode, style?: object, padding: 'md' | 'lg' = 'md') => (
-    <Appear key={c.id} index={2 + exercise.choices.indexOf(c)} style={style}>
+    <View key={c.id} style={style}>
       <ChoiceCard
         state={stateOf(c)}
         disabled={checked !== null}
@@ -47,13 +47,9 @@ export function ExerciseView({ exercise, selected, checked, onToggle }: Exercise
       >
         {children}
       </ChoiceCard>
-    </Appear>
+    </View>
   );
-  const item = exercise.item && (
-    <Appear from="pop" spring="bouncy" index={1}>
-      <ItemCard item={exercise.item} />
-    </Appear>
-  );
+  const item = exercise.item && <ItemCard item={exercise.item} />;
 
   const mood: Mood = checked === null ? 'thinking' : checked ? 'cheer' : 'worried';
 

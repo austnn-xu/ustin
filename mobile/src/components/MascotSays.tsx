@@ -35,7 +35,6 @@ export function MascotSays({ children, mood = 'happy', size = 'md', hue, wave, p
     <Appear
       key={text ?? undefined}
       from="pop"
-      spring="bouncy"
       style={[styles.bubbleWrap, layout === 'above' && styles.bubbleAbove]}
     >
       <Pressable

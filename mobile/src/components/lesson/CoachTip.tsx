@@ -10,7 +10,7 @@ import { makeStyles } from '@/theme';
 export function CoachTip({ children }: { children: string }) {
   const styles = useStyles();
   return (
-    <Appear key={children} from="pop" spring="bouncy" style={styles.wrap}>
+    <Appear key={children} from="pop" spring="quick" style={styles.wrap}>
       <Float style={styles.tip}>
         <Icon icon={Pointer} size="md" color="onColor" />
         <Text variant="callout" style={styles.text}>
