@@ -12,6 +12,8 @@ The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android
 | **Shop** | Spend coins (1 per right answer, +5 for 5 in a row, +10 for 10 in a row) on hats, glasses, neckwear and paint jobs for Tin, who then wears them all over the app. |
 | **Profile** | Streak, XP, badges, daily goal, location and appearance. |
 
+The first run teaches by doing: Tin asks where a takeaway coffee cup goes, then splits it into its three parts with the real verdict, explains the three tabs in plain words, sets a daily goal in minutes, and coaches the first lesson step by step. Throughout, motion follows one rule: nothing appears from nowhere, and things move from where they were.
+
 Every lesson question is generated from the same catalog and decision engine the lookup uses (`lib/lessons.js`), so a lesson can never teach an answer the app would contradict.
 
 The rest of this README covers the knowledge base and recognition, which the app shares with the original single-page web app in `public/`.

@@ -1,13 +1,16 @@
+export { Appear, type AppearProps } from './Appear';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
 export { ChoiceCard, type ChoiceCardProps, type ChoiceState } from './ChoiceCard';
 export { Chip, type ChipProps } from './Chip';
 export { Divider } from './Divider';
+export { Float, type FloatProps } from './Float';
 export { Icon, type IconProps } from './Icon';
 export { Input, type InputProps } from './Input';
 export { ListRow, type ListRowProps } from './ListRow';
 export { PressableScale, type PressableScaleProps } from './PressableScale';
 export { ProgressBar, type ProgressBarProps } from './ProgressBar';
+export { RollingNumber, type RollingNumberProps } from './RollingNumber';
 export { Screen, type ScreenProps } from './Screen';
 export { Skeleton, SkeletonText, type SkeletonProps } from './Skeleton';
 export { Text, type TextProps } from './Text';

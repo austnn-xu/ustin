@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 import { makeStyles, useTheme } from '@/theme';
 import { PressableScale } from './PressableScale';
 
@@ -19,7 +19,8 @@ export type ChoiceCardProps = {
 
 /**
  * A chunky, selectable answer tile: 2px border with a thicker bottom edge it presses into. Selected turns blue,
- * then correct/wrong turn green/red once the answer is checked.
+ * then correct/wrong turn green/red once the answer is checked. Each change is felt as well as seen: choosing hops,
+ * a right answer bounces, a wrong one shakes its head.
  */
 export function ChoiceCard({ children, state = 'idle', onPress, disabled, accessibilityLabel, style, padding = 'md' }: ChoiceCardProps) {
   const t = useTheme();
@@ -27,6 +28,24 @@ export function ChoiceCard({ children, state = 'idle', onPress, disabled, access
   const depth = t.layout.depth.md;
   const pressed = useSharedValue(0);
   const face = useAnimatedStyle(() => ({ transform: [{ translateY: pressed.value * (depth - t.layout.border) }] }));
+  const pop = useSharedValue(0);
+  const shake = useSharedValue(0);
+  const prev = useRef(state);
+
+  useEffect(() => {
+    if (state === prev.current) return;
+    prev.current = state;
+    if (state === 'selected' || state === 'correct') {
+      pop.value = withSequence(withSpring(state === 'correct' ? 1 : 0.5, t.motion.spring.snappy), withSpring(0, t.motion.spring.bouncy));
+    } else if (state === 'wrong') {
+      shake.value = 1;
+      shake.value = withSpring(0, t.motion.spring.wobble);
+    }
+  }, [state, pop, shake, t.motion.spring]);
+
+  const react = useAnimatedStyle(() => ({
+    transform: [{ translateX: shake.value * t.space[3] }, { scale: 1 + pop.value * 0.06 }],
+  }));
 
   const tone =
     state === 'selected'
@@ -38,39 +57,42 @@ export function ChoiceCard({ children, state = 'idle', onPress, disabled, access
           : null;
 
   return (
-    <PressableScale
-      scale={false}
-      haptic="selection"
-      onPress={onPress}
-      disabled={disabled}
-      onPressIn={() => {
-        pressed.value = withSpring(1, t.motion.spring.snappy);
-      }}
-      onPressOut={() => {
-        pressed.value = withSpring(0, t.motion.spring.snappy);
-      }}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ selected: state === 'selected' || state === 'correct', disabled }}
-      style={[styles.root, state === 'dimmed' && styles.dimmed, style]}
-    >
-      <View style={[styles.edge, { backgroundColor: tone ? tone.depth : t.colors.border }]} />
-      <Animated.View
-        style={[
-          styles.face,
-          padding === 'lg' && styles.padLg,
-          tone ? { borderColor: tone.base, backgroundColor: tone.subtle } : styles.idle,
-          face,
-        ]}
+    <Animated.View style={[style, react]}>
+      <PressableScale
+        scale={false}
+        haptic="selection"
+        onPress={onPress}
+        disabled={disabled}
+        onPressIn={() => {
+          pressed.value = withSpring(1, t.motion.spring.snappy);
+        }}
+        onPressOut={() => {
+          pressed.value = withSpring(0, t.motion.spring.snappy);
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ selected: state === 'selected' || state === 'correct', disabled }}
+        style={[styles.root, styles.grow, state === 'dimmed' && styles.dimmed]}
       >
-        {children}
-      </Animated.View>
-    </PressableScale>
+        <View style={[styles.edge, { backgroundColor: tone ? tone.depth : t.colors.border }]} />
+        <Animated.View
+          style={[
+            styles.face,
+            padding === 'lg' && styles.padLg,
+            tone ? { borderColor: tone.base, backgroundColor: tone.subtle } : styles.idle,
+            face,
+          ]}
+        >
+          {children}
+        </Animated.View>
+      </PressableScale>
+    </Animated.View>
   );
 }
 
 const useStyles = makeStyles((t) => ({
   root: { paddingBottom: t.layout.depth.md - t.layout.border },
+  grow: { flexGrow: 1 },
   edge: { position: 'absolute', left: 0, right: 0, bottom: 0, top: t.layout.depth.md, borderRadius: t.radius.lg },
   face: {
     flex: 1,
