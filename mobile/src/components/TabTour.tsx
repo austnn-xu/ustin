@@ -69,7 +69,7 @@ function TourSheet({ id }: { id: TourId }) {
           { animationName: keyframes.fadeIn, animationDuration: t.motion.enter, animationTimingFunction: easing.out },
         ]}
       />
-      <Appear spring="bouncy" style={s.sheetWrap}>
+      <Appear style={s.sheetWrap}>
         <Card variant="floating" padding="lg" style={s.sheet}>
           <View style={s.head}>
             <Mascot mood={current.mood} size="sm" />

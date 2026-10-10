@@ -4,7 +4,6 @@ import { ChevronLeft, House, MapPin, ScanSearch, Store } from 'lucide-react-nati
 import { useMemo, useState, useTransition } from 'react';
 import { View } from 'react-native';
 import { BIN, BinArt } from '@/components/art/Bin';
-import { Confetti } from '@/components/art/Confetti';
 import { Mascot, type Mood } from '@/components/art/Mascot';
 import { ItemCard } from '@/components/lesson/ItemCard';
 import { MascotSays } from '@/components/MascotSays';
@@ -27,7 +26,8 @@ import { makeStyles, useTheme, type HueName } from '@/theme';
  *   goal   — how much time a day, in minutes
  *   place  — where you live, for drop-offs (optional)
  *   ready  — exactly what happens next, then straight into lesson one
- * Steps slide in the direction you are going: forward from the right, back from the left.
+ * Steps slide in the direction you are going: forward from the right, back from the left. That slide is each step's
+ * only motion; the coffee-cup reveal is the one sequence, because it is the point of the whole first run.
  */
 const STEPS = ['hello', 'try', 'how', 'goal', 'place', 'ready'] as const;
 type Step = (typeof STEPS)[number];
@@ -109,7 +109,6 @@ export default function Onboarding() {
         {step === 'place' && <Place />}
         {step === 'ready' && <Ready />}
       </Appear>
-      {step === 'ready' && <Confetti />}
     </Screen>
   );
 }
@@ -135,7 +134,7 @@ function Hello() {
           A minute of setup, a quick quiz, then your first five-minute lesson.
         </Text>
       </Appear>
-      <Appear index={8}>
+      <Appear index={5}>
         <Text variant="caption" color="textTertiary" align="center">
           (Psst: you can tap me.)
         </Text>
@@ -172,14 +171,12 @@ function TryIt({ pick, onPick }: { pick: OutcomeId | null; onPick: (outcome: Out
       <MascotSays mood={pick ? (right.length ? 'wow' : 'worried') : 'thinking'} size="sm" typing>
         {reveal ?? 'Quick one. You just finished a coffee. Where does the cup go?'}
       </MascotSays>
-      <Appear from="pop" spring="bouncy" index={1}>
-        <ItemCard item={item} />
-      </Appear>
+      <ItemCard item={item} />
 
       {!pick ? (
         <View style={styles.grid}>
-          {DEMO_BINS.map((o, i) => (
-            <Appear key={o} index={2 + i} style={styles.third}>
+          {DEMO_BINS.map((o) => (
+            <View key={o} style={styles.third}>
               <ChoiceCard
                 accessibilityLabel={BIN[o].short}
                 onPress={() => {
@@ -195,7 +192,7 @@ function TryIt({ pick, onPick }: { pick: OutcomeId | null; onPick: (outcome: Out
                   </Text>
                 </View>
               </ChoiceCard>
-            </Appear>
+            </View>
           ))}
         </View>
       ) : (
@@ -203,7 +200,8 @@ function TryIt({ pick, onPick }: { pick: OutcomeId | null; onPick: (outcome: Out
           {verdict.components.map((c, i) => {
             const bin = BIN[c.outcome.id];
             return (
-              <Appear key={c.label} index={3 + i * 2}>
+              // The payoff of the first run: the cup comes apart one part at a time.
+              <Appear key={c.label} index={1 + i * 2}>
                 <Card style={styles.part}>
                   <BinArt outcome={c.outcome.id} size={t.layout.art.sm} />
                   <View style={styles.flex}>
@@ -223,7 +221,7 @@ function TryIt({ pick, onPick }: { pick: OutcomeId | null; onPick: (outcome: Out
               </Appear>
             );
           })}
-          <Appear index={3 + verdict.components.length * 2 + 1}>
+          <Appear index={1 + verdict.components.length * 2}>
             <Card variant="tinted" hue="green" style={styles.lessonNote}>
               <Text variant="bodyStrong" hue="green">
                 {verdict.tip ?? 'One object, several materials.'}
@@ -275,34 +273,30 @@ function HowItWorks() {
   const styles = useStyles();
   return (
     <View style={styles.stack}>
-      <MascotSays mood="happy" size="sm" typing>
+      <MascotSays mood="happy" size="sm">
         Here is what is inside. I will show you around each one the first time you open it.
       </MascotSays>
-      {WAYS.map((w, i) => (
-        <Appear key={w.title} index={2 + i * 2}>
-          <Card style={styles.way}>
-            <View style={[styles.wayIcon, { backgroundColor: t.colors.hue[w.hue].subtle }]}>
-              <Icon icon={w.icon} hue={w.hue} size="lg" />
-            </View>
-            <View style={styles.flex}>
-              <Text variant="heading">{w.title}</Text>
-              <Text variant="callout" color="textSecondary">
-                {w.body}
-              </Text>
-            </View>
-          </Card>
-        </Appear>
-      ))}
-      <Appear index={10}>
-        <Card variant="tinted" hue="green">
-          <Text variant="bodyStrong" hue="green">
-            Mistakes are free.
-          </Text>
-          <Text variant="caption" hue="green">
-            No hearts, no lives. Get one wrong and I show you why, then it comes back once at the end so you can nail it.
-          </Text>
+      {WAYS.map((w) => (
+        <Card key={w.title} style={styles.way}>
+          <View style={[styles.wayIcon, { backgroundColor: t.colors.hue[w.hue].subtle }]}>
+            <Icon icon={w.icon} hue={w.hue} size="lg" />
+          </View>
+          <View style={styles.flex}>
+            <Text variant="heading">{w.title}</Text>
+            <Text variant="callout" color="textSecondary">
+              {w.body}
+            </Text>
+          </View>
         </Card>
-      </Appear>
+      ))}
+      <Card variant="tinted" hue="green">
+        <Text variant="bodyStrong" hue="green">
+          Mistakes are free.
+        </Text>
+        <Text variant="caption" hue="green">
+          No hearts, no lives. Get one wrong and I show you why, then it comes back once at the end so you can nail it.
+        </Text>
+      </Card>
     </View>
   );
 }
@@ -315,39 +309,36 @@ function Goal() {
   const setGoal = useSettings((s) => s.setDailyGoal);
   return (
     <View style={styles.stack}>
-      <MascotSays mood={GOAL_MOOD[goal]} size="sm" typing>
+      <MascotSays mood={GOAL_MOOD[goal]} size="sm">
         How much time can you give me each day?
       </MascotSays>
-      {GOALS.map((g, i) => {
+      {GOALS.map((g) => {
         const minutes = (g.value / XP.lesson) * MINUTES_PER_LESSON;
         return (
-          <Appear key={g.value} index={2 + i}>
-            <ChoiceCard
-              state={goal === g.value ? 'selected' : 'idle'}
-              onPress={() => setGoal(g.value)}
-              accessibilityLabel={`${g.label}, about ${minutes} minutes a day, ${g.blurb}`}
-              padding="lg"
-            >
-              <View style={styles.goalRow}>
-                <View style={styles.flex}>
-                  <Text variant="heading">{g.label}</Text>
-                  <Text variant="callout" color="textSecondary">
-                    {g.blurb}
-                  </Text>
-                </View>
-                <Text variant="bodyStrong" hue={goal === g.value ? 'blue' : undefined} color="textSecondary">
-                  {`${minutes} min`}
+          <ChoiceCard
+            key={g.value}
+            state={goal === g.value ? 'selected' : 'idle'}
+            onPress={() => setGoal(g.value)}
+            accessibilityLabel={`${g.label}, about ${minutes} minutes a day, ${g.blurb}`}
+            padding="lg"
+          >
+            <View style={styles.goalRow}>
+              <View style={styles.flex}>
+                <Text variant="heading">{g.label}</Text>
+                <Text variant="callout" color="textSecondary">
+                  {g.blurb}
                 </Text>
               </View>
-            </ChoiceCard>
-          </Appear>
+              <Text variant="bodyStrong" hue={goal === g.value ? 'blue' : undefined} color="textSecondary">
+                {`${minutes} min`}
+              </Text>
+            </View>
+          </ChoiceCard>
         );
       })}
-      <Appear index={7}>
-        <Text variant="caption" color="textTertiary" align="center">
-          You can change this any time in Profile.
-        </Text>
-      </Appear>
+      <Text variant="caption" color="textTertiary" align="center">
+        You can change this any time in Profile.
+      </Text>
     </View>
   );
 }
@@ -357,19 +348,15 @@ function Place() {
   const place = useSettings((s) => s.place);
   return (
     <View style={styles.stack}>
-      <MascotSays mood={place ? 'cheer' : 'thinking'} size="sm" typing>
+      <MascotSays mood={place ? 'cheer' : 'thinking'} size="sm">
         {place
           ? `Got it: ${place.label}. I will look for drop-offs near there.`
           : 'Where do you live? Some things, like batteries, cannot go in any bin, so I will find the nearest drop-off.'}
       </MascotSays>
-      <Appear index={2}>
-        <LocationPicker />
-      </Appear>
-      <Appear index={3}>
-        <Text variant="caption" color="textTertiary">
-          Your location stays on this device. It is only sent to OpenStreetMap to find places near you.
-        </Text>
-      </Appear>
+      <LocationPicker />
+      <Text variant="caption" color="textTertiary">
+        Your location stays on this device. It is only sent to OpenStreetMap to find places near you.
+      </Text>
     </View>
   );
 }
@@ -392,33 +379,27 @@ function Ready() {
     <View style={styles.stack}>
       <View style={styles.readyHead}>
         <Mascot mood="cheer" size={short ? 'sm' : 'md'} pokeable />
-        <Appear from="pop" spring="bouncy" index={1} style={styles.flex}>
-          <Text variant="display" hue="green">
-            {"You're all set!"}
-          </Text>
-        </Appear>
+        <Text variant="display" hue="green" style={styles.flex}>
+          {"You're all set!"}
+        </Text>
       </View>
 
-      <Appear index={3}>
-        <Card style={styles.firstStop}>
-          <Text variant="label" color="textTertiary">
-            Your first stop
-          </Text>
-          <Text variant="heading">{unit?.title ?? first.title}</Text>
-          <Text variant="callout" color="textSecondary">
-            {names.join(' · ')}
-          </Text>
-          <Text variant="callout" hue="yellow">{`About ${MINUTES_PER_LESSON} minutes · +${XP.lesson} XP`}</Text>
-        </Card>
-      </Appear>
-
-      <Appear index={5}>
+      <Card style={styles.firstStop}>
         <Text variant="label" color="textTertiary">
-          How a lesson works
+          Your first stop
         </Text>
-      </Appear>
-      {LESSON_STEPS.map((s, i) => (
-        <Appear key={s.n} index={6 + i} style={styles.lessonStep}>
+        <Text variant="heading">{unit?.title ?? first.title}</Text>
+        <Text variant="callout" color="textSecondary">
+          {names.join(' · ')}
+        </Text>
+        <Text variant="callout" hue="yellow">{`About ${MINUTES_PER_LESSON} minutes · +${XP.lesson} XP`}</Text>
+      </Card>
+
+      <Text variant="label" color="textTertiary">
+        How a lesson works
+      </Text>
+      {LESSON_STEPS.map((s) => (
+        <View key={s.n} style={styles.lessonStep}>
           <View style={[styles.stepDot, { backgroundColor: t.colors.hue.blue.base }]}>
             <Text variant="bodyStrong" style={styles.onColor}>
               {s.n}
@@ -427,7 +408,7 @@ function Ready() {
           <Text variant="bodyStrong" style={styles.flex}>
             {s.text}
           </Text>
-        </Appear>
+        </View>
       ))}
     </View>
   );

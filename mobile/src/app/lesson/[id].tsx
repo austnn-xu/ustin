@@ -172,7 +172,7 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
         <ProgressBar value={progress} accessibilityLabel="Lesson progress" />
         <View style={styles.coins} accessibilityLabel={`${coins} coins earned this lesson`}>
           <Coin size={t.layout.icon.md} />
-          <RollingNumber value={coins} hue="yellow" bump />
+          <RollingNumber value={coins} hue="yellow" />
         </View>
       </View>
 
@@ -183,8 +183,8 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
               Previous mistake
             </Text>
           )}
-          {/* Each exercise slides in from the right, the way you are moving through the lesson. */}
-          <Appear key={`${exercise.id}:${index}`} from="right">
+          {/* The next exercise slides in from the right, quickly: it happens a dozen times a lesson. */}
+          <Appear key={`${exercise.id}:${index}`} from="right" spring="quick">
             <ExerciseView exercise={exercise} selected={selected} checked={checked} onToggle={toggle} />
           </Appear>
         </View>

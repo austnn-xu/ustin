@@ -67,8 +67,8 @@ export function LessonComplete({ summary, onContinue }: { summary: LessonSummary
   const t = useTheme();
   const { short } = useScreenSize();
   // Count up once each tile has landed.
-  const xp = useCountUp(summary.xp, 900, t.motion.stagger * 4);
-  const coins = useCountUp(summary.coins, 900, t.motion.stagger * 6);
+  const xp = useCountUp(summary.xp, 900, t.motion.stagger * 2);
+  const coins = useCountUp(summary.coins, 900, t.motion.stagger * 2);
   const title = summary.perfect ? 'Perfect lesson!' : summary.accuracy >= 0.8 ? 'Lesson complete!' : 'You made it!';
   const line = summary.perfect
     ? 'Not a single mistake. You really know your bins.'
@@ -78,32 +78,24 @@ export function LessonComplete({ summary, onContinue }: { summary: LessonSummary
 
   return (
     <Screen scroll footer={<Button label="Continue" fullWidth onPress={onContinue} />}>
-      {/* The celebration builds: Tin jumps, the headline lands, then each stat pops in on its own beat. */}
+      {/* One quick build: Tin jumps, the headline lands, the stats arrive together. Confetti does the rest. */}
       <View style={styles.center}>
         <Mascot mood="cheer" size={short ? 'md' : summary.badges.length ? 'lg' : 'xl'} pokeable />
-        <Appear from="pop" spring="bouncy" index={1}>
+        <Appear from="pop" index={1}>
           <Text variant="display" hue="yellow" align="center">
             {title}
           </Text>
         </Appear>
-        <Appear index={2}>
-          <Text variant="body" color="textSecondary" align="center">
-            {line}
-          </Text>
+        <Text variant="body" color="textSecondary" align="center">
+          {line}
+        </Text>
+        <Appear index={2} style={styles.tiles}>
+          <StatTile label="Total XP" value={`${xp}`} icon={Zap} hue="yellow" />
+          <StatTile label="Coins" value={`${coins}`} hue="orange" art={<Coin size={t.layout.icon.md} />} />
+          <StatTile label="Accuracy" value={`${Math.round(summary.accuracy * 100)}%`} icon={Target} hue="green" />
         </Appear>
-        <View style={styles.tiles}>
-          <Appear from="pop" spring="bouncy" index={4} style={styles.flex}>
-            <StatTile label="Total XP" value={`${xp}`} icon={Zap} hue="yellow" />
-          </Appear>
-          <Appear from="pop" spring="bouncy" index={6} style={styles.flex}>
-            <StatTile label="Coins" value={`${coins}`} hue="orange" art={<Coin size={t.layout.icon.md} />} />
-          </Appear>
-          <Appear from="pop" spring="bouncy" index={8} style={styles.flex}>
-            <StatTile label="Accuracy" value={`${Math.round(summary.accuracy * 100)}%`} icon={Target} hue="green" />
-          </Appear>
-        </View>
         {summary.goalReached && (
-          <Appear index={10} style={styles.stretch}>
+          <Appear index={3} style={styles.stretch}>
             <Card variant="tinted" hue="yellow" style={styles.note}>
               <Icon icon={Zap} hue="yellow" filled />
               <Text variant="bodyStrong" hue="yellow" style={styles.flex}>
@@ -113,7 +105,7 @@ export function LessonComplete({ summary, onContinue }: { summary: LessonSummary
           </Appear>
         )}
         {summary.badges.length > 0 && (
-          <Appear index={11} style={styles.stretch}>
+          <Appear index={4} style={styles.stretch}>
             <Card variant="tinted" hue="purple" style={styles.badges}>
               <Text variant="label" hue="purple">
                 {summary.badges.length === 1 ? 'New badge' : `${summary.badges.length} new badges`}
@@ -147,30 +139,30 @@ export function StreakCelebration({ streak, onContinue }: { streak: number; onCo
             <Flame size={t.layout.mascot.lg} color={t.colors.hue.orange.depth} fill={t.colors.hue.orange.base} strokeWidth={t.layout.iconStroke} />
           </Flicker>
         </Appear>
-        <Appear from="pop" spring="bouncy" index={2}>
-          <Text variant="hero" hue="orange" align="center" tabular>
-            {count}
-          </Text>
-        </Appear>
-        <Appear index={3}>
-          <Text variant="title" hue="orange" align="center">
-            day streak!
-          </Text>
-        </Appear>
-        <Appear index={5} style={styles.stretch}>
+        <Text variant="hero" hue="orange" align="center" tabular>
+          {count}
+        </Text>
+        <Text variant="title" hue="orange" align="center">
+          day streak!
+        </Text>
+        <Appear index={2} style={styles.stretch}>
           <Card style={styles.week}>
             <View style={styles.weekRow}>
-              {lastWeek(today).map((d, i) => {
+              {lastWeek(today).map((d) => {
                 const active = (xpByDay[d] ?? 0) > 0;
                 return (
                   <View key={d} style={styles.day}>
                     <Text variant="label" color={d === today ? 'text' : 'textTertiary'}>
                       {weekdayLetter(d)}
                     </Text>
-                    {/* The days tick on one by one, today last and with the biggest bounce. */}
-                    <Appear from="pop" spring="bouncy" index={7 + i} delay={d === today ? t.motion.stagger * 3 : 0}>
+                    {/* Only today's tick pops in: it is the one that just happened. */}
+                    {d === today ? (
+                      <Appear from="pop" spring="bouncy" index={4}>
+                        <View style={[styles.dot, active && styles.dotOn]}>{active && <Icon icon={Check} size="sm" color="onColor" />}</View>
+                      </Appear>
+                    ) : (
                       <View style={[styles.dot, active && styles.dotOn]}>{active && <Icon icon={Check} size="sm" color="onColor" />}</View>
-                    </Appear>
+                    )}
                   </View>
                 );
               })}

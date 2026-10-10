@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import { House, MapPin, ScanSearch, Store, UserRound } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, PressableScale, Text } from '@/components/ui';
 import { useScreenSize } from '@/lib/useScreenSize';
@@ -19,7 +19,8 @@ const TABS: Record<string, { icon: LucideIcon; label: string }> = {
 
 /**
  * The tab bar. The active tab sits in a blue outlined tile that slides across to whichever tab you pick, so you see
- * where you went rather than a highlight blinking from one place to another; the new tab's icon hops as it lands.
+ * where you went rather than a highlight blinking from one place to another. That one slide is the only motion: you
+ * switch tabs constantly.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const t = useTheme();
@@ -86,9 +87,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               }}
               style={styles.tab}
             >
-              <TabIcon focused={focused}>
-                <Icon icon={tab.icon} size="lg" hue={focused ? 'blue' : undefined} color="textTertiary" />
-              </TabIcon>
+              <Icon icon={tab.icon} size="lg" hue={focused ? 'blue' : undefined} color="textTertiary" />
               {!narrow && (
                 <Text variant="label" hue={focused ? 'blue' : undefined} color="textTertiary" numberOfLines={1} style={styles.label}>
                   {tab.label}
@@ -100,19 +99,6 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       </View>
     </View>
   );
-}
-
-/** Hops and tilts the icon when its tab becomes the active one. */
-function TabIcon({ focused, children }: { focused: boolean; children: React.ReactNode }) {
-  const t = useTheme();
-  const hop = useSharedValue(0);
-  useEffect(() => {
-    if (focused) hop.value = withSequence(withSpring(1, t.motion.spring.snappy), withSpring(0, t.motion.spring.bouncy));
-  }, [focused, hop, t.motion.spring]);
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: -hop.value * t.space[1.5] }, { rotate: `${hop.value * -8}deg` }, { scale: 1 + hop.value * 0.12 }],
-  }));
-  return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 const useStyles = makeStyles((t) => ({

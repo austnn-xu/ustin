@@ -11,8 +11,11 @@ export type AppearProps = {
   index?: number;
   /** Extra wait (ms) before it starts, on top of the stagger. */
   delay?: number;
-  /** `bouncy` overshoots a touch, for rewards and Tin's bubbles; `gentle` settles softly, for most content. */
-  spring?: 'gentle' | 'standard' | 'bouncy';
+  /**
+   * `quick` for things that happen constantly (the next question, a popover) — short, no overshoot; `gentle` settles
+   * softly, for most content; `bouncy` overshoots a touch, for rare rewards only.
+   */
+  spring?: 'quick' | 'gentle' | 'bouncy';
   style?: StyleProp<ViewStyle>;
   pointerEvents?: 'auto' | 'none' | 'box-none' | 'box-only';
 };
@@ -43,7 +46,7 @@ export function Appear({ children, from = 'below', index = 0, delay = 0, spring 
         style,
         !reduced && {
           animationName: FROM[from],
-          animationDuration: bouncy ? t.motion.enterBouncy : t.motion.enter,
+          animationDuration: bouncy ? t.motion.enterBouncy : spring === 'quick' ? t.motion.enterQuick : t.motion.enter,
           animationTimingFunction: bouncy ? easing.back : easing.out,
           animationDelay: delay + index * t.motion.stagger,
           // Hold the first frame during the stagger delay, so it never flashes in before its turn.
