@@ -1,7 +1,7 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
-import { makeStyles, useTheme } from '@/theme';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
+import { easing, keyframes, makeStyles, useTheme } from '@/theme';
 import { PressableScale } from './PressableScale';
 
 export type ChoiceState = 'idle' | 'selected' | 'correct' | 'wrong' | 'dimmed';
@@ -28,24 +28,16 @@ export function ChoiceCard({ children, state = 'idle', onPress, disabled, access
   const depth = t.layout.depth.md;
   const pressed = useSharedValue(0);
   const face = useAnimatedStyle(() => ({ transform: [{ translateY: pressed.value * (depth - t.layout.border) }] }));
-  const pop = useSharedValue(0);
-  const shake = useSharedValue(0);
-  const prev = useRef(state);
-
-  useEffect(() => {
-    if (state === prev.current) return;
-    prev.current = state;
-    if (state === 'selected' || state === 'correct') {
-      pop.value = withSequence(withSpring(state === 'correct' ? 1 : 0.5, t.motion.spring.snappy), withSpring(0, t.motion.spring.bouncy));
-    } else if (state === 'wrong') {
-      shake.value = 1;
-      shake.value = withSpring(0, t.motion.spring.wobble);
-    }
-  }, [state, pop, shake, t.motion.spring]);
-
-  const react = useAnimatedStyle(() => ({
-    transform: [{ translateX: shake.value * t.space[3] }, { scale: 1 + pop.value * 0.06 }],
-  }));
+  // Each change of state plays its reaction once, as a CSS animation (no JavaScript per frame).
+  const reduced = useReducedMotion();
+  const reaction =
+    reduced || state === 'idle' || state === 'dimmed'
+      ? null
+      : {
+          animationName: state === 'wrong' ? keyframes.nope : state === 'correct' ? keyframes.cheer : keyframes.hop,
+          animationDuration: t.motion.react,
+          animationTimingFunction: easing.out,
+        };
 
   const tone =
     state === 'selected'
@@ -57,7 +49,7 @@ export function ChoiceCard({ children, state = 'idle', onPress, disabled, access
           : null;
 
   return (
-    <Animated.View style={[style, react]}>
+    <Animated.View style={[style, reaction]}>
       <PressableScale
         scale={false}
         haptic="selection"

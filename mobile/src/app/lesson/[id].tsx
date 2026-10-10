@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { X } from 'lucide-react-native';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useTransition } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Coin } from '@/components/art/Coin';
@@ -65,6 +65,10 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
   const summary = useRef<LessonSummary | null>(null);
   const streakAfter = useRef(0);
 
+  // Check and Continue render the next state as a transition: the feedback panel and the next exercise build in slices
+  // instead of freezing the screen, and taps are ignored until they land so a double tap can never skip a question.
+  const [pending, startTransition] = useTransition();
+
   const exercise = queue[index]!;
   const done = index + (checked !== null ? 1 : 0);
   const progress = done / queue.length;
@@ -79,30 +83,33 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
   };
 
   const check = () => {
-    const ok = lessons.isCorrect(exercise, selected);
-    setChecked(ok);
-    if (ok) {
-      haptics.success();
-      const next = combo + 1;
-      setCombo(next);
-      setTitle(next >= 3 ? `${next} in a row!` : PRAISE[Math.floor(Math.random() * PRAISE.length)]!);
-      // A coin for every right answer, and a bonus for landing 5 or 10 in a row.
-      const paid = coinsForCorrect(next);
-      earnCoins(paid.total);
-      setCoins((c) => c + paid.total);
-      setPayout(paid);
-    } else {
-      haptics.error();
-      setCombo(0);
-      setPayout(null);
-      setTitle(NUDGE[Math.floor(Math.random() * NUDGE.length)]!);
-      missed.current.add(exercise.id);
-      recordMistakes(exercise.objects);
-      if (!retried.current.has(exercise.id)) {
-        retried.current.add(exercise.id);
-        setQueue((q) => [...q, exercise]);
+    if (pending || checked !== null) return;
+    startTransition(() => {
+      const ok = lessons.isCorrect(exercise, selected);
+      setChecked(ok);
+      if (ok) {
+        haptics.success();
+        const next = combo + 1;
+        setCombo(next);
+        setTitle(next >= 3 ? `${next} in a row!` : PRAISE[Math.floor(Math.random() * PRAISE.length)]!);
+        // A coin for every right answer, and a bonus for landing 5 or 10 in a row.
+        const paid = coinsForCorrect(next);
+        earnCoins(paid.total);
+        setCoins((c) => c + paid.total);
+        setPayout(paid);
+      } else {
+        haptics.error();
+        setCombo(0);
+        setPayout(null);
+        setTitle(NUDGE[Math.floor(Math.random() * NUDGE.length)]!);
+        missed.current.add(exercise.id);
+        recordMistakes(exercise.objects);
+        if (!retried.current.has(exercise.id)) {
+          retried.current.add(exercise.id);
+          setQueue((q) => [...q, exercise]);
+        }
       }
-    }
+    });
   };
 
   const finish = () => {
@@ -127,11 +134,14 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
   };
 
   const next = () => {
+    if (pending) return;
     if (coaching) finishCoaching();
-    setSelected([]);
-    setChecked(null);
-    if (index + 1 >= queue.length) finish();
-    else setIndex(index + 1);
+    startTransition(() => {
+      setSelected([]);
+      setChecked(null);
+      if (index + 1 >= queue.length) finish();
+      else setIndex(index + 1);
+    });
   };
 
   const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));

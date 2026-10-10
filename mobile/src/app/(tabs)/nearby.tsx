@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useIsFocused, useLocalSearchParams } from 'expo-router';
 import { ExternalLink } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
@@ -37,10 +37,15 @@ export default function Nearby() {
     if (params.kind && params.kind in KINDS) setKind(params.kind as PlaceKind);
   }, [params.kind, params.item]);
 
+  // The tab is built in the background before anyone opens it; only ask OpenStreetMap once it has actually been seen.
+  const focused = useIsFocused();
+  const [seen, setSeen] = useState(focused);
+  if (focused && !seen) setSeen(true);
+
   const query = useQuery({
     queryKey: ['places', kind, place?.lat, place?.lon],
     queryFn: () => findPlaces(kind, place!.lat, place!.lon),
-    enabled: !!place,
+    enabled: !!place && seen,
   });
 
   useEffect(() => setSelected(null), [kind, place?.lat, place?.lon]);

@@ -1,10 +1,9 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Recycle } from 'lucide-react-native';
-import { useEffect } from 'react';
 import { View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
-import { useTheme, type Hue, type HueName } from '@/theme';
+import { drift, easing, keyframes, useTheme, type Hue, type HueName } from '@/theme';
 
 /**
  * The cartoon town the Learn route runs through: wheelie-bin stops, the sorting centre at the end of each unit,
@@ -33,27 +32,16 @@ export function BinStopArt({ hue: hueName, locked, open, icon: Glyph, iconFilled
     ? { base: t.colors.borderStrong, depth: t.colors.textTertiary, subtle: t.colors.fill, text: t.colors.textTertiary }
     : t.colors.hue[hueName];
   const height = size * (76 / 64);
-  const lid = useSharedValue(0);
-
-  useEffect(() => {
-    if (!open) {
-      lid.value = 0;
-      return;
-    }
-    lid.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: t.motion.idleDuration / 4, easing: Easing.out(Easing.back(2)) }),
-        withTiming(1, { duration: t.motion.idleDuration / 2 }),
-        withTiming(0, { duration: t.motion.idleDuration / 4, easing: Easing.in(Easing.quad) }),
-        withTiming(0, { duration: t.motion.idleDuration / 2 }),
-      ),
-      -1,
-    );
-  }, [open, lid, t.motion.idleDuration]);
-
-  const lidStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${-lid.value * 28}deg` }],
-  }));
+  const reduced = useReducedMotion();
+  // The open (current) stop flaps its lid on a CSS loop: no JavaScript per frame.
+  const lidStyle =
+    open && !reduced
+      ? {
+          animationName: keyframes.lidFlap,
+          animationDuration: t.motion.idleDuration * 1.5,
+          animationIterationCount: 'infinite' as const,
+        }
+      : null;
 
   return (
     <View style={{ width: size, height }} aria-hidden>
@@ -136,14 +124,18 @@ export function TruckArt({ hue: hueName, size, flip }: { hue: HueName; size: num
   const s = t.colors.scene;
   const hue = t.colors.hue[hueName];
   const m = t.colors.mascot;
-  const bounce = useSharedValue(0);
+  const reduced = useReducedMotion();
 
-  useEffect(() => {
-    bounce.value = withRepeat(withTiming(1, { duration: t.motion.idleDuration / 3, easing: Easing.inOut(Easing.sin) }), -1, true);
-  }, [bounce, t.motion.idleDuration]);
-
-  // The body idles on its suspension; the wheels stay planted.
-  const body = useAnimatedStyle(() => ({ transform: [{ translateY: bounce.value * size * 0.015 }] }));
+  // The body idles on its suspension (a CSS loop); the wheels stay planted.
+  const body = reduced
+    ? null
+    : {
+        animationName: drift(size * 0.015),
+        animationDuration: t.motion.idleDuration / 3,
+        animationTimingFunction: easing.sine,
+        animationIterationCount: 'infinite' as const,
+        animationDirection: 'alternate' as const,
+      };
   const height = size * (76 / 120);
 
   return (

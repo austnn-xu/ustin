@@ -2,15 +2,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import { Check, Flame, Target, Zap } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Coin } from '@/components/art/Coin';
 import { Confetti } from '@/components/art/Confetti';
 import { Mascot } from '@/components/art/Mascot';
@@ -20,7 +12,7 @@ import type { Achievement } from '@/lib/achievements';
 import { dayKey, lastWeek, weekdayLetter } from '@/lib/dates';
 import { haptics } from '@/lib/haptics';
 import { useProgress } from '@/stores/progress';
-import { makeStyles, useTheme, type HueName } from '@/theme';
+import { easing, keyframes, makeStyles, useTheme, type HueName } from '@/theme';
 import { useScreenSize } from '@/lib/useScreenSize';
 
 /** Counts up to `to` once, after `delay` ms, for celebratory numbers. */
@@ -195,19 +187,25 @@ export function StreakCelebration({ streak, onContinue }: { streak: number; onCo
   );
 }
 
-/** A flame that never sits still: it breathes and leans, a loop like a real fire. */
+/** A flame that never sits still: it breathes and leans, a CSS loop like a real fire. */
 function Flicker({ children }: { children: React.ReactNode }) {
   const t = useTheme();
   const reduced = useReducedMotion();
-  const f = useSharedValue(0);
-  useEffect(() => {
-    if (reduced) return;
-    f.value = withRepeat(withTiming(1, { duration: t.motion.pulseDuration / 2, easing: Easing.inOut(Easing.sin) }), -1, true);
-  }, [f, reduced, t.motion.pulseDuration]);
-  const style = useAnimatedStyle(() => ({
-    transform: [{ scaleY: 1 + f.value * 0.06 }, { scaleX: 1 - f.value * 0.03 }, { rotate: `${(f.value - 0.5) * 4}deg` }],
-  }));
-  return <Animated.View style={style}>{children}</Animated.View>;
+  return (
+    <Animated.View
+      style={
+        !reduced && {
+          animationName: keyframes.flicker,
+          animationDuration: t.motion.pulseDuration / 2,
+          animationTimingFunction: easing.sine,
+          animationIterationCount: 'infinite',
+          animationDirection: 'alternate',
+        }
+      }
+    >
+      {children}
+    </Animated.View>
+  );
 }
 
 /** "Wait, don't go!" — shown when closing a lesson part-way. The sheet springs up over a fading scrim. */

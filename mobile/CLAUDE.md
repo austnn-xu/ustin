@@ -48,7 +48,7 @@ Always pair the hue with the icon and the label; color is never the only signal.
 (cosmetics are drawn in `OutfitArt.tsx`, in the mascot's own coordinates). Tin carries the emotion of the app:
 happy on the path, cheering on a correct answer and at the end of a lesson, worried on a wrong one or when the streak is
 waiting on you, sad when a lesson is abandoned, thinking while a photo is analysed. Use Tin wherever a moment has a feeling —
-never more than one Tin on screen.
+never more than one Tin on screen (a sheet over a dimmed screen, like a tab's tour, counts as its own screen).
 
 Tin is a cartoon and moves like one: it blinks, every mood change lands with a squash-and-stretch, cheering jumps, a
 wrong answer makes it shiver, it can `wave` hello, its mouth flaps while `MascotSays` is `typing`, and where it is the
@@ -75,7 +75,7 @@ something (onboarding, empty states), not for every bubble.
 src/app/              routes only (Expo Router): (tabs)/ learn · what-bin · near me · shop · profile, plus lesson/ and item/
 src/theme/            tokens + ThemeProvider + makeStyles — the only place raw values live
 src/components/ui/    primitives: Text, Button, ChoiceCard, ProgressBar, Input, Chip, Skeleton, Icon, Screen, PressableScale,
-                      and the motion primitives Appear, Float and RollingNumber
+                      the motion primitives Appear, Float and RollingNumber, and Deferred
 src/components/art/   the mascot and its outfits, coins, confetti, bins, item artwork, the route's town — the only place SVG
                       coordinates live
 src/components/       product components, composed from primitives
@@ -133,12 +133,32 @@ Family (family.co) is the reference for *how things move*: fluid, physical, and 
   or a streak gets the full build-up with confetti.
 - Motion respects the system's reduce-motion setting (`useReducedMotion`): entrances and loops are skipped, content just shows.
 
+## Performance (the web build is what most people use)
+
+Smooth beats showy. Measure with Playwright at 4× and 8× CPU throttle before and after any motion change.
+
+- **CSS for anything that plays by itself.** Entrances (`Appear`), loops (`Float`, Tin's bob, the truck, the bin lid, the
+  flame, skeletons) and confetti are Reanimated 4 CSS animations built from `src/theme/animations.ts`. On the web they run
+  on the compositor; on native, on the UI thread. Never `withRepeat` or a JS-driven loop.
+- **Springs only for a direct response to a touch**, one element at a time (press, the tab highlight, a mood change).
+- **No per-frame React renders.** Nothing calls `setState` on a fast timer except the smallest possible leaf (the typed text
+  in `MascotSays`). Tin's drawing is memoised in parts so a blink redraws only the face; a Tin with `idle={false}` (and not
+  talking, waving or pokeable) is a still drawing with no hooks at all — use that for grids.
+- **Big renders are transitions.** Each tab renders its content through `Deferred`; lesson Check/Continue and onboarding
+  steps use `useTransition` and ignore taps while pending. The other tabs pre-build in idle time after launch.
+- **Hidden means skipped.** On the web, navigators keep every screen mounted and stacked; `FocusedScene` gives unfocused
+  screens `content-visibility: hidden`, and route units off screen use `content-visibility: auto`.
+
 ## The first run
 
 Onboarding (`src/app/onboarding.tsx`) teaches by doing, one idea per screen: meet Tin, answer a real question (where a
 takeaway coffee cup goes; the reveal splits it into its three parts using the real verdict), the three things the app
 does, a daily goal in minutes, an optional location, then exactly what the first lesson will be and how a lesson works.
 The very first lesson then coaches the loop once with `CoachTip` (pick → Check → read why → Continue).
+
+Then the rest of the app teaches itself: the first time each tab opens, `TabTour` raises a sheet where Tin walks through
+what the tab is for and how to use it, two or three steps, each with the same icon as the real control
+(content in `src/lib/tour.ts`, every claim true to the screen). Skip or Got it marks it seen; Profile → Replay the tour.
 
 ## Never do
 

@@ -16,7 +16,8 @@ export type RollingNumberProps = {
   accessibilityLabel?: string;
 };
 
-const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+/** The whole column of digits as one text node (one line each), so a counter costs one element per digit, not ten. */
+const COLUMN = '0\n1\n2\n3\n4\n5\n6\n7\n8\n9';
 
 /**
  * A number whose digits roll to their new value like an odometer, instead of snapping. Every counter in the app
@@ -86,11 +87,9 @@ function Digit({
   return (
     <View style={[styles.window, { height: lineHeight }]} importantForAccessibility="no-hide-descendants" aria-hidden>
       <Animated.View style={column}>
-        {DIGITS.map((d) => (
-          <Text key={d} variant={variant} hue={hue} color={color} tabular style={{ height: lineHeight }}>
-            {d}
-          </Text>
-        ))}
+        <Text variant={variant} hue={hue} color={color} tabular numberOfLines={10}>
+          {COLUMN}
+        </Text>
       </Animated.View>
     </View>
   );

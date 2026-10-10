@@ -1,20 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Pressable } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
 import { paintOf, type Outfit } from '@/lib/cosmetics';
 import { haptics } from '@/lib/haptics';
 import { useProgress } from '@/stores/progress';
-import { useTheme, type HueName } from '@/theme';
+import { drift, easing, useTheme, type HueName } from '@/theme';
 import { EyewearArt, HatArt, NeckArt } from './OutfitArt';
 
 export type Mood = 'happy' | 'cheer' | 'worried' | 'sad' | 'thinking' | 'sleepy' | 'wow';
@@ -26,7 +17,10 @@ export type MascotProps = {
   hue?: HueName;
   /** What Tin wears. Omit to wear the outfit the user has equipped; pass null for bare Tin. */
   outfit?: Outfit | null;
-  /** Gentle idle bob and blinking. On by default; turn off in dense lists. */
+  /**
+   * Gentle idle bob, blinking and reactions to mood changes. On by default. Turn it off for thumbnails (the shop grid):
+   * an idle-less Tin that is not talking, waving or pokeable is drawn once, with no hooks or animation at all.
+   */
   idle?: boolean;
   /** Flap Tin's mouth, while its speech bubble is typing out. */
   talking?: boolean;
@@ -47,6 +41,9 @@ const MOOD_LABEL: Record<Mood, string> = {
   wow: 'Tin the tin can, amazed',
 };
 
+/** Moods worth a reaction when Tin first appears (a quiet `happy` Tin just arrives). */
+const EXPRESSIVE: Mood[] = ['cheer', 'wow', 'worried', 'sad'];
+
 /** How many swings make one wave. */
 const WAVE_SWINGS = 6;
 
@@ -56,8 +53,30 @@ const WAVE_SWINGS = 6;
  *
  * Tin is a cartoon, so it moves like one: it blinks, its mouth flaps while it talks, every mood change lands with a
  * squash-and-stretch, cheering jumps, a wrong answer makes it shiver, and it waves hello.
+ *
+ * Built to stay cheap: the idle bob is a CSS loop (no JS per frame), reactions are a brief spring on one view, and the
+ * drawing is split so a blink or a mouth flap redraws only the face, never the whole can.
  */
-export function Mascot({
+export const Mascot = memo(function Mascot(props: MascotProps) {
+  const { idle = true, talking = false, wave = false, pokeable = false } = props;
+  if (!idle && !talking && !wave && !pokeable) return <StillTin {...props} />;
+  return <LiveTin {...props} />;
+});
+
+/** A Tin that never moves: one render, no timers, no animated styles. For grids of thumbnails. */
+function StillTin({ mood = 'happy', size = 'md', hue = 'green', outfit: outfitProp, accessibilityLabel }: MascotProps) {
+  const t = useTheme();
+  const equipped = useProgress((s) => s.equipped);
+  const outfit = outfitProp === undefined ? equipped : outfitProp;
+  const px = t.layout.mascot[size];
+  return (
+    <View style={{ width: px, height: px * (168 / 120) }} accessibilityRole="image" accessibilityLabel={accessibilityLabel ?? MOOD_LABEL[mood]}>
+      <TinArt mood={mood} band={paintOf(outfit) ?? hue} outfit={outfit} wave={0} blinking={false} mouthOpen={false} />
+    </View>
+  );
+}
+
+function LiveTin({
   mood: moodProp = 'happy',
   size = 'md',
   hue = 'green',
@@ -69,11 +88,9 @@ export function Mascot({
   accessibilityLabel,
 }: MascotProps) {
   const t = useTheme();
-  const c = t.colors.mascot;
   const reduced = useReducedMotion();
   const equipped = useProgress((s) => s.equipped);
   const outfit = outfitProp === undefined ? equipped : outfitProp;
-  const band = t.colors.hue[paintOf(outfit) ?? hue];
   const px = t.layout.mascot[size];
   const height = px * (168 / 120);
 
@@ -85,23 +102,17 @@ export function Mascot({
   const [waving, setWaving] = useState(false);
   const swing = useBeat(waving, t.motion.waveBeat);
 
-  const bob = useSharedValue(0);
   const squash = useSharedValue(0);
   const jump = useSharedValue(0);
   const shake = useSharedValue(0);
+  const first = useRef(true);
 
   useEffect(() => {
-    if (!idle || reduced) return;
-    bob.value = withRepeat(
-      withTiming(1, { duration: t.motion.idleDuration, easing: Easing.inOut(Easing.sin) }),
-      -1,
-      true,
-    );
-  }, [bob, idle, reduced, t.motion.idleDuration]);
-
-  useEffect(() => {
+    const arriving = first.current;
+    first.current = false;
     if (reduced) return;
-    // Every new mood lands like a cartoon: squashed flat, then stretching back with a jiggle.
+    // A quiet Tin just arrives; an expressive one (or any change of mood) lands like a cartoon.
+    if (arriving && !EXPRESSIVE.includes(mood)) return;
     squash.value = 1;
     squash.value = withSpring(0, t.motion.spring.wobble);
     if (mood === 'cheer' || mood === 'wow') {
@@ -111,7 +122,8 @@ export function Mascot({
       shake.value = 1;
       shake.value = withSpring(0, t.motion.spring.wobble);
     }
-  }, [mood, reduced, squash, jump, shake, t.motion.spring]);
+    // Only a change of mood replays the reaction; the shared values and springs are stable.
+  }, [mood]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!wave || reduced) return;
@@ -122,16 +134,19 @@ export function Mascot({
 
   useEffect(() => {
     if (!poked) return;
-    const id = setTimeout(() => setPoked(0), t.motion.waveBeat * WAVE_SWINGS);
+    const id = setTimeout(() => {
+      setPoked(0);
+      setWaving(false);
+    }, t.motion.waveBeat * WAVE_SWINGS);
     return () => clearTimeout(id);
   }, [poked, t.motion.waveBeat]);
 
-  const style = useAnimatedStyle(() => {
+  const react = useAnimatedStyle(() => {
     const sy = 1 - squash.value * 0.14;
     return {
       transform: [
         // Squash about the feet, not the middle, so Tin stays planted on the ground.
-        { translateY: bob.value * -px * 0.03 + jump.value * px * 0.14 + ((1 - sy) * height) / 2 },
+        { translateY: jump.value * px * 0.14 + ((1 - sy) * height) / 2 },
         { translateX: shake.value * px * 0.06 },
         { scaleX: 1 + squash.value * 0.1 },
         { scaleY: sy },
@@ -141,35 +156,30 @@ export function Mascot({
 
   const art = (
     <Animated.View
-      style={[{ width: px, height }, style]}
+      style={[
+        { width: px, height },
+        idle &&
+          !reduced && {
+            animationName: drift(px * 0.03),
+            animationDuration: t.motion.idleDuration,
+            animationTimingFunction: easing.sine,
+            animationIterationCount: 'infinite',
+            animationDirection: 'alternate',
+          },
+      ]}
       accessibilityRole={pokeable ? undefined : 'image'}
       accessibilityLabel={pokeable ? undefined : (accessibilityLabel ?? MOOD_LABEL[mood])}
     >
-      <Svg width="100%" height="100%" viewBox="0 -28 120 168">
-        {/* Feet */}
-        <Ellipse cx={45} cy={131} rx={10} ry={5} fill={c.outline} />
-        <Ellipse cx={75} cy={131} rx={10} ry={5} fill={c.outline} />
-
-        <Arms mood={mood} body={c.body} outline={c.outline} wave={waving ? (swing ? 1 : 2) : 0} />
-
-        {/* Body */}
-        <Rect x={22} y={30} width={76} height={98} rx={14} fill={c.body} />
-        <Path d="M78 30 h6 a14 14 0 0 1 14 14 v70 a14 14 0 0 1 -14 14 h-6 z" fill={c.bodyShade} />
-        <Path d="M24 48 H96 M24 112 H96" stroke={c.bodyShade} strokeWidth={3} />
-        <Rect x={22} y={96} width={76} height={14} fill={band.base} />
-        <Path d="M22 103 H98" stroke={band.depth} strokeWidth={2} strokeDasharray="3 5" />
-        <Rect x={22} y={30} width={76} height={98} rx={14} fill="none" stroke={c.outline} strokeWidth={4} strokeLinejoin="round" />
-
-        {/* Lid */}
-        <Ellipse cx={60} cy={30} rx={40} ry={10} fill={c.rim} stroke={c.outline} strokeWidth={4} />
-        <Ellipse cx={60} cy={30} rx={31} ry={6} fill={c.bodyShade} />
-        <Ellipse cx={70} cy={27} rx={8} ry={3.5} fill="none" stroke={c.outline} strokeWidth={3} />
-
-        {outfit?.neck && <NeckArt id={outfit.neck} c={t.colors} />}
-        <Face mood={mood} c={c} blinking={blinking} mouthOpen={talking && mouthOpen} />
-        {outfit?.eyes && <EyewearArt id={outfit.eyes} c={t.colors} />}
-        {outfit?.hat && <HatArt id={outfit.hat} c={t.colors} />}
-      </Svg>
+      <Animated.View style={[styles.fill, react]}>
+        <TinArt
+          mood={mood}
+          band={paintOf(outfit) ?? hue}
+          outfit={outfit}
+          wave={waving ? (swing ? 1 : 2) : 0}
+          blinking={blinking}
+          mouthOpen={talking && mouthOpen}
+        />
+      </Animated.View>
     </Animated.View>
   );
 
@@ -189,6 +199,63 @@ export function Mascot({
     </Pressable>
   );
 }
+
+const styles = { fill: { flex: 1 } } as const;
+
+type TinArtProps = {
+  mood: Mood;
+  band: HueName;
+  outfit: Outfit | null;
+  wave: 0 | 1 | 2;
+  blinking: boolean;
+  mouthOpen: boolean;
+};
+
+/**
+ * The drawing. The can and each outfit piece are memoised elements, so when only the face changes (a blink, a mouth
+ * flap, a new mood) React leaves the rest of the SVG alone.
+ */
+const TinArt = memo(function TinArt({ mood, band: bandName, outfit, wave, blinking, mouthOpen }: TinArtProps) {
+  const t = useTheme();
+  const c = t.colors.mascot;
+  const band = t.colors.hue[bandName];
+  const can = useMemo(
+    () => (
+      <G>
+        {/* Body */}
+        <Rect x={22} y={30} width={76} height={98} rx={14} fill={c.body} />
+        <Path d="M78 30 h6 a14 14 0 0 1 14 14 v70 a14 14 0 0 1 -14 14 h-6 z" fill={c.bodyShade} />
+        <Path d="M24 48 H96 M24 112 H96" stroke={c.bodyShade} strokeWidth={3} />
+        <Rect x={22} y={96} width={76} height={14} fill={band.base} />
+        <Path d="M22 103 H98" stroke={band.depth} strokeWidth={2} strokeDasharray="3 5" />
+        <Rect x={22} y={30} width={76} height={98} rx={14} fill="none" stroke={c.outline} strokeWidth={4} strokeLinejoin="round" />
+
+        {/* Lid */}
+        <Ellipse cx={60} cy={30} rx={40} ry={10} fill={c.rim} stroke={c.outline} strokeWidth={4} />
+        <Ellipse cx={60} cy={30} rx={31} ry={6} fill={c.bodyShade} />
+        <Ellipse cx={70} cy={27} rx={8} ry={3.5} fill="none" stroke={c.outline} strokeWidth={3} />
+      </G>
+    ),
+    [c, band],
+  );
+  const neck = useMemo(() => (outfit?.neck ? <NeckArt id={outfit.neck} c={t.colors} /> : null), [outfit?.neck, t.colors]);
+  const eyes = useMemo(() => (outfit?.eyes ? <EyewearArt id={outfit.eyes} c={t.colors} /> : null), [outfit?.eyes, t.colors]);
+  const hat = useMemo(() => (outfit?.hat ? <HatArt id={outfit.hat} c={t.colors} /> : null), [outfit?.hat, t.colors]);
+
+  return (
+    <Svg width="100%" height="100%" viewBox="0 -28 120 168">
+      {/* Feet */}
+      <Ellipse cx={45} cy={131} rx={10} ry={5} fill={c.outline} />
+      <Ellipse cx={75} cy={131} rx={10} ry={5} fill={c.outline} />
+      <Arms mood={mood} body={c.body} outline={c.outline} wave={wave} />
+      {can}
+      {neck}
+      <Face mood={mood} c={c} blinking={blinking} mouthOpen={mouthOpen} />
+      {eyes}
+      {hat}
+    </Svg>
+  );
+});
 
 /** Blinks now and then, at a slightly random rhythm (sometimes twice), so Tin never looks like a still image. */
 function useBlink(enabled: boolean) {
@@ -231,7 +298,7 @@ function useBeat(on: boolean, ms: number) {
 
 type FaceColors = ReturnType<typeof useTheme>['colors']['mascot'];
 
-function Arms({ mood, body, outline, wave }: { mood: Mood; body: string; outline: string; wave: 0 | 1 | 2 }) {
+const Arms = memo(function Arms({ mood, body, outline, wave }: { mood: Mood; body: string; outline: string; wave: 0 | 1 | 2 }) {
   const pose =
     mood === 'cheer' || mood === 'wow'
       ? ['M26 72 Q10 62 12 42', 'M94 72 Q110 62 108 42']
@@ -254,9 +321,9 @@ function Arms({ mood, body, outline, wave }: { mood: Mood; body: string; outline
       ))}
     </G>
   );
-}
+});
 
-function Face({ mood, c, blinking, mouthOpen }: { mood: Mood; c: FaceColors; blinking: boolean; mouthOpen: boolean }) {
+const Face = memo(function Face({ mood, c, blinking, mouthOpen }: { mood: Mood; c: FaceColors; blinking: boolean; mouthOpen: boolean }) {
   const line = { stroke: c.eye, strokeWidth: 4, strokeLinecap: 'round' as const, fill: 'none' };
   const look =
     mood === 'thinking' ? { x: 3, y: -3 } : mood === 'sad' ? { x: 0, y: 3 } : mood === 'happy' ? { x: 1, y: -1 } : { x: 0, y: 0 };
@@ -338,4 +405,4 @@ function Face({ mood, c, blinking, mouthOpen }: { mood: Mood; c: FaceColors; bli
       {mood === 'sad' && <Path d="M38 76 q-4 7 0 9 q4 -2 0 -9 z" fill={c.tear} />}
     </G>
   );
-}
+});

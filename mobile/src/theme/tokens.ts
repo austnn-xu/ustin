@@ -109,7 +109,12 @@ export const opacity = {
   muted: 0.6,
 } as const;
 
-/** Spring presets. Every state transition uses one of these. */
+/**
+ * Motion. Two engines, chosen for speed:
+ *  - CSS animations (Reanimated 4 `animationName`) for everything that plays by itself — entrances, idle loops,
+ *    celebrations. They run on the compositor on the web and natively on iOS/Android, never on the JS thread.
+ *  - Springs (Reanimated worklets) for direct responses to a touch — press, select, a mood change — one element at a time.
+ */
 export const motion = {
   pressScale: 0.96,
   spring: {
@@ -124,10 +129,26 @@ export const motion = {
     /** Cartoon squash-and-stretch and the "nope" shake: a stiff spring that rings a few times before it settles. */
     wobble: { damping: 5, stiffness: 520, mass: 0.6 },
   },
+  /** Entrance durations (ms): `enter` for content, `enterBouncy` for things that pop (rewards, bubbles). */
+  enter: 420,
+  enterBouncy: 520,
+  /**
+   * Cubic-bezier curves for CSS animations. `out` settles softly; `back` overshoots a touch, like a spring; `sine` is the
+   * smooth back-and-forth of a loop; `fall` is confetti slowing as it drops.
+   */
+  curve: {
+    out: [0.22, 1, 0.36, 1],
+    back: [0.34, 1.56, 0.64, 1],
+    sine: [0.37, 0, 0.63, 1],
+    fall: [0.25, 0.46, 0.45, 0.94],
+  },
   /** Things arriving on screen slide this far (pt) as they fade in, so nothing appears from nowhere. */
   enterDistance: 24,
   /** Steps and exercises slide in from the side by this much (pt), in the direction you are moving. */
   slideDistance: 64,
+  /** How far (pt) a wrong answer shakes its head, and how long (ms) one-shot reactions like that take. */
+  shakeDistance: 12,
+  react: 480,
   /** Delay (ms) between siblings arriving one after another. */
   stagger: 70,
   /** Loop durations (ms) — loops and one-shot celebrations are the only timing-based motion. */
@@ -142,6 +163,11 @@ export const motion = {
   /** Tin's speech types out at this many ms per character, and its mouth flaps every `talkBeat` while it does. */
   typeSpeed: 24,
   talkBeat: 120,
+  /** After the app settles (ms), the other tabs are built in the background, one every `preloadGap` ms. */
+  preloadAfter: 1500,
+  preloadGap: 600,
+  /** A tab's tour waits this long (ms) after the tab opens, so the screen is there before Tin starts explaining it. */
+  tourDelay: 600,
   /** One swing of Tin's waving arm (ms). */
   waveBeat: 240,
 } as const;
