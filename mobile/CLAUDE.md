@@ -50,6 +50,11 @@ happy on the path, cheering on a correct answer and at the end of a lesson, worr
 waiting on you, sad when a lesson is abandoned, thinking while a photo is analysed. Use Tin wherever a moment has a feeling —
 never more than one Tin on screen.
 
+Tin is a cartoon and moves like one: it blinks, every mood change lands with a squash-and-stretch, cheering jumps, a
+wrong answer makes it shiver, it can `wave` hello, its mouth flaps while `MascotSays` is `typing`, and where it is the
+star of the screen it is `pokeable` (tap it: it hops, grins and waves). Keep `typing` for moments where Tin explains
+something (onboarding, empty states), not for every bubble.
+
 ## Stack
 
 - Expo SDK 57 + React Native + TypeScript (strict). Expo Router, routes in `src/app/`.
@@ -69,7 +74,8 @@ never more than one Tin on screen.
 ```
 src/app/              routes only (Expo Router): (tabs)/ learn · what-bin · near me · shop · profile, plus lesson/ and item/
 src/theme/            tokens + ThemeProvider + makeStyles — the only place raw values live
-src/components/ui/    primitives: Text, Button, ChoiceCard, ProgressBar, Input, Chip, Skeleton, Icon, Screen, PressableScale
+src/components/ui/    primitives: Text, Button, ChoiceCard, ProgressBar, Input, Chip, Skeleton, Icon, Screen, PressableScale,
+                      and the motion primitives Appear, Float and RollingNumber
 src/components/art/   the mascot and its outfits, coins, confetti, bins, item artwork, the route's town — the only place SVG
                       coordinates live
 src/components/       product components, composed from primitives
@@ -108,6 +114,31 @@ src/stores/           zustand stores (progress, settings)
   choices, success/error haptics on answers.
 - Safe areas on every screen (`<Screen>`). Keyboard avoidance on every screen with an input.
 - Fetched data (places) has skeleton loading, a real empty state with something useful to do, and an error state with retry.
+
+## Motion
+
+Family (family.co) is the reference for *how things move*: fluid, physical, and never abrupt. The rules:
+
+- **Nothing appears from nowhere.** Content arrives with `<Appear>` (fade + a short slide or pop, on a spring). Siblings
+  arriving together stagger with `index` so the eye reads them in order: question → item → answers; headline → stats.
+- **Direction means something.** Moving forward (next onboarding step, next exercise) slides in from the right; going back
+  slides in from the left. Sheets rise from the bottom over a fading scrim.
+- **Things move from where they were.** The tab highlight slides to the new tab; progress bars spring to their new value and
+  swell when they fill; numbers roll digit by digit with `<RollingNumber>` instead of snapping.
+- **Feel the answer.** Choosing a tile hops it, a right answer bounces, a wrong one shakes its head (`spring.wobble`), and
+  the feedback badge lands after its panel.
+- **Alive at rest, sparingly.** `<Float>` for the one thing that is waiting for you (the route's Start tag, a coach tip,
+  the idling truck). Never more than one or two floating things on a screen.
+- **The rarer the moment, the bigger the delight.** Everyday taps get a press and a haptic; finishing onboarding, a lesson
+  or a streak gets the full build-up with confetti.
+- Motion respects the system's reduce-motion setting (`useReducedMotion`): entrances and loops are skipped, content just shows.
+
+## The first run
+
+Onboarding (`src/app/onboarding.tsx`) teaches by doing, one idea per screen: meet Tin, answer a real question (where a
+takeaway coffee cup goes; the reveal splits it into its three parts using the real verdict), the three things the app
+does, a daily goal in minutes, an optional location, then exactly what the first lesson will be and how a lesson works.
+The very first lesson then coaches the loop once with `CoachTip` (pick → Check → read why → Continue).
 
 ## Never do
 

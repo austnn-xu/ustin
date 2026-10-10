@@ -5,10 +5,11 @@ import { ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Coin } from '@/components/art/Coin';
 import { MascotSays } from '@/components/MascotSays';
+import { CoachTip } from '@/components/lesson/CoachTip';
 import { ExerciseView } from '@/components/lesson/ExerciseView';
 import { FeedbackPanel } from '@/components/lesson/FeedbackPanel';
 import { LessonComplete, QuitConfirm, StreakCelebration, type LessonSummary } from '@/components/lesson/LessonEnd';
-import { Button, Icon, PressableScale, ProgressBar, Text } from '@/components/ui';
+import { Appear, Button, Icon, PressableScale, ProgressBar, RollingNumber, Text } from '@/components/ui';
 import { newlyUnlocked } from '@/lib/achievements';
 import { coinsForCorrect } from '@/lib/cosmetics';
 import { dayKey } from '@/lib/dates';
@@ -40,6 +41,11 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
   const markCelebrated = useProgress((s) => s.markCelebrated);
   const earnCoins = useProgress((s) => s.earnCoins);
   const goal = useSettings((s) => s.dailyGoal);
+  // Someone's very first lesson coaches them through the loop once: pick, Check, read why, Continue.
+  const [coaching] = useState(
+    () => !useSettings.getState().lessonCoached && Object.keys(useProgress.getState().lessons).length === 0,
+  );
+  const finishCoaching = useSettings((s) => s.finishLessonCoaching);
 
   // Mistakes cost nothing: a wrong answer just comes back once at the end of the lesson, so it gets a second go.
   const [queue, setQueue] = useState<Exercise[]>(built.exercises);
@@ -121,6 +127,7 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
   };
 
   const next = () => {
+    if (coaching) finishCoaching();
     setSelected([]);
     setChecked(null);
     if (index + 1 >= queue.length) finish();
@@ -155,9 +162,7 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
         <ProgressBar value={progress} accessibilityLabel="Lesson progress" />
         <View style={styles.coins} accessibilityLabel={`${coins} coins earned this lesson`}>
           <Coin size={t.layout.icon.md} />
-          <Text variant="bodyStrong" hue="yellow" tabular>
-            {coins}
-          </Text>
+          <RollingNumber value={coins} hue="yellow" bump />
         </View>
       </View>
 
@@ -168,13 +173,25 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
               Previous mistake
             </Text>
           )}
-          <ExerciseView key={`${exercise.id}:${index}`} exercise={exercise} selected={selected} checked={checked} onToggle={toggle} />
+          {/* Each exercise slides in from the right, the way you are moving through the lesson. */}
+          <Appear key={`${exercise.id}:${index}`} from="right">
+            <ExerciseView exercise={exercise} selected={selected} checked={checked} onToggle={toggle} />
+          </Appear>
         </View>
       </ScrollView>
 
       {checked === null ? (
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, t.space[6]) }]}>
           <View style={styles.column}>
+            {coaching && index === 0 && (
+              <CoachTip>
+                {selected.length === 0
+                  ? exercise.multi
+                    ? 'Tap every answer that fits'
+                    : 'Tap the answer you think is right'
+                  : 'Now tap Check to see if you got it'}
+              </CoachTip>
+            )}
             <Button label="Check" fullWidth disabled={selected.length === 0} onPress={check} />
           </View>
         </View>
@@ -186,6 +203,7 @@ function LessonPlayer({ lessonId }: { lessonId: string }) {
           explain={exercise.explain}
           payout={checked ? payout : null}
           showTin={exercise.type !== 'truefalse'}
+          coach={coaching && index === 0}
           onContinue={next}
         />
       )}

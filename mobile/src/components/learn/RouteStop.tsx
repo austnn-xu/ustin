@@ -2,7 +2,7 @@ import { Check, Lock, Star } from 'lucide-react-native';
 import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { BinStopArt, SortingCenterArt } from '@/components/art/RouteArt';
-import { PressableScale } from '@/components/ui';
+import { Float, PressableScale, Text } from '@/components/ui';
 import type { NodeState } from '@/lib/course';
 import { makeStyles, useTheme, type HueName } from '@/theme';
 
@@ -19,7 +19,8 @@ export type RouteStopProps = {
 
 /**
  * One lesson on the route: a wheelie bin at the roadside (or the sorting centre, for a unit review). Pressing it
- * squashes it down onto its shadow.
+ * squashes it down onto its shadow. The current stop has a "Start" tag floating over it, so the next thing to do is
+ * never in doubt.
  */
 export function RouteStop({ state, hue, review, stars, label, size, onPress }: RouteStopProps) {
   const t = useTheme();
@@ -33,6 +34,16 @@ export function RouteStop({ state, hue, review, stars, label, size, onPress }: R
 
   return (
     <View style={styles.wrap}>
+      {state === 'current' && (
+        <Float style={styles.tagWrap} distance={1.5}>
+          <View style={[styles.tag, { borderColor: t.colors.hue[hue].base }]}>
+            <Text variant="label" hue={hue}>
+              {review ? 'Review' : 'Start'}
+            </Text>
+          </View>
+          <View style={[styles.tagTail, { borderColor: t.colors.hue[hue].base }]} />
+        </Float>
+      )}
       <PressableScale
         scale={false}
         haptic="light"
@@ -94,6 +105,23 @@ const useStyles = makeStyles((t) => ({
     height: t.space[3],
     borderRadius: t.radius.pill,
     backgroundColor: t.colors.scene.shadow,
+  },
+  tagWrap: { position: 'absolute', bottom: '100%', marginBottom: t.space[2], alignItems: 'center', zIndex: 2 },
+  tag: {
+    paddingHorizontal: t.space[3],
+    paddingVertical: t.space[1],
+    borderRadius: t.radius.md,
+    borderWidth: t.layout.border,
+    backgroundColor: t.colors.surface,
+  },
+  tagTail: {
+    width: t.space[3],
+    height: t.space[3],
+    marginTop: -t.space[1.5] - t.layout.border / 2,
+    backgroundColor: t.colors.surface,
+    borderRightWidth: t.layout.border,
+    borderBottomWidth: t.layout.border,
+    transform: [{ rotate: '45deg' }],
   },
   stars: {
     flexDirection: 'row',

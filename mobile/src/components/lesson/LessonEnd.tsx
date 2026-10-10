@@ -2,32 +2,42 @@ import type { LucideIcon } from 'lucide-react-native';
 import { Check, Flame, Target, Zap } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { Coin } from '@/components/art/Coin';
 import { Confetti } from '@/components/art/Confetti';
 import { Mascot } from '@/components/art/Mascot';
 import { MascotSays } from '@/components/MascotSays';
-import { Button, Card, Icon, Screen, Text } from '@/components/ui';
+import { Appear, Button, Card, Icon, Screen, Text } from '@/components/ui';
 import type { Achievement } from '@/lib/achievements';
 import { dayKey, lastWeek, weekdayLetter } from '@/lib/dates';
+import { haptics } from '@/lib/haptics';
 import { useProgress } from '@/stores/progress';
 import { makeStyles, useTheme, type HueName } from '@/theme';
 import { useScreenSize } from '@/lib/useScreenSize';
 
-/** Counts up to `to` once, for celebratory numbers. */
-function useCountUp(to: number, ms = 900) {
+/** Counts up to `to` once, after `delay` ms, for celebratory numbers. */
+function useCountUp(to: number, ms = 900, delay = 0) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     let frame = 0;
     let start: number | null = null;
     const tick = (now: number) => {
-      start ??= now;
-      const p = Math.min(1, (now - start) / ms);
+      start ??= now + delay;
+      const p = Math.max(0, Math.min(1, (now - start) / ms));
       setValue(Math.round(to * (1 - (1 - p) ** 3)));
       if (p < 1) frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [to, ms]);
+  }, [to, ms, delay]);
   return value;
 }
 
@@ -64,8 +74,9 @@ export function LessonComplete({ summary, onContinue }: { summary: LessonSummary
   const styles = useStyles();
   const t = useTheme();
   const { short } = useScreenSize();
-  const xp = useCountUp(summary.xp);
-  const coins = useCountUp(summary.coins);
+  // Count up once each tile has landed.
+  const xp = useCountUp(summary.xp, 900, t.motion.stagger * 4);
+  const coins = useCountUp(summary.coins, 900, t.motion.stagger * 6);
   const title = summary.perfect ? 'Perfect lesson!' : summary.accuracy >= 0.8 ? 'Lesson complete!' : 'You made it!';
   const line = summary.perfect
     ? 'Not a single mistake. You really know your bins.'
@@ -75,39 +86,54 @@ export function LessonComplete({ summary, onContinue }: { summary: LessonSummary
 
   return (
     <Screen scroll footer={<Button label="Continue" fullWidth onPress={onContinue} />}>
+      {/* The celebration builds: Tin jumps, the headline lands, then each stat pops in on its own beat. */}
       <View style={styles.center}>
-        <Mascot mood="cheer" size={short ? 'md' : summary.badges.length ? 'lg' : 'xl'} />
-        <Text variant="display" hue="yellow" align="center">
-          {title}
-        </Text>
-        <Text variant="body" color="textSecondary" align="center">
-          {line}
-        </Text>
+        <Mascot mood="cheer" size={short ? 'md' : summary.badges.length ? 'lg' : 'xl'} pokeable />
+        <Appear from="pop" spring="bouncy" index={1}>
+          <Text variant="display" hue="yellow" align="center">
+            {title}
+          </Text>
+        </Appear>
+        <Appear index={2}>
+          <Text variant="body" color="textSecondary" align="center">
+            {line}
+          </Text>
+        </Appear>
         <View style={styles.tiles}>
-          <StatTile label="Total XP" value={`${xp}`} icon={Zap} hue="yellow" />
-          <StatTile label="Coins" value={`${coins}`} hue="orange" art={<Coin size={t.layout.icon.md} />} />
-          <StatTile label="Accuracy" value={`${Math.round(summary.accuracy * 100)}%`} icon={Target} hue="green" />
+          <Appear from="pop" spring="bouncy" index={4} style={styles.flex}>
+            <StatTile label="Total XP" value={`${xp}`} icon={Zap} hue="yellow" />
+          </Appear>
+          <Appear from="pop" spring="bouncy" index={6} style={styles.flex}>
+            <StatTile label="Coins" value={`${coins}`} hue="orange" art={<Coin size={t.layout.icon.md} />} />
+          </Appear>
+          <Appear from="pop" spring="bouncy" index={8} style={styles.flex}>
+            <StatTile label="Accuracy" value={`${Math.round(summary.accuracy * 100)}%`} icon={Target} hue="green" />
+          </Appear>
         </View>
         {summary.goalReached && (
-          <Card variant="tinted" hue="yellow" style={styles.note}>
-            <Icon icon={Zap} hue="yellow" filled />
-            <Text variant="bodyStrong" hue="yellow" style={styles.flex}>
-              Daily goal reached!
-            </Text>
-          </Card>
+          <Appear index={10} style={styles.stretch}>
+            <Card variant="tinted" hue="yellow" style={styles.note}>
+              <Icon icon={Zap} hue="yellow" filled />
+              <Text variant="bodyStrong" hue="yellow" style={styles.flex}>
+                Daily goal reached!
+              </Text>
+            </Card>
+          </Appear>
         )}
         {summary.badges.length > 0 && (
-          <Card variant="tinted" hue="purple" style={styles.badges}>
-            <Text variant="label" hue="purple">
-              {summary.badges.length === 1 ? 'New badge' : `${summary.badges.length} new badges`}
-            </Text>
-            {summary.badges.map((b) => (
-              <View key={b.id} style={styles.badge}>
-                <Icon icon={b.icon} hue={b.hue} />
-                <Text variant="bodyStrong">{b.title}</Text>
-              </View>
-            ))}
-          </Card>
+          <Appear index={11} style={styles.stretch}>
+            <Card variant="tinted" hue="purple" style={styles.badges}>
+              <Text variant="label" hue="purple">
+                {summary.badges.length === 1 ? 'New badge' : `${summary.badges.length} new badges`}
+              </Text>
+              {summary.badges.map((b) => (
+                <View key={b.id} style={styles.badge}>
+                  <Icon icon={b.icon} hue={b.hue} />
+                  <Text variant="bodyStrong">{b.title}</Text>
+                </View>
+              ))}
+            </Card>
+          </Appear>
         )}
       </View>
       <Confetti />
@@ -124,54 +150,91 @@ export function StreakCelebration({ streak, onContinue }: { streak: number; onCo
   return (
     <Screen scroll footer={<Button label="Continue" fullWidth onPress={onContinue} />}>
       <View style={styles.center}>
-        <View style={styles.flame}>
-          <Flame size={t.layout.mascot.lg} color={t.colors.hue.orange.depth} fill={t.colors.hue.orange.base} strokeWidth={t.layout.iconStroke} />
-        </View>
-        <Text variant="hero" hue="orange" align="center" tabular>
-          {count}
-        </Text>
-        <Text variant="title" hue="orange" align="center">
-          day streak!
-        </Text>
-        <Card style={styles.week}>
-          <View style={styles.weekRow}>
-            {lastWeek(today).map((d) => {
-              const active = (xpByDay[d] ?? 0) > 0;
-              return (
-                <View key={d} style={styles.day}>
-                  <Text variant="label" color={d === today ? 'text' : 'textTertiary'}>
-                    {weekdayLetter(d)}
-                  </Text>
-                  <View style={[styles.dot, active && styles.dotOn]}>{active && <Icon icon={Check} size="sm" color="onColor" />}</View>
-                </View>
-              );
-            })}
-          </View>
-          <Text variant="callout" color="textSecondary" align="center">
-            {streak === 1
-              ? 'A new streak starts today. Come back tomorrow to grow it!'
-              : 'Do a lesson or look up an item every day to keep it burning.'}
+        <Appear from="pop" spring="bouncy" style={styles.flame}>
+          <Flicker>
+            <Flame size={t.layout.mascot.lg} color={t.colors.hue.orange.depth} fill={t.colors.hue.orange.base} strokeWidth={t.layout.iconStroke} />
+          </Flicker>
+        </Appear>
+        <Appear from="pop" spring="bouncy" index={2}>
+          <Text variant="hero" hue="orange" align="center" tabular>
+            {count}
           </Text>
-        </Card>
+        </Appear>
+        <Appear index={3}>
+          <Text variant="title" hue="orange" align="center">
+            day streak!
+          </Text>
+        </Appear>
+        <Appear index={5} style={styles.stretch}>
+          <Card style={styles.week}>
+            <View style={styles.weekRow}>
+              {lastWeek(today).map((d, i) => {
+                const active = (xpByDay[d] ?? 0) > 0;
+                return (
+                  <View key={d} style={styles.day}>
+                    <Text variant="label" color={d === today ? 'text' : 'textTertiary'}>
+                      {weekdayLetter(d)}
+                    </Text>
+                    {/* The days tick on one by one, today last and with the biggest bounce. */}
+                    <Appear from="pop" spring="bouncy" index={7 + i} delay={d === today ? t.motion.stagger * 3 : 0}>
+                      <View style={[styles.dot, active && styles.dotOn]}>{active && <Icon icon={Check} size="sm" color="onColor" />}</View>
+                    </Appear>
+                  </View>
+                );
+              })}
+            </View>
+            <Text variant="callout" color="textSecondary" align="center">
+              {streak === 1
+                ? 'A new streak starts today. Come back tomorrow to grow it!'
+                : 'Do a lesson or look up an item every day to keep it burning.'}
+            </Text>
+          </Card>
+        </Appear>
       </View>
     </Screen>
   );
 }
 
-/** "Wait, don't go!" — shown when closing a lesson part-way. */
+/** A flame that never sits still: it breathes and leans, a loop like a real fire. */
+function Flicker({ children }: { children: React.ReactNode }) {
+  const t = useTheme();
+  const reduced = useReducedMotion();
+  const f = useSharedValue(0);
+  useEffect(() => {
+    if (reduced) return;
+    f.value = withRepeat(withTiming(1, { duration: t.motion.pulseDuration / 2, easing: Easing.inOut(Easing.sin) }), -1, true);
+  }, [f, reduced, t.motion.pulseDuration]);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scaleY: 1 + f.value * 0.06 }, { scaleX: 1 - f.value * 0.03 }, { rotate: `${(f.value - 0.5) * 4}deg` }],
+  }));
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
+
+/** "Wait, don't go!" — shown when closing a lesson part-way. The sheet springs up over a fading scrim. */
 export function QuitConfirm({ onStay, onQuit }: { onStay: () => void; onQuit: () => void }) {
+  const t = useTheme();
   const styles = useStyles();
+  const p = useSharedValue(0);
+  useEffect(() => {
+    haptics.medium();
+    p.value = withSpring(1, t.motion.spring.gentle);
+  }, [p, t.motion.spring.gentle]);
+  const scrim = useAnimatedStyle(() => ({ opacity: Math.min(1, p.value) }));
+  const sheet = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - p.value) * t.space[20] * 3 }] }));
   return (
-    <View style={styles.scrim}>
-      <Card variant="floating" padding="lg" style={styles.sheet}>
-        <MascotSays mood="sad" size="md">
-          Wait, don&apos;t go! You will lose your progress in this lesson.
-        </MascotSays>
-        <View style={styles.buttons}>
-          <Button label="Keep learning" variant="secondary" fullWidth onPress={onStay} />
-          <Button label="End session" variant="ghost" hue="orange" fullWidth onPress={onQuit} />
-        </View>
-      </Card>
+    <View style={styles.overlay}>
+      <Animated.View style={[styles.scrimFill, scrim]} />
+      <Animated.View style={[styles.sheetWrap, sheet]}>
+        <Card variant="floating" padding="lg" style={styles.sheet}>
+          <MascotSays mood="sad" size="md">
+            Wait, don&apos;t go! You will lose your progress in this lesson.
+          </MascotSays>
+          <View style={styles.buttons}>
+            <Button label="Keep learning" variant="secondary" fullWidth onPress={onStay} />
+            <Button label="End session" variant="ghost" hue="orange" fullWidth onPress={onQuit} />
+          </View>
+        </Card>
+      </Animated.View>
     </View>
   );
 }
@@ -190,12 +253,12 @@ const useStyles = makeStyles((t) => ({
     gap: t.space[1],
     paddingVertical: t.space[3],
   },
-  note: { flexDirection: 'row', alignItems: 'center', gap: t.space[3], alignSelf: 'stretch' },
-  badges: { alignSelf: 'stretch', gap: t.space[2] },
+  note: { flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
+  badges: { gap: t.space[2] },
   badge: { flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
   flex: { flex: 1 },
   flame: { marginBottom: -t.space[6] },
-  week: { alignSelf: 'stretch', gap: t.space[3], marginTop: t.space[4] },
+  week: { gap: t.space[3], marginTop: t.space[4] },
   weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
   day: { alignItems: 'center', gap: t.space[1] },
   dot: {
@@ -208,15 +271,17 @@ const useStyles = makeStyles((t) => ({
   },
   dotOn: { backgroundColor: t.colors.hue.orange.base },
   buttons: { gap: t.space[2], alignSelf: 'stretch' },
-  scrim: {
+  overlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: t.colors.scrim,
     justifyContent: 'flex-end',
     padding: t.layout.gutter,
   },
+  scrimFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: t.colors.scrim },
+  sheetWrap: { width: '100%' },
+  stretch: { alignSelf: 'stretch' },
   sheet: { gap: t.space[5], width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center', marginBottom: t.space[6] },
 }));

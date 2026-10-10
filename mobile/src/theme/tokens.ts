@@ -121,13 +121,29 @@ export const motion = {
     gentle: { damping: 26, stiffness: 180, mass: 1 },
     /** Mascot reactions, celebrations, things that should feel alive. */
     bouncy: { damping: 9, stiffness: 200, mass: 0.8 },
+    /** Cartoon squash-and-stretch and the "nope" shake: a stiff spring that rings a few times before it settles. */
+    wobble: { damping: 5, stiffness: 520, mass: 0.6 },
   },
+  /** Things arriving on screen slide this far (pt) as they fade in, so nothing appears from nowhere. */
+  enterDistance: 24,
+  /** Steps and exercises slide in from the side by this much (pt), in the direction you are moving. */
+  slideDistance: 64,
+  /** Delay (ms) between siblings arriving one after another. */
+  stagger: 70,
   /** Loop durations (ms) — loops and one-shot celebrations are the only timing-based motion. */
   pulseDuration: 900,
   idleDuration: 1600,
   confettiDuration: 2400,
   /** How long a reward toast stays up. */
   toastHold: 2600,
+  /** Tin blinks every few seconds (ms, randomised between the two), and a blink lasts `blinkHold`. */
+  blinkEvery: [2600, 5200],
+  blinkHold: 130,
+  /** Tin's speech types out at this many ms per character, and its mouth flaps every `talkBeat` while it does. */
+  typeSpeed: 24,
+  talkBeat: 120,
+  /** One swing of Tin's waving arm (ms). */
+  waveBeat: 240,
 } as const;
 
 /** Shadows for floating elements only (popovers, feedback panel, tab bar). */

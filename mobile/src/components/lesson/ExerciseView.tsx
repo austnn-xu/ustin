@@ -4,7 +4,7 @@ import { BIN, BinArt } from '@/components/art/Bin';
 import { ItemArt } from '@/components/art/ItemArt';
 import type { Mood } from '@/components/art/Mascot';
 import { MascotSays } from '@/components/MascotSays';
-import { ChoiceCard, Chip, Icon, Text, type ChoiceState } from '@/components/ui';
+import { Appear, ChoiceCard, Chip, Icon, Text, type ChoiceState } from '@/components/ui';
 import type { Exercise, ExerciseChoice } from '@/lib/engine';
 import { useScreenSize } from '@/lib/useScreenSize';
 import { makeStyles, useTheme } from '@/theme';
@@ -18,7 +18,10 @@ export type ExerciseViewProps = {
   onToggle: (choiceId: string) => void;
 };
 
-/** Renders any generated exercise: its prompt, the item, and the right kind of answer tiles for its type. */
+/**
+ * Renders any generated exercise: its prompt, the item, and the right kind of answer tiles for its type. The item pops
+ * in, then the answers arrive one after another, so the eye goes question → item → choices.
+ */
 export function ExerciseView({ exercise, selected, checked, onToggle }: ExerciseViewProps) {
   const t = useTheme();
   const styles = useStyles();
@@ -33,17 +36,23 @@ export function ExerciseView({ exercise, selected, checked, onToggle }: Exercise
   };
 
   const tile = (c: ExerciseChoice, children: React.ReactNode, style?: object, padding: 'md' | 'lg' = 'md') => (
-    <ChoiceCard
-      key={c.id}
-      state={stateOf(c)}
-      disabled={checked !== null}
-      onPress={() => onToggle(c.id)}
-      accessibilityLabel={c.sublabel ? `${c.label}, ${c.sublabel}` : c.label}
-      style={style}
-      padding={padding}
-    >
-      {children}
-    </ChoiceCard>
+    <Appear key={c.id} index={2 + exercise.choices.indexOf(c)} style={style}>
+      <ChoiceCard
+        state={stateOf(c)}
+        disabled={checked !== null}
+        onPress={() => onToggle(c.id)}
+        accessibilityLabel={c.sublabel ? `${c.label}, ${c.sublabel}` : c.label}
+        style={styles.fill}
+        padding={padding}
+      >
+        {children}
+      </ChoiceCard>
+    </Appear>
+  );
+  const item = exercise.item && (
+    <Appear from="pop" spring="bouncy" index={1}>
+      <ItemCard item={exercise.item} />
+    </Appear>
   );
 
   const mood: Mood = checked === null ? 'thinking' : checked ? 'cheer' : 'worried';
@@ -54,7 +63,7 @@ export function ExerciseView({ exercise, selected, checked, onToggle }: Exercise
 
       {exercise.type === 'truefalse' ? (
         <>
-          {exercise.item && <ItemCard item={exercise.item} />}
+          {item}
           <MascotSays mood={mood} size="sm">
             {exercise.statement}
           </MascotSays>
@@ -74,7 +83,7 @@ export function ExerciseView({ exercise, selected, checked, onToggle }: Exercise
         </>
       ) : (
         <>
-          {exercise.item && <ItemCard item={exercise.item} />}
+          {item}
 
           {exercise.type === 'bin' && (
             <View style={styles.grid}>
@@ -181,5 +190,6 @@ const useStyles = makeStyles((t) => ({
   center: { alignItems: 'center', justifyContent: 'center', gap: t.space[2], minHeight: t.space[20] },
   rowChoice: { flexDirection: 'row', alignItems: 'center', gap: t.space[3], minHeight: t.space[8] },
   flex: { flex: 1 },
+  fill: { flexGrow: 1 },
 }));
 

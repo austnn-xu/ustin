@@ -1,7 +1,9 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import type { LucideIcon } from 'lucide-react-native';
 import { House, MapPin, ScanSearch, Store, UserRound } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, PressableScale, Text } from '@/components/ui';
 import { useScreenSize } from '@/lib/useScreenSize';
@@ -15,16 +17,31 @@ const TABS: Record<string, { icon: LucideIcon; label: string }> = {
   profile: { icon: UserRound, label: 'Profile' },
 };
 
-/** Duolingo-style tab bar: the active tab gets a blue outlined tile. */
+/**
+ * The tab bar. The active tab sits in a blue outlined tile that slides across to whichever tab you pick, so you see
+ * where you went rather than a highlight blinking from one place to another; the new tab's icon hops as it lands.
+ */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const t = useTheme();
   const styles = useStyles();
   const insets = useSafeAreaInsets();
   // Five labels do not fit under 360px; the icons carry it there (each tab keeps its accessible name).
   const { narrow } = useScreenSize();
+  const count = state.routes.filter((r) => TABS[r.name]).length;
+  const [rowWidth, setRowWidth] = useState(0);
+  const slot = (rowWidth - t.space[2] * 2) / Math.max(1, count);
+  const x = useSharedValue(state.index);
+
+  useEffect(() => {
+    x.value = withSpring(state.index, t.motion.spring.standard);
+  }, [state.index, x, t.motion.spring.standard]);
+
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value * slot }] }));
+
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, t.space[2]) }]}>
-      <View style={styles.row}>
+      <View style={styles.row} onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}>
+        {rowWidth > 0 && <Animated.View style={[styles.pill, { width: slot - t.space[1] }, pill]} pointerEvents="none" />}
         {state.routes.map((route, index) => {
           const tab = TABS[route.name];
           if (!tab) return null;
@@ -40,9 +57,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                 const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
                 if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
               }}
-              style={[styles.tab, focused && styles.active]}
+              style={styles.tab}
             >
-              <Icon icon={tab.icon} size="lg" hue={focused ? 'blue' : undefined} color="textTertiary" />
+              <TabIcon focused={focused}>
+                <Icon icon={tab.icon} size="lg" hue={focused ? 'blue' : undefined} color="textTertiary" />
+              </TabIcon>
               {!narrow && (
                 <Text variant="label" hue={focused ? 'blue' : undefined} color="textTertiary" numberOfLines={1} style={styles.label}>
                   {tab.label}
@@ -54,6 +73,19 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       </View>
     </View>
   );
+}
+
+/** Hops and tilts the icon when its tab becomes the active one. */
+function TabIcon({ focused, children }: { focused: boolean; children: React.ReactNode }) {
+  const t = useTheme();
+  const hop = useSharedValue(0);
+  useEffect(() => {
+    if (focused) hop.value = withSequence(withSpring(1, t.motion.spring.snappy), withSpring(0, t.motion.spring.bouncy));
+  }, [focused, hop, t.motion.spring]);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: -hop.value * t.space[1.5] }, { rotate: `${hop.value * -8}deg` }, { scale: 1 + hop.value * 0.12 }],
+  }));
+  return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 const useStyles = makeStyles((t) => ({
@@ -77,11 +109,17 @@ const useStyles = makeStyles((t) => ({
     gap: t.space[0.5],
     paddingVertical: t.space[1.5],
     marginHorizontal: t.space[0.5],
-    borderRadius: t.radius.md,
-    borderWidth: t.layout.border,
-    borderColor: 'transparent',
   },
   /** Five tabs share the bar, so labels drop the label variant's caps and tracking to fit. */
   label: { textTransform: 'none', letterSpacing: 0 },
-  active: { borderColor: t.colors.hue.blue.base, backgroundColor: t.colors.hue.blue.subtle },
+  pill: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: t.space[2] + t.space[0.5],
+    borderRadius: t.radius.md,
+    borderWidth: t.layout.border,
+    borderColor: t.colors.hue.blue.base,
+    backgroundColor: t.colors.hue.blue.subtle,
+  },
 }));

@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { SECTION_HUE } from '@/components/art/ItemArt';
 import { PROPS, SceneryProp, TruckArt } from '@/components/art/RouteArt';
+import { Appear, Float } from '@/components/ui';
 import { lessonState, unitProgress } from '@/lib/course';
 import type { Unit } from '@/lib/engine';
 import type { LessonRecord } from '@/stores/progress';
@@ -171,7 +172,10 @@ export function RouteUnit({ unit, width, screenWidth, records, currentId, select
             pointerEvents="none"
             onLayout={() => onCurrentLayout?.(current.y)}
           >
-            <TruckArt hue="green" size={route.truck} flip={truckSide > 0} />
+            {/* The engine is running: the truck idles with a little bounce while it waits for you. */}
+            <Float distance={0.5} duration={t.motion.pulseDuration / 3}>
+              <TruckArt hue="green" size={route.truck} flip={truckSide > 0} />
+            </Float>
           </View>
         )}
 
@@ -195,14 +199,19 @@ export function RouteUnit({ unit, width, screenWidth, records, currentId, select
         })}
 
         {selected && (
-          <View style={[styles.abs, styles.card, { top: selected.y + route.bin * 0.75 }]}>
+          <Appear
+            key={selected.lesson.id}
+            from="pop"
+            spring="bouncy"
+            style={[styles.abs, styles.card, { top: selected.y + route.bin * 0.75 }]}
+          >
             <LessonCard
               unit={unit}
               lesson={selected.lesson}
               index={unit.lessons.slice(0, selected.i).filter((l) => !l.review).length}
               state={lessonState(selected.lesson.id, records)}
             />
-          </View>
+          </Appear>
         )}
       </View>
     </View>

@@ -3,7 +3,7 @@ import { Coin } from '@/components/art/Coin';
 import { Flame, Zap } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Icon, PressableScale, Text } from '@/components/ui';
+import { Icon, PressableScale, RollingNumber, Text } from '@/components/ui';
 import { dayKey } from '@/lib/dates';
 import { currentStreak, useProgress } from '@/stores/progress';
 import { makeStyles, useTheme } from '@/theme';
@@ -43,21 +43,15 @@ export function StatsBar({ title }: { title?: string }) {
         style={styles.pill}
       >
         <Icon icon={Flame} hue={doneToday ? 'orange' : undefined} color="textTertiary" filled={doneToday} />
-        <Text variant="bodyStrong" hue={doneToday ? 'orange' : undefined} color="textTertiary" tabular>
-          {count}
-        </Text>
+        <RollingNumber value={count} hue={doneToday ? 'orange' : undefined} color="textTertiary" bump />
       </PressableScale>
       <PressableScale onPress={() => router.push('/shop')} accessibilityLabel={`${coins} coins. Open the shop`} style={styles.pill}>
         <Coin size={t.layout.icon.md} />
-        <Text variant="bodyStrong" hue="yellow" tabular>
-          {coins}
-        </Text>
+        <RollingNumber value={coins} hue="yellow" bump />
       </PressableScale>
       <PressableScale onPress={() => router.push('/profile')} accessibilityLabel={`${xp} XP`} style={styles.pill}>
         <Icon icon={Zap} hue="yellow" filled />
-        <Text variant="bodyStrong" hue="yellow" tabular>
-          {xp}
-        </Text>
+        <RollingNumber value={xp} hue="yellow" bump />
       </PressableScale>
     </View>
   );

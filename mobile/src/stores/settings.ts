@@ -19,10 +19,13 @@ type SettingsState = {
   dailyGoal: DailyGoal;
   place: SavedPlace | null;
   onboarded: boolean;
+  /** The first lesson walks you through answering (pick, Check, read why, Continue) until this is set. */
+  lessonCoached: boolean;
   setColorScheme: (scheme: ColorSchemePreference) => void;
   setDailyGoal: (goal: DailyGoal) => void;
   setPlace: (place: SavedPlace | null) => void;
   finishOnboarding: () => void;
+  finishLessonCoaching: () => void;
 };
 
 export const useSettings = create<SettingsState>()(
@@ -32,10 +35,12 @@ export const useSettings = create<SettingsState>()(
       dailyGoal: 20,
       place: null,
       onboarded: false,
+      lessonCoached: false,
       setColorScheme: (colorScheme) => set({ colorScheme }),
       setDailyGoal: (dailyGoal) => set({ dailyGoal }),
       setPlace: (place) => set({ place }),
       finishOnboarding: () => set({ onboarded: true }),
+      finishLessonCoaching: () => set({ lessonCoached: true }),
     }),
     { name: 'ustin-settings', storage: createJSONStorage(() => AsyncStorage) },
   ),
