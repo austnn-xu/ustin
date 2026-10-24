@@ -15,7 +15,7 @@ export function LessonCard({ unit, lesson, index, state }: { unit: Unit; lesson:
   const hue = t.colors.hue[hueName];
   const locked = state === 'locked';
   const names = lesson.objects.map((id) => rules.findObject(id)?.label).filter(Boolean) as string[];
-  const shown = lesson.review ? `Everything in ${unit.title}: ${names.length} items` : names.join(' · ');
+  const shown = lesson.summary ?? (lesson.review ? `Everything in ${unit.title}: ${names.length} items` : names.join(' · '));
   const xp = lesson.review ? XP.review : XP.lesson;
   const regular = unit.lessons.filter((l) => !l.review).length;
 

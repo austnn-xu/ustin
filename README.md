@@ -6,7 +6,7 @@ The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android
 
 | Tab | What it does |
 |---|---|
-| **Learn** | A course of five-minute lessons laid out as a cartoon recycling route: 11 neighbourhoods (one per catalog shelf), 49 wheelie-bin stops, a sorting centre at the end of each unit, and Tin driving the truck to your next stop. XP, streaks, a daily goal, badges and coins. No hearts or lives: a wrong answer is explained and comes back once at the end of the lesson. |
+| **Learn** | A course of five-minute lessons laid out as a cartoon recycling route: 12 neighbourhoods (one per catalog shelf, plus *Food & methane*), 53 wheelie-bin stops, a sorting centre at the end of each unit, and Tin driving the truck to your next stop. XP, streaks, a daily goal, badges and coins. No hearts or lives: a wrong answer is explained and comes back once at the end of the lesson. |
 | **What bin?** | Search 177 items or snap a photo (web build). Answers a follow-up only when it changes the verdict, then shows where *each part* goes, down to the resin code, and why. |
 | **Near me** | From your ZIP code or location, the nearest places that take the item: battery bins, e-waste, hazardous waste, clothing banks, pharmacies, transfer stations… Real data from OpenStreetMap. Every place is marked as *listed as accepting this* or *usually accepts, call ahead*. |
 | **Shop** | Spend coins (1 per right answer, +5 for 5 in a row, +10 for 10 in a row) on hats, glasses, neckwear and paint jobs for Tin, who then wears them all over the app. |
@@ -14,7 +14,9 @@ The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android
 
 The first run teaches by doing: Tin asks where a takeaway coffee cup goes, then splits it into its three parts with the real verdict, explains the app in plain words, sets a daily goal in minutes, and coaches the first lesson step by step. After that, the first visit to each tab (the route, What bin?, Near me, the shop, your profile) gets a two-or-three-step tour from Tin, replayable from Profile. Throughout, motion follows one rule: nothing appears from nowhere, and things move from where they were.
 
-Every lesson question is generated from the same catalog and decision engine the lookup uses (`lib/lessons.js`), so a lesson can never teach an answer the app would contradict.
+Every lesson question on a shelf is generated from the same catalog and decision engine the lookup uses (`lib/lessons.js`), so a lesson can never teach an answer the app would contradict.
+
+**Food & methane** is the one topic unit (`lib/topics.js`), right after *Food scraps*: short hand-written cards on *why* food scraps go where they do. Food is the most common material in US landfills, where it rots without oxygen and gives off methane. Composting done right (damp, airy, turned) barely does, and not wasting food beats both. Every number on a card names its source (EPA, USDA, IPCC), shown under the answer, and a test refuses a statistic without one. It also covers the myth that composting is worse for methane than the trash, and the true part behind it: a soggy, packed-down pile can go airless and make methane, which is why you turn it and add dry browns.
 
 The rest of this README covers the knowledge base and recognition, which the app shares with the original single-page web app in `public/`.
 
@@ -141,7 +143,7 @@ No dependencies, no install, no build step for development.
 ```bash
 node server.js          # http://localhost:3000
 PORT=8080 node server.js
-npm test                # 53 checks across the engine, the catalog, the recogniser and the lessons
+npm test                # 57 checks across the engine, the catalog, the recogniser and the lessons
 ./build.sh              # assemble dist/ for static hosting
 ```
 
@@ -159,6 +161,7 @@ lib/catalog.js             177 objects on 11 shelves, built from component facto
 lib/streams.js             Outcomes, material streams, follow-up questions
 lib/rules.js               The decision engine
 lib/lessons.js             The course: units, lessons and generated exercises
+lib/topics.js              Topic units: sourced, hand-written cards (Food & methane)
 lib/recognizer.js          ILSVRC classes + material head -> catalog objects
 lib/imagenet-labels.js     The 1000 class names (generated)
 public/index.html          App shell and icon set
