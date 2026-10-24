@@ -128,8 +128,22 @@ export type Lesson = {
   review: boolean;
   summary?: string;
   cards?: string[];
+  /** An extra's check: plays like a lesson, but is not a stop on the route. */
+  optional?: boolean;
 };
 export type GuidePoint = { title: string; text: string; source: string };
+export type DiyArtKind = 'tote' | 'holes' | 'raise' | 'browns' | 'greens' | 'layers' | 'roll' | 'harvest';
+/** An optional hands-on guide hung off a topic unit: illustrated steps, quick fixes, then a check (`lesson`). */
+export type Extra = {
+  id: string;
+  unit: string;
+  title: string;
+  blurb: string;
+  steps: { art: DiyArtKind; title: string; text: string; tip?: string }[];
+  fixes: { problem: string; fix: string }[];
+  source: string;
+  lesson: string;
+};
 export type Unit = {
   id: string;
   index: number;
@@ -140,6 +154,8 @@ export type Unit = {
   lessons: Lesson[];
   /** Topic units only: the guidebook's key points. */
   guide?: GuidePoint[];
+  /** Topic units only: optional hands-on guides. */
+  extras?: Extra[];
 };
 
 export type BuiltLesson = {
@@ -150,7 +166,9 @@ export type BuiltLesson = {
 type LessonsApi = {
   UNITS: Unit[];
   LESSONS: Lesson[];
+  EXTRA_LESSONS: Lesson[];
   findLesson: (id: string) => Lesson | null;
+  findExtra: (id: string) => Extra | null;
   findUnit: (id: string) => Unit | null;
   buildLesson: (lessonId: string, seed: string | number) => BuiltLesson;
   isCorrect: (exercise: Exercise, selected: string[]) => boolean;

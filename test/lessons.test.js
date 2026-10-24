@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const { OBJECTS, SECTIONS, QUESTIONS, findObject, resolve } = require('../lib/rules');
-const { UNITS, LESSONS, SCENARIO, buildLesson, isCorrect } = require('../lib/lessons');
+const { UNITS, LESSONS, EXTRA_LESSONS, SCENARIO, buildLesson, isCorrect, findLesson, findExtra } = require('../lib/lessons');
 const { TOPICS, SOURCES } = require('../lib/topics');
 
 const SEEDS = [1, 2, 3, 'retry', 42];
@@ -134,9 +134,10 @@ test('topic cards are well formed, unique and sourced where they cite a number',
   for (const topic of TOPICS) {
     assert.ok(topic.guide.length >= 1, `${topic.id} needs a guidebook`);
     for (const point of topic.guide) assert.ok(sources.has(point.source), `${topic.id}: guide point "${point.title}" needs a known source`);
-    for (const lesson of topic.lessons) {
-      assert.ok(lesson.cards.length >= 8, `${topic.id}: "${lesson.title}" needs at least 8 cards for a full lesson`);
-      for (const card of lesson.cards) {
+    for (const lesson of topic.lessons) assert.ok(lesson.cards.length >= 8, `${topic.id}: "${lesson.title}" needs at least 8 cards for a full lesson`);
+    const decks = [...topic.lessons.map((l) => l.cards), ...(topic.extras || []).map((x) => x.check)];
+    for (const cards of decks) {
+      for (const card of cards) {
         assert.ok(!ids.has(card.id), `duplicate card ${card.id}`);
         ids.add(card.id);
         assert.ok(card.explain && card.explain.length > 20, `${card.id}: needs a real explanation`);
@@ -175,4 +176,24 @@ test('the methane unit agrees with the catalog: food scraps compost, or go in th
   assert.strictEqual(resolve(scraps, { composting: 'yes' }).headline.id, 'compost');
   assert.strictEqual(resolve(scraps, { composting: 'no' }).headline.id, 'trash');
   assert.match(resolve(scraps, { composting: 'yes' }).components[0].why, /methane/);
+});
+
+test('optional extras are full guides, off the route, with a check that plays like a lesson', () => {
+  const arts = new Set(['tote', 'holes', 'raise', 'browns', 'greens', 'layers', 'roll', 'harvest']);
+  assert.ok(EXTRA_LESSONS.length >= 1);
+  for (const lesson of EXTRA_LESSONS) {
+    assert.ok(!LESSONS.includes(lesson), `${lesson.id} must not be a stop on the route, or skipping it would lock the rest`);
+    assert.strictEqual(findLesson(lesson.id), lesson);
+    const extra = findExtra(lesson.id);
+    assert.ok(extra && extra.steps.length >= 3, `${lesson.id} needs a guide`);
+    for (const step of extra.steps) {
+      assert.ok(arts.has(step.art), `${lesson.id}: step "${step.title}" has no drawing (${step.art})`);
+      assert.ok(step.title && step.text.length > 40, `${lesson.id}: step "${step.title}" needs real instructions`);
+    }
+    for (const seed of SEEDS) {
+      const { exercises } = buildLesson(lesson.id, seed);
+      assert.strictEqual(exercises.length, lesson.cards.length, `${lesson.id} should ask every check card`);
+      for (const ex of exercises) assert.ok(isCorrect(ex, ex.answer) && ex.explain.text.length > 20);
+    }
+  }
 });

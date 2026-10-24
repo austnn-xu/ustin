@@ -82,6 +82,7 @@ function ThemedStack() {
         <Stack.Screen name="lesson/[id]" options={{ presentation: 'fullScreenModal', gestureEnabled: false, animation: 'slide_from_bottom' }} />
         <Stack.Screen name="item/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="unit/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="guide/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
       </Stack>
     </>
