@@ -115,7 +115,7 @@ export function ExerciseView({ exercise, selected, checked, onToggle }: Exercise
             </View>
           )}
 
-          {exercise.type === 'stream' && (
+          {(exercise.type === 'stream' || exercise.type === 'choice') && (
             <View style={styles.list}>
               {exercise.choices.map((c) =>
                 tile(

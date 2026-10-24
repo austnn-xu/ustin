@@ -10,7 +10,10 @@ import { lessons, rules } from '@/lib/engine';
 import { useProgress } from '@/stores/progress';
 import { makeStyles, useTheme } from '@/theme';
 
-/** A unit's guidebook: every item on the shelf and where it goes, for reading before (or instead of) a lesson. */
+/**
+ * A unit's guidebook, for reading before (or instead of) a lesson: every item on the shelf and where it goes, or for a
+ * topic unit, its key points and where each one comes from.
+ */
 export default function Guidebook() {
   const t = useTheme();
   const styles = useStyles();
@@ -77,41 +80,66 @@ export default function Guidebook() {
         </View>
 
         <MascotSays mood="happy" size="sm">
-          {`Here is everything on the ${unit.shelf.toLowerCase()} shelf. Tap any item to see every part and why.`}
+          {unit.guide
+            ? `Here is the whole idea in ${unit.guide.length} points. The lessons ask about each one.`
+            : `Here is everything on the ${unit.shelf.toLowerCase()} shelf. Tap any item to see every part and why.`}
         </MascotSays>
 
-        <Card padding="none">
-          {objects.map((o, i) => {
-            const v = rules.resolve(o, {});
-            const asks = rules.questionsFor(o).length > 0;
-            // "Split" in the engine also means several materials in one bin; here only several bins matters.
-            const bins = [...new Set(v.components.map((c) => c.outcome.id))];
-            return (
-              <View key={o.id}>
-                {i > 0 && <Divider />}
-                <PressableScale
-                  scale={false}
-                  onPress={() => router.push({ pathname: '/item/[id]', params: { id: o.id, from: 'guide' } })}
-                  accessibilityLabel={`${o.label}: ${bins.length > 1 ? 'several bins' : v.headline.label}`}
-                  style={styles.row}
-                >
-                  <ItemArt objectId={o.id} size="sm" />
-                  <View style={styles.flex}>
-                    <Text variant="bodyStrong">{o.label}</Text>
-                    <Text variant="caption" color="textSecondary">
-                      {bins.length > 1 ? 'Several bins: sort the parts' : asks ? `${BIN[v.headline.id].short}, usually` : BIN[v.headline.id].short}
-                    </Text>
-                  </View>
-                  <View style={styles.bins}>
-                    {bins.map((oid) => (
-                      <BinArt key={oid} outcome={oid} size={t.layout.icon.lg} />
-                    ))}
-                  </View>
-                </PressableScale>
+        {unit.guide?.map((point, i) => (
+          <Card key={point.title}>
+            <View style={styles.point}>
+              <View style={[styles.number, { backgroundColor: hue.subtle }]}>
+                <Text variant="heading" hue={hueName}>
+                  {String(i + 1)}
+                </Text>
               </View>
-            );
-          })}
-        </Card>
+              <View style={styles.flex}>
+                <Text variant="heading">{point.title}</Text>
+                <Text variant="body" color="textSecondary">
+                  {point.text}
+                </Text>
+                <Text variant="caption" color="textTertiary">
+                  {`Source: ${point.source}`}
+                </Text>
+              </View>
+            </View>
+          </Card>
+        ))}
+
+        {objects.length > 0 && (
+          <Card padding="none">
+            {objects.map((o, i) => {
+              const v = rules.resolve(o, {});
+              const asks = rules.questionsFor(o).length > 0;
+              // "Split" in the engine also means several materials in one bin; here only several bins matters.
+              const bins = [...new Set(v.components.map((c) => c.outcome.id))];
+              return (
+                <View key={o.id}>
+                  {i > 0 && <Divider />}
+                  <PressableScale
+                    scale={false}
+                    onPress={() => router.push({ pathname: '/item/[id]', params: { id: o.id, from: 'guide' } })}
+                    accessibilityLabel={`${o.label}: ${bins.length > 1 ? 'several bins' : v.headline.label}`}
+                    style={styles.row}
+                  >
+                    <ItemArt objectId={o.id} size="sm" />
+                    <View style={styles.flex}>
+                      <Text variant="bodyStrong">{o.label}</Text>
+                      <Text variant="caption" color="textSecondary">
+                        {bins.length > 1 ? 'Several bins: sort the parts' : asks ? `${BIN[v.headline.id].short}, usually` : BIN[v.headline.id].short}
+                      </Text>
+                    </View>
+                    <View style={styles.bins}>
+                      {bins.map((oid) => (
+                        <BinArt key={oid} outcome={oid} size={t.layout.icon.lg} />
+                      ))}
+                    </View>
+                  </PressableScale>
+                </View>
+              );
+            })}
+          </Card>
+        )}
       </View>
     </Screen>
   );
@@ -125,5 +153,13 @@ const useStyles = makeStyles((t) => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: t.space[3], padding: t.space[3] },
   flex: { flex: 1 },
   bins: { flexDirection: 'row', gap: t.space[1] },
+  point: { flexDirection: 'row', alignItems: 'flex-start', gap: t.space[3] },
+  number: {
+    width: t.layout.control.sm,
+    height: t.layout.control.sm,
+    borderRadius: t.radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: t.space[6] },
 }));

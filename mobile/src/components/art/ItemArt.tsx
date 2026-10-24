@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react-native';
 import {
   Archive, Armchair, Backpack, Bandage, Banana, Battery, BatteryFull, BedDouble, Beer, Bike, Bone, BookOpen,
-  Box, Brush, Cable, Cake, Candy, Car, Carrot, Cigarette, Circle, Coffee, Container, Cookie, CookingPot, CupSoda,
+  Box, Brush, Cable, Cake, Candy, Car, Carrot, Cigarette, Circle, Cloud, Coffee, Container, Cookie, CookingPot, CupSoda,
   Disc3, Droplet, Droplets, Egg, FileText, FireExtinguisher, Flame, FlaskConical, Flower2, Footprints, Frame,
   Fuel, Gamepad2, Gift, GlassWater, Glasses, Hammer, Hand, Headphones, Image, Keyboard, Laptop, Layers, Leaf,
   Lightbulb, Mail, Microwave, Milk, Newspaper, Notebook, Package, PackageOpen, PaintBucket, Paintbrush, Pencil, Pill,
@@ -20,6 +20,7 @@ export const SECTION_HUE: Record<string, HueName> = {
   packaging: 'orange',
   kitchen: 'blue',
   organics: 'green',
+  methane: 'brown',
   paper: 'purple',
   bathroom: 'blue',
   electronics: 'slate',
@@ -34,6 +35,7 @@ const SECTION_ICON: Record<string, LucideIcon> = {
   packaging: Package,
   kitchen: Utensils,
   organics: Leaf,
+  methane: Cloud,
   paper: FileText,
   bathroom: Droplets,
   electronics: Plug,

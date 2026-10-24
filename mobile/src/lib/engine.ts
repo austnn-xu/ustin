@@ -80,7 +80,7 @@ type RulesApi = {
 // Lessons
 // ---------------------------------------------------------------------------
 
-export type ExerciseType = 'bin' | 'parts' | 'truefalse' | 'code' | 'stream' | 'pick';
+export type ExerciseType = 'bin' | 'parts' | 'truefalse' | 'code' | 'stream' | 'pick' | 'choice';
 
 export type ExerciseItem = {
   objectId: string;
@@ -113,12 +113,34 @@ export type Exercise = {
     text: string;
     outcome: OutcomeId | null;
     stream: { code: string; label: string; acceptance: string } | null;
+    /** Topic cards only: where a fact comes from. */
+    source?: string | null;
   };
   objects: string[];
 };
 
-export type Lesson = { id: string; unit: string; title: string; objects: string[]; review: boolean };
-export type Unit = { id: string; index: number; title: string; blurb: string; shelf: string; lessons: Lesson[] };
+/** Shelf lessons teach catalog `objects`; topic lessons teach hand-written `cards` and have a `summary` instead. */
+export type Lesson = {
+  id: string;
+  unit: string;
+  title: string;
+  objects: string[];
+  review: boolean;
+  summary?: string;
+  cards?: string[];
+};
+export type GuidePoint = { title: string; text: string; source: string };
+export type Unit = {
+  id: string;
+  index: number;
+  kind: 'shelf' | 'topic';
+  title: string;
+  blurb: string;
+  shelf: string;
+  lessons: Lesson[];
+  /** Topic units only: the guidebook's key points. */
+  guide?: GuidePoint[];
+};
 
 export type BuiltLesson = {
   lesson: { id: string; title: string; unit: string; unitTitle: string; review: boolean };

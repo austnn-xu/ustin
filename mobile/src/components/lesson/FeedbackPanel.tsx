@@ -94,6 +94,11 @@ export function FeedbackPanel({ correct, title, answer, explain, showTin, payout
           <Text variant="body" hue={hueName}>
             {explain.text}
           </Text>
+          {explain.source && (
+            <Text variant="caption" hue={hueName}>
+              {`Source: ${explain.source}`}
+            </Text>
+          )}
         </ScrollView>
 
         {coach && <CoachTip>{correct ? 'The why is the lesson. Tap Continue' : 'Mistakes are free. Read why, then Continue'}</CoachTip>}
