@@ -8,7 +8,7 @@ import { StatsBar } from '@/components/StatsBar';
 import { Button, Card, Icon, ProgressBar, Screen, Text } from '@/components/ui';
 import { nextLesson } from '@/lib/course';
 import { dayKey } from '@/lib/dates';
-import { lessons } from '@/lib/engine';
+import { lessons, rules } from '@/lib/engine';
 import { currentStreak, useProgress } from '@/stores/progress';
 import { useSettings } from '@/stores/settings';
 import { makeStyles, useTheme } from '@/theme';
@@ -133,7 +133,7 @@ function EndOfTheRoad({ done }: { done: boolean }) {
           <Text variant="body" color="textSecondary" align="center">
             {done
               ? 'Keep your streak going by sorting real things with What bin?'
-              : 'Finish all 11 routes to master the full catalog: 177 everyday items.'}
+              : `Finish all ${lessons.UNITS.length} routes to master the full catalog: ${rules.OBJECTS.length} everyday items.`}
           </Text>
           {done && <Button label="What bin?" variant="secondary" onPress={() => router.push('/scan')} />}
         </Card>

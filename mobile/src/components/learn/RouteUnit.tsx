@@ -222,7 +222,7 @@ export function RouteUnit({ unit, width, screenWidth, records, currentId, select
 }
 
 /**
- * The route is long — eleven neighbourhoods of SVG scenery — and only one or two are ever on screen. On the web, let the
+ * The route is long — a dozen neighbourhoods of SVG scenery — and only one or two are ever on screen. On the web, let the
  * browser skip styling, laying out and painting the ones that are off screen. The unit's height is known, so the
  * scrollbar never jumps.
  */

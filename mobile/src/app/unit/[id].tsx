@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Hammer } from 'lucide-react-native';
 import { View } from 'react-native';
 import { BIN, BinArt } from '@/components/art/Bin';
 import { ItemArt, SECTION_HUE } from '@/components/art/ItemArt';
@@ -104,6 +104,32 @@ export default function Guidebook() {
               </View>
             </View>
           </Card>
+        ))}
+
+        {unit.extras?.map((x) => (
+          <PressableScale
+            key={x.id}
+            onPress={() => router.push({ pathname: '/guide/[id]', params: { id: x.id } })}
+            accessibilityLabel={`Optional bonus: ${x.title}`}
+          >
+            <Card>
+              <View style={styles.point}>
+                <View style={[styles.number, { backgroundColor: hue.subtle }]}>
+                  <Icon icon={Hammer} hue={hueName} />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="label" hue={hueName}>
+                    {`Bonus · optional · ${x.steps.length} steps`}
+                  </Text>
+                  <Text variant="heading">{x.title}</Text>
+                  <Text variant="callout" color="textSecondary">
+                    {x.blurb}
+                  </Text>
+                </View>
+                <Icon icon={ChevronRight} color="textTertiary" />
+              </View>
+            </Card>
+          </PressableScale>
         ))}
 
         {objects.length > 0 && (

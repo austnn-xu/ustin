@@ -18,6 +18,8 @@ Every lesson question on a shelf is generated from the same catalog and decision
 
 **Food & methane** is the one topic unit (`lib/topics.js`), right after *Food scraps*: short hand-written cards on *why* food scraps go where they do. Food is the most common material in US landfills, where it rots without oxygen and gives off methane. Composting done right (damp, airy, turned) barely does, and not wasting food beats both. Every number on a card names its source (EPA, USDA, IPCC), shown under the answer, and a test refuses a statistic without one. It also covers the myth that composting is worse for methane than the trash, and the true part behind it: a soggy, packed-down pile can go airless and make methane, which is why you turn it and add dry browns.
 
+The unit's road sign also carries an optional **bonus**: *Build your own compost bin*, an illustrated eight-step guide to turning a storage tote into a compost bin (drawings in `mobile/src/components/art/DiyArt.tsx`), with quick fixes and a six-question check that plays like a lesson. It is not a stop on the route, so skipping it never locks anything.
+
 The rest of this README covers the knowledge base and recognition, which the app shares with the original single-page web app in `public/`.
 
 ## The problem
@@ -143,7 +145,7 @@ No dependencies, no install, no build step for development.
 ```bash
 node server.js          # http://localhost:3000
 PORT=8080 node server.js
-npm test                # 57 checks across the engine, the catalog, the recogniser and the lessons
+npm test                # 58 checks across the engine, the catalog, the recogniser and the lessons
 ./build.sh              # assemble dist/ for static hosting
 ```
 
