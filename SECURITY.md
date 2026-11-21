@@ -1,0 +1,84 @@
+# Security
+
+US Tin is a learning app. It holds no email addresses, passwords, payment details or precise location history, and
+the design goal is to keep it that way: the safest data is the data the app never collects.
+
+## Reporting a problem
+
+Please report security issues privately through GitHub's **Security → Report a vulnerability** on this repository,
+not in a public issue. Include what you found, how to reproduce it, and what it lets someone do.
+
+## What is stored, and where
+
+| Data | Where | Protection |
+|---|---|---|
+| Progress: XP, streak, lessons, coins, Tin's outfit, Arena stats | On the device (AsyncStorage; localStorage on the web) | Not secret. Validated field by field every time it loads (`mobile/src/stores/sanitize.ts`), so edited or corrupted values fall back to defaults instead of crashing the app. |
+| Settings: theme, daily goal, saved ZIP or approximate location, recent game PINs | On the device | Same validation. Location is only ever sent to OpenStreetMap services, never to the leaderboard. |
+| Leaderboard session (anonymous) | **iOS/Android:** the OS Keychain / Keystore via expo-secure-store, device-only (not in backups). **Web:** localStorage | The only secret the app holds. See "The web build" for why the browser copy is protected by policy rather than encryption. |
+| Cached answers (nearby places, leaderboards) | On the device, kept up to 24 h | An allowlist of public data only (`mobile/src/lib/queryCache.ts`). The player's identity, PIN lookups and errors are never cached. Restored copies are validated before they are drawn. Reset progress clears it. |
+| Leaderboard: name, Tin's paint colour, match scores, game PINs | Supabase (Postgres) | Row level security on, no direct table access; every read and write goes through a database function that checks it. |
+
+## The leaderboard
+
+- **Anonymous accounts.** Picking a name signs the device in anonymously. There is no email or password to leak.
+- **Closed tables.** Row level security is on with no policies, and `anon`/`authenticated` have no table privileges.
+  The only way in is the `security definer` functions in `supabase/migrations`, each with a pinned `search_path`
+  and a statement timeout.
+- **Server-side scoring.** `submit_run` re-scores every match with the same rules as `lib/arena.js` and rejects
+  anything impossible; the result (win/loss) is decided from the rival's stored score, not taken from the client. One
+  run per player per game PIN, and a cooldown between runs.
+- **Names.** 2–16 letters, digits, spaces, dots, dashes or underscores; unique ignoring case; names that impersonate
+  the app, Tin or staff ("US Tin", "admin", "support", …) are refused; a name can change at most once an hour.
+- **Delete my data.** Arena → your name → *Remove me from the leaderboard* deletes the player, every match, every game
+  PIN they hosted and the anonymous account itself (`delete_me`), then signs the device out.
+- **What it cannot do.** Questions are generated on the phone, so the server cannot verify individual answers; it
+  bounds what a run may claim instead. That is right for friendly competition and wrong for anything with prizes.
+- **Operator checklist.** Turn on CAPTCHA for anonymous sign-ins once public (Supabase recommends it), keep the
+  `service_role` key out of the app and the repository, and apply every file in `supabase/migrations` in order.
+
+## Links from map data
+
+Nearby places come from OpenStreetMap, which anyone can edit. A site's website and phone number are untrusted text:
+`lib/safe-url.js` lets through only `http(s)` pages and plain phone numbers (no `javascript:`, `data:`, credentials
+in the host, control characters), when the data arrives *and* again when a link is opened. The map itself is
+OpenStreetMap's embed in a sandboxed iframe that cannot navigate the app and is sent no referrer.
+
+## The web build
+
+The Expo app is published to GitHub Pages, which cannot send HTTP headers. `mobile/scripts/harden-web.mjs` runs on every
+export and puts what a page can declare into `index.html` / `404.html`:
+
+- **Content-Security-Policy:** scripts only from the site itself (no inline scripts, no `eval`;
+  `'wasm-unsafe-eval'` only so TensorFlow.js can compile WebAssembly); network only to the services the app uses
+  (Zippopotam, Nominatim, Overpass and its mirrors, the MobileNet weights bucket, and the configured Supabase project,
+  which must be `https`); frames only from OpenStreetMap; no plugins; `<base>` locked; no form posts; mixed content
+  upgraded. The build fails if an inline script appears.
+- **Referrer policy:** other sites see only our origin, never a full URL.
+
+`style-src` allows `'unsafe-inline'` because react-native-web writes styles at runtime; styles cannot run code.
+
+What a meta tag cannot do on GitHub Pages: `frame-ancestors` (clickjacking), `X-Content-Type-Options`, HSTS and
+`Permissions-Policy`. Serving the build from a host that supports headers (Vercel, Netlify, Cloudflare Pages) and adding
+the headers from `security-headers.js` closes that gap. On the web, the leaderboard session sits in localStorage
+because a static site has no server to set an httpOnly cookie; the CSP is what keeps foreign scripts away from it, and
+the session is only an anonymous leaderboard identity.
+
+## The original web app (`public/`, `server.js`)
+
+`security-headers.js` is the single source of its headers, sent by `server.js` and by Vercel (`vercel.json`; a test
+keeps them identical): a strict CSP with `frame-ancestors 'none'`, `nosniff`, `X-Frame-Options: DENY`, a referrer
+policy, a `Permissions-Policy` that allows only the camera, COOP, HSTS on Vercel, and cache rules (pages revalidate,
+the API is never cached). The dev server confines `/lib/` to the `lib` folder's `.js` files, and a test fires
+path-traversal requests at it. Everything inserted with `innerHTML` is escaped.
+
+## Dependencies
+
+Run `npm audit --omit=dev` in `mobile/`. As of this writing the remaining findings are in build tooling, plus
+`decode-uri-component` under `expo-router` (a denial of service from a crafted link, which can only hang the
+visitor's own tab). Its fix needs the next Expo SDK major, so it is tracked rather than forced.
+
+## Checks
+
+- `npm test` (root): engine, lessons, Arena scoring kept in step with the SQL, URL safety, headers and path traversal.
+- `supabase/tests/run.sh`: the migrations against a local Postgres, with real and bogus submissions, reserved names,
+  the rename limit and `delete_me`.

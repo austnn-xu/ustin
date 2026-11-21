@@ -236,6 +236,10 @@ The browser does not call these — the engine and the classifier both run clien
 | `GET /api/catalog` | Objects for the manual picker |
 | `POST /api/resolve` | `{ objectId, answers }` → per-component verdicts + streams |
 
+## Security and privacy
+
+The app collects no email, password or payment details. The leaderboard session is the one secret it holds (in the phone's Keychain/Keystore), stored progress and cached data are validated every time they load, links built from OpenStreetMap data are filtered to plain web pages, the web build ships a strict Content-Security-Policy, and players can delete everything the leaderboard knows about them. Details, the threat model and how to report a problem: [`SECURITY.md`](SECURITY.md).
+
 ## Known limits
 
 - **Rules are generic, not local.** Disposal is set by your municipality, and the acceptance ratings are national averages. A real version needs postcode-level rule sets; questions like "does your program take film?" paper over this for now. *Near me* finds places by location, but what your own curbside bin takes is still the national picture.

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { bool, isObj, oneOf, real, text, tours } from './sanitize';
 
 export type ColorSchemePreference = 'system' | 'light' | 'dark';
 export type DailyGoal = 10 | 20 | 30 | 50;
@@ -56,6 +57,47 @@ export const useSettings = create<SettingsState>()(
       rememberPin: (code) =>
         set((s) => ({ recentPins: [{ code, at: Date.now() }, ...s.recentPins.filter((p) => p.code !== code)].slice(0, 5) })),
     }),
-    { name: 'ustin-settings', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'ustin-settings',
+      storage: createJSONStorage(() => AsyncStorage),
+      // Checked field by field on the way back in (see sanitize.ts).
+      merge: (persisted, current) => ({ ...current, ...cleanSettings(persisted) }),
+      partialize: (s) => ({
+        colorScheme: s.colorScheme,
+        dailyGoal: s.dailyGoal,
+        place: s.place,
+        onboarded: s.onboarded,
+        lessonCoached: s.lessonCoached,
+        toursSeen: s.toursSeen,
+        recentPins: s.recentPins,
+      }),
+    },
   ),
 );
+
+function cleanPlace(v: unknown): SavedPlace | null {
+  if (!isObj(v)) return null;
+  const lat = real(v.lat, NaN, -90, 90);
+  const lon = real(v.lon, NaN, -180, 180);
+  if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+  const zip = typeof v.zip === 'string' && /^\d{5}$/.test(v.zip) ? v.zip : undefined;
+  return { label: text(v.label, 'Saved location', 120), lat, lon, source: oneOf(v.source, ['zip', 'gps'] as const, 'zip'), ...(zip ? { zip } : null) };
+}
+
+/** Persisted settings, checked: anything malformed falls back to its default. */
+export function cleanSettings(raw: unknown): Partial<SettingsState> {
+  if (!isObj(raw)) return {};
+  return {
+    colorScheme: oneOf(raw.colorScheme, ['system', 'light', 'dark'] as const, 'system'),
+    dailyGoal: oneOf(raw.dailyGoal, [10, 20, 30, 50] as const, 20),
+    place: cleanPlace(raw.place),
+    onboarded: bool(raw.onboarded, false),
+    lessonCoached: bool(raw.lessonCoached, false),
+    toursSeen: tours(raw.toursSeen),
+    recentPins: Array.isArray(raw.recentPins)
+      ? raw.recentPins
+          .filter((p): p is { code: string; at: number } => isObj(p) && typeof p.code === 'string' && /^\d{6}$/.test(p.code) && typeof p.at === 'number')
+          .slice(0, 5)
+      : [],
+  };
+}

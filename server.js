@@ -5,9 +5,11 @@ const fsp = require('node:fs/promises');
 const path = require('node:path');
 
 const { OBJECTS, findObject, resolve } = require('./lib/rules');
+const { SECURITY_HEADERS, cacheControlFor } = require('./security-headers');
 
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const LIB_DIR = path.join(__dirname, 'lib');
 const MAX_BODY = 64 * 1024;
 
 const MIME = {
@@ -23,6 +25,7 @@ const MIME = {
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
   res.writeHead(status, {
+    ...SECURITY_HEADERS,
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(body),
     'Cache-Control': 'no-store',
@@ -77,19 +80,23 @@ async function serveStatic(pathname, res) {
   const rel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
 
   // The browser loads the shared engine from /lib/, which lives beside public/
-  // rather than inside it. The prefix check below still contains both roots.
-  const base = rel.startsWith('lib/') ? __dirname : PUBLIC_DIR;
-  const target = path.join(base, rel);
+  // rather than inside it. Each root is its own boundary: /lib/ can reach only
+  // the .js files in lib/, never the rest of the repository.
+  const isLib = rel.startsWith('lib/');
+  const base = isLib ? LIB_DIR : PUBLIC_DIR;
+  const target = path.join(base, isLib ? rel.slice('lib/'.length) : rel);
 
-  if (target !== base && !target.startsWith(base + path.sep)) {
+  if (target === base || !target.startsWith(base + path.sep) || (isLib && path.extname(target) !== '.js')) {
     return sendJson(res, 403, { error: 'Forbidden' });
   }
 
   try {
     const data = await fsp.readFile(target);
     res.writeHead(200, {
+      ...SECURITY_HEADERS,
       'Content-Type': MIME[path.extname(target).toLowerCase()] || 'application/octet-stream',
       'Content-Length': data.length,
+      'Cache-Control': cacheControlFor(pathname),
     });
     res.end(data);
   } catch {

@@ -9,8 +9,8 @@ one, the app still plays Arena matches against Tin and says the leaderboard is n
 2. **Turn on anonymous sign-ins:** Authentication → Sign In / Providers → *Allow anonymous sign-ins*. Players never
    make an account; choosing a leaderboard name signs the device in anonymously. Supabase recommends turning on
    CAPTCHA protection for anonymous sign-ins once the app is public, to stop bots creating accounts in bulk.
-3. **Create the tables and functions:** paste `migrations/20261121000000_arena.sql` into the SQL editor and run it
-   (or `supabase link` then `supabase db push` with the Supabase CLI).
+3. **Create the tables and functions:** run every file in `migrations/`, oldest first, in the SQL editor (or
+   `supabase link` then `supabase db push` with the Supabase CLI).
 4. **Point the app at it:** Project Settings → API gives a Project URL and a public `anon` key. Put them in
    `mobile/.env`:
 
@@ -41,6 +41,10 @@ these functions:
 | `find_opponent()` | signed in | A random recent run by someone else, to race on the same questions |
 | `submit_run(seed, points, …)` | signed in | Re-scores a finished match and records it (see below) |
 | `create_room()` / `join_room(code)` / `room_board(code)` | signed in / anyone | Game PINs and their podiums |
+| `delete_me()` | signed in | Deletes the player, their matches, the PINs they hosted and the anonymous account |
+
+Names that impersonate the app, Tin or staff are refused, a name can change once an hour, and every function has a
+statement timeout. The full picture is in [`SECURITY.md`](../SECURITY.md).
 
 ## How much it trusts a submitted match
 
@@ -58,7 +62,7 @@ best players score. Beating Tin is self-reported, so it is worth half a win agai
 
 `tests/run.sh` applies the migration to a throwaway local Postgres (16+) with a small stand-in for Supabase's `auth`
 schema, then walks `tests/arena.scenario.sql`: real and bogus submissions as three players. Errors are expected where
-a step is meant to be refused.
+a step is meant to be refused, including reserved names, the rename limit and `delete_me`.
 
 ```sh
 PGBIN=/usr/lib/postgresql/16/bin sh supabase/tests/run.sh

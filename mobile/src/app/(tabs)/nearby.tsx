@@ -19,6 +19,7 @@ import {
   OSM_ATTRIBUTION,
   usesMiles,
   type PlaceKind,
+  cleanPlaces,
 } from '@/lib/places';
 import { useSettings } from '@/stores/settings';
 import { makeStyles, useTheme } from '@/theme';
@@ -46,6 +47,8 @@ export default function Nearby() {
     queryKey: ['places', kind, place?.lat, place?.lon],
     queryFn: () => findPlaces(kind, place!.lat, place!.lon),
     enabled: !!place && seen,
+    // Results can come back from the on-device cache, so they are checked before they are drawn.
+    select: (data) => cleanPlaces(data) ?? { sites: [], radiusKm: 0, at: { lat: place!.lat, lon: place!.lon } },
   });
 
   useEffect(() => setSelected(null), [kind, place?.lat, place?.lon]);

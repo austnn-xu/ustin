@@ -1,6 +1,6 @@
 import { CloudOff, Crown, Trophy } from 'lucide-react-native';
 import { View } from 'react-native';
-import { Button, Card, Icon, Skeleton, Text } from '@/components/ui';
+import { Button, Card, Icon, PressableScale, Skeleton, Text } from '@/components/ui';
 import { ArenaError, leaderboardConfigured, type BoardRow } from '@/lib/leaderboard';
 import { makeStyles, useTheme, type HueName } from '@/theme';
 import { Avatar } from './Avatar';
@@ -105,6 +105,23 @@ function Row({ entry: e, unit }: { entry: BoardEntry; unit: string }) {
   );
 }
 
+/** Shown over a saved board when it could not be refreshed: say how old it is, and offer to try again. */
+export function StaleNote({ at, onRetry }: { at: number; onRetry: () => void }) {
+  const styles = useStyles();
+  const when = at ? new Date(at).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'earlier';
+  return (
+    <PressableScale haptic="selection" onPress={onRetry} style={styles.stale} accessibilityLabel={`Offline. Showing the board from ${when}. Tap to try again`}>
+      <Icon icon={CloudOff} size="sm" color="textTertiary" />
+      <Text variant="caption" color="textSecondary" style={styles.flex}>
+        {`Offline: showing the board from ${when}.`}
+      </Text>
+      <Text variant="caption" hue="blue">
+        Retry
+      </Text>
+    </PressableScale>
+  );
+}
+
 /** The shape of a board while it loads. */
 export function BoardSkeleton({ rows = 5 }: { rows?: number }) {
   const t = useTheme();
@@ -191,5 +208,6 @@ const useStyles = makeStyles((t) => ({
   youTag: { backgroundColor: t.colors.hue.blue.base, borderRadius: t.radius.pill, paddingHorizontal: t.space[2] },
   message: { flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
   messageStack: { gap: t.space[3] },
+  stale: { flexDirection: 'row', alignItems: 'center', gap: t.space[2], minHeight: t.layout.hitTarget },
   messageRow: { flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
 }));

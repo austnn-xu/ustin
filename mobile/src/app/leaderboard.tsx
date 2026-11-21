@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { RefreshControl, View } from 'react-native';
-import { BoardList, BoardMessage, BoardSkeleton, toEntries } from '@/components/arena/BoardList';
+import { BoardList, BoardMessage, BoardSkeleton, StaleNote, toEntries } from '@/components/arena/BoardList';
 import { Segmented } from '@/components/arena/Segmented';
 import { Icon, PressableScale, Screen, Text } from '@/components/ui';
 import { leaderboardConfigured, useLeaderboard, type Period } from '@/lib/leaderboard';
@@ -51,12 +51,15 @@ export default function Leaderboard() {
           <BoardMessage />
         ) : board.isPending ? (
           <BoardSkeleton rows={10} />
-        ) : board.isError ? (
+        ) : board.isError && !board.data?.length ? (
           <BoardMessage error={board.error} onRetry={() => void board.refetch()} />
         ) : board.data.length === 0 ? (
           <BoardMessage empty="Nobody is on the board yet. Play a match to be first." />
         ) : (
-          <BoardList entries={toEntries(board.data, 50)} />
+          <>
+            {board.isError && <StaleNote at={board.dataUpdatedAt} onRetry={() => void board.refetch()} />}
+            <BoardList entries={toEntries(board.data, 50)} />
+          </>
         )}
       </View>
     </Screen>

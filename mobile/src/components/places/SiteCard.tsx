@@ -1,6 +1,7 @@
 import { CircleCheck, Clock, ExternalLink, Info, Navigation, Phone } from 'lucide-react-native';
 import { Linking, View } from 'react-native';
 import { Button, Chip, Icon, PressableScale, Text } from '@/components/ui';
+import { safeUrl } from '@/lib/engine';
 import { directionsUrl, formatDistance, type Site } from '@/lib/places';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -8,6 +9,9 @@ import { makeStyles, useTheme } from '@/theme';
 export function SiteCard({ site, miles, selected, onPress }: { site: Site; miles: boolean; selected: boolean; onPress: () => void }) {
   const t = useTheme();
   const styles = useStyles();
+  // Checked again here, not just when the data arrives: a cached copy could have been altered since.
+  const tel = safeUrl.safeTel(site.phone);
+  const web = safeUrl.safeWebUrl(site.website);
   return (
     <View style={[styles.card, selected && { borderColor: t.colors.hue.blue.base, backgroundColor: t.colors.hue.blue.subtle }]}>
       {/* Tapping the details shows the site on the map; the action buttons sit outside so buttons never nest. */}
@@ -70,12 +74,8 @@ export function SiteCard({ site, miles, selected, onPress }: { site: Site; miles
 
       <View style={styles.actions}>
         <Button label="Directions" icon={Navigation} variant="secondary" size="md" onPress={() => Linking.openURL(directionsUrl(site))} />
-        {site.phone && (
-          <Button label="Call" icon={Phone} variant="neutral" size="md" onPress={() => Linking.openURL(`tel:${site.phone!.replace(/[^\d+]/g, '')}`)} />
-        )}
-        {site.website && (
-          <Button label="Website" icon={ExternalLink} variant="neutral" size="md" onPress={() => Linking.openURL(site.website!)} />
-        )}
+        {tel && <Button label="Call" icon={Phone} variant="neutral" size="md" onPress={() => Linking.openURL(tel)} />}
+        {web && <Button label="Website" icon={ExternalLink} variant="neutral" size="md" onPress={() => Linking.openURL(web)} />}
       </View>
     </View>
   );
