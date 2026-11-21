@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { numbers } from '@/lib/engine';
 import { makeStyles, useTheme, type ColorTokens, type HueName, type TypeVariant } from '@/theme';
 import { Text } from './Text';
 
@@ -11,6 +12,11 @@ export type RollingNumberProps = {
   color?: keyof ColorTokens;
   /** Text after the number, e.g. "%" or " XP". It does not roll. */
   suffix?: string;
+  /**
+   * Show big numbers short, simulator-style: 9,999 then 12.3K, 4.56M, 7.8B, 1.2T, 9Qa (see ../lib/numbers.js). On by
+   * default, so no counter in the app can grow into a wall of digits.
+   */
+  compact?: boolean;
   accessibilityLabel?: string;
 };
 
@@ -21,21 +27,29 @@ const COLUMN = '0\n1\n2\n3\n4\n5\n6\n7\n8\n9';
  * A number whose digits roll to their new value like an odometer, instead of snapping. Every counter in the app
  * (streak, coins, XP, the lesson's score) uses it, so numbers always move the way they changed.
  */
-export function RollingNumber({ value, variant = 'bodyStrong', hue, color, suffix, accessibilityLabel }: RollingNumberProps) {
+export function RollingNumber({ value, variant = 'bodyStrong', hue, color, suffix, accessibilityLabel, compact = true }: RollingNumberProps) {
   const t = useTheme();
   const styles = useStyles();
-  const chars = String(Math.max(0, Math.round(value))).split('');
+  const whole = numbers.clampPoints(Math.round(value));
+  const chars = (compact ? numbers.compact(whole) : String(whole)).split('');
   const lineHeight = t.type[variant].lineHeight ?? t.type.body.lineHeight!;
   return (
     <View
       style={styles.row}
       accessible
-      accessibilityLabel={accessibilityLabel ?? `${value}${suffix ?? ''}`}
+      accessibilityLabel={accessibilityLabel ?? `${whole.toLocaleString('en-US')}${suffix ?? ''}`}
     >
-      {chars.map((ch, i) => (
-        // Key digits by place value from the right, so 9 → 10 keeps the ones column rolling and adds a tens column.
-        <Digit key={chars.length - i} digit={Number(ch)} lineHeight={lineHeight} variant={variant} hue={hue} color={color} />
-      ))}
+      {chars.map((ch, i) =>
+        // Key by place from the right, so 9 → 10 keeps the ones column rolling and adds a tens column. Separators,
+        // decimal points and suffixes (",", ".", "K", "Qa") sit still; only digits roll.
+        /\d/.test(ch) ? (
+          <Digit key={chars.length - i} digit={Number(ch)} lineHeight={lineHeight} variant={variant} hue={hue} color={color} />
+        ) : (
+          <Text key={`${chars.length - i}${ch}`} variant={variant} hue={hue} color={color}>
+            {ch}
+          </Text>
+        ),
+      )}
       {suffix ? (
         <Text variant={variant} hue={hue} color={color} tabular>
           {suffix}

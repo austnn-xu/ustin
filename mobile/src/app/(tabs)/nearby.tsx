@@ -23,6 +23,7 @@ import {
 } from '@/lib/places';
 import { useSettings } from '@/stores/settings';
 import { makeStyles, useTheme } from '@/theme';
+import { SectionSwitch } from '@/components/SectionSwitch';
 
 export default function Nearby() {
   const styles = useStyles();
@@ -60,6 +61,7 @@ export default function Nearby() {
     <Screen gutter={false} keyboard>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.column}>
+          <SectionSwitch current="nearby" />
           <Text variant="display">Near me</Text>
 
           {item && (

@@ -10,6 +10,7 @@ import { rules, type CatalogObject } from '@/lib/engine';
 import { useRecognition, type Recognition } from '@/lib/recognize';
 import { useProgress } from '@/stores/progress';
 import { makeStyles, useTheme } from '@/theme';
+import { SectionSwitch } from '@/components/SectionSwitch';
 
 /** Things people most often get wrong, as one-tap starting points. */
 const POPULAR = ['coffee-cup', 'pizza-box', 'battery', 'produce-bag', 'takeout-container', 'light-bulb', 'smartphone', 'clothing'];
@@ -36,6 +37,7 @@ export default function WhatBin() {
     <Screen gutter={false} keyboard>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.column}>
+          <SectionSwitch current="scan" />
           <Text variant="display">What bin?</Text>
 
           {state.phase === 'idle' ? (

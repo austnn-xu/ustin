@@ -8,9 +8,11 @@ import { Mascot, type Mood } from '@/components/art/Mascot';
 import { StatTile, useCountUp } from '@/components/lesson/LessonEnd';
 import { Button, Card, Icon, Screen, Skeleton, Text } from '@/components/ui';
 import { paintOf } from '@/lib/cosmetics';
-import { arena, type MatchRewards } from '@/lib/engine';
+import { arena, leagues, numbers, type MatchRewards } from '@/lib/engine';
 import { haptics } from '@/lib/haptics';
-import { ArenaError, formatPin, leaderboardConfigured, submitRun, useLeaderboard, useRoomBoard } from '@/lib/leaderboard';
+import { ArenaError, formatPin, leaderboardConfigured, submitRun, useMyLeague, useRoomBoard, type MyLeague, type SubmittedRun } from '@/lib/leaderboard';
+import { LeagueBadge } from '@/components/art/LeagueBadge';
+import { isPristine, leagueId, leagueName } from './League';
 import type { Setup } from '@/lib/match';
 import { useScreenSize } from '@/lib/useScreenSize';
 import { useProgress } from '@/stores/progress';
@@ -51,6 +53,7 @@ export function MatchEnd({
   const [rewards, setRewards] = useState<MatchRewards | null>(null);
   const [post, setPost] = useState<Post>(setup.online ? 'posting' : 'skipped');
   const [postError, setPostError] = useState<string | null>(null);
+  const [posted, setPosted] = useState<SubmittedRun | null>(null);
   const begun = useRef(false);
   const paid = useRef(false);
 
@@ -75,6 +78,7 @@ export function MatchEnd({
         tinScore: rival.kind === 'tin' ? localRivalScore : null,
       });
       pay(arena.rewardsFor({ points: summary.points, rival: kind, rivalScore: rival.kind === 'room' ? res.rivalScore : localRivalScore }));
+      setPosted(res);
       setPost('posted');
       void queryClient.invalidateQueries({ queryKey: ['arena'] });
     } catch (e) {
@@ -93,8 +97,8 @@ export function MatchEnd({
     // Once per finished match.
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const weekly = useLeaderboard('week');
-  const myRank = post === 'posted' ? weekly.data?.find((r) => r.isMe)?.rank : undefined;
+  // Refetched once the match is posted (the post invalidates every arena query), so it shows the new place.
+  const my = useMyLeague();
   const room = useRoomBoard(rival.kind === 'room' ? rival.code : undefined, rival.kind === 'room' && post === 'posted');
 
   const score = arena.total(summary.points);
@@ -170,7 +174,9 @@ export function MatchEnd({
           post={post}
           error={postError}
           rewards={rewards}
-          rank={myRank}
+          posted={posted}
+          my={post === 'posted' ? my.data ?? null : null}
+          vsPlayer={rival.kind === 'player'}
           onRetry={() => void send()}
         />
       </View>
@@ -183,15 +189,20 @@ function PostCard({
   post,
   error,
   rewards,
-  rank,
+  posted,
+  my,
+  vsPlayer,
   onRetry,
 }: {
   post: Post;
   error: string | null;
   rewards: MatchRewards | null;
-  rank?: number;
+  posted: SubmittedRun | null;
+  my: MyLeague | null;
+  vsPlayer: boolean;
   onRetry: () => void;
 }) {
+  const t = useTheme();
   const styles = useStyles();
   if (post === 'skipped') {
     return (
@@ -218,27 +229,48 @@ function PostCard({
       </Card>
     );
   }
+  if (post === 'posting' || !rewards || !posted) {
+    return (
+      <Card variant="tinted" hue="blue" style={styles.row}>
+        <Icon icon={Trophy} hue="blue" shade="text" />
+        <Text variant="bodyStrong" hue="blue" style={styles.flex}>
+          Posting to the leaderboard…
+        </Text>
+      </Card>
+    );
+  }
+  const id = leagueId(posted.league);
+  const c = t.colors.league[id];
+  const pristine = isPristine(posted.league);
+  const fellToRuby = posted.league === leagues.PRISTINE - 1 && posted.rrChange < 0;
+  const bonus = rewards.bonus > 0 ? `${fmt(rewards.score)} score + ${fmt(rewards.bonus)} for the ${rewards.outcome === 'tie' ? 'tie' : 'win'}` : 'Your score, straight into your league';
+
+  let title: string;
+  let sub: string;
+  if (fellToRuby) {
+    title = `${posted.rrChange} RR: back to Ruby`;
+    sub = 'Top a Ruby group to earn Pristine again.';
+  } else if (pristine) {
+    title = posted.rrChange > 0 ? `+${posted.rrChange} RR` : posted.rrChange < 0 ? `${posted.rrChange} RR` : 'RR unchanged';
+    sub = vsPlayer
+      ? `${numbers.compact(posted.rr)} RR${my?.pristineRank ? ` · Pristine #${my.pristineRank}` : ''}`
+      : 'Only quick matches against other players move RR.';
+  } else {
+    title = `+${numbers.compact(rewards.earned)} league points`;
+    sub = `${bonus}${my && my.league === posted.league && my.rank ? ` · #${my.rank} of ${my.size} in ${leagueName(posted.league)}` : ''}`;
+  }
   return (
-    <Card variant="tinted" hue="blue" style={styles.row}>
-      <Icon icon={Trophy} hue="blue" shade="text" />
+    <View style={[styles.row, styles.leagueCard, { backgroundColor: c.subtle, borderColor: c.base }]}>
+      <LeagueBadge league={id} size={t.layout.control.md} />
       <View style={styles.flex}>
-        {post === 'posting' || !rewards ? (
-          <Text variant="bodyStrong" hue="blue">
-            Posting to the leaderboard…
-          </Text>
-        ) : (
-          <>
-            <Text variant="bodyStrong" hue="blue">{`+${fmt(rewards.earned)} leaderboard points`}</Text>
-            <Text variant="callout" hue="blue">
-              {rewards.bonus > 0
-                ? `${fmt(rewards.score)} score + ${fmt(rewards.bonus)} for the ${rewards.outcome === 'tie' ? 'tie' : 'win'}`
-                : 'Your score, straight onto the board'}
-              {rank ? ` · #${rank} this week` : ''}
-            </Text>
-          </>
-        )}
+        <Text variant="bodyStrong" style={{ color: c.text }}>
+          {title}
+        </Text>
+        <Text variant="callout" color="textSecondary">
+          {sub}
+        </Text>
       </View>
-    </Card>
+    </View>
   );
 }
 
@@ -248,5 +280,6 @@ const useStyles = makeStyles((t) => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: t.space[3], alignSelf: 'stretch' },
   stack: { gap: t.space[3], alignSelf: 'stretch' },
   flex: { flex: 1 },
+  leagueCard: { padding: t.space[4], borderRadius: t.radius.lg, borderWidth: t.layout.border },
   buttons: { gap: t.space[2] },
 }));

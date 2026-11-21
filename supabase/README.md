@@ -42,6 +42,13 @@ these functions:
 | `submit_run(seed, points, …)` | signed in | Re-scores a finished match and records it (see below) |
 | `create_room()` / `join_room(code)` / `room_board(code)` | signed in / anyone | Game PINs and their podiums |
 | `delete_me()` | signed in | Deletes the player, their matches, the PINs they hosted and the anonymous account |
+| `my_league()` / `league_board()` | signed in | Your league, your place, and this week's group (Bronze–Ruby) |
+| `pristine_board(limit)` | anyone | The Pristine ladder by RR, top 25 by default |
+
+**Leagues** (`20261123000000_leagues.sql`): a player's first match of the week puts them in a group of up to 30 from
+their league; weeks are settled lazily, on each player's first action of a later week, so no scheduled job is needed.
+Pristine is an RR ladder updated inside `submit_run`. Every total is capped at 9 quadrillion (`points_cap()`). The rules
+mirror `lib/leagues.js` and `lib/numbers.js`; `test/leagues.test.js` keeps them identical.
 
 Names that impersonate the app, Tin or staff are refused, a name can change once an hour, and every function has a
 statement timeout. The full picture is in [`SECURITY.md`](../SECURITY.md).

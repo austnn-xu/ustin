@@ -1,13 +1,15 @@
 import { Crown } from 'lucide-react-native';
 import { View } from 'react-native';
 import { Appear, Icon, Text } from '@/components/ui';
+import { numbers } from '@/lib/engine';
 import { makeStyles, useTheme, type HueName } from '@/theme';
 import { Avatar } from './Avatar';
 
 /** `rank` is the shared place on a tie; without it, the order given is the place. */
 export type PodiumEntry = { key: string; name: string; paint: HueName; score: number; isMe: boolean; rank?: number };
 
-const fmt = (n: number) => n.toLocaleString('en-US');
+/** Short above 9,999 (12.3K, 4.56M): podium blocks are narrow. */
+const fmt = (n: number) => numbers.compact(n);
 
 /**
  * The end of a match: up to three players on blocks, first in the middle and tallest. The blocks rise once, third place

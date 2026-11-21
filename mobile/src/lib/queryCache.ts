@@ -9,7 +9,8 @@ import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-cl
  *
  * What may be kept is an allowlist, not "everything": public data only.
  *   - places    nearby drop-off sites from OpenStreetMap
- *   - boards    the global leaderboard and game PIN podiums (names and scores everyone can see anyway)
+ *   - boards    the global leaderboard, league groups, the Pristine ladder and game PIN podiums (names and
+ *               scores other players can see anyway)
  * Never kept: the signed-in player (`arena/me`), game PIN lookups, errors, and anything not listed here. The sign-in
  * session is not in this cache at all; it lives in the OS keychain (see secureStorage.ts).
  *
@@ -18,7 +19,7 @@ import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-cl
  */
 
 /** Bump when the shape of any cached query's data changes; old copies are then discarded on launch. */
-export const CACHE_VERSION = 'v1';
+export const CACHE_VERSION = 'v2';
 const MAX_AGE = 24 * 60 * 60 * 1000;
 const STORAGE_KEY = 'ustin-query-cache';
 /** A cache bigger than this is not saved: it would slow every launch to read back (and something is wrong). */
@@ -26,7 +27,7 @@ const MAX_BYTES = 1_500_000;
 
 const KEEP: ((key: readonly unknown[]) => boolean)[] = [
   (k) => k[0] === 'places',
-  (k) => k[0] === 'arena' && (k[1] === 'board' || k[1] === 'room-board'),
+  (k) => k[0] === 'arena' && (k[1] === 'board' || k[1] === 'room-board' || k[1] === 'group' || k[1] === 'ladder'),
 ];
 
 export const shouldKeep = (query: Pick<Query, 'queryKey' | 'state'>) =>
