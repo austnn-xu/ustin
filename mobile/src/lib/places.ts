@@ -16,7 +16,7 @@ import {
 } from 'lucide-react-native';
 import { Platform } from 'react-native';
 import type { HueName } from '@/theme';
-import type { OutcomeId, Verdict } from './engine';
+import { safeUrl, type OutcomeId, type Verdict } from './engine';
 
 export type PlaceKind =
   | 'recycling'
@@ -402,6 +402,42 @@ export type Site = {
 
 export type PlacesResult = { sites: Site[]; radiusKm: number; at: { lat: number; lon: number } };
 
+const isNum = (v: unknown, min: number, max: number): v is number => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
+const strOrNull = (v: unknown) => (typeof v === 'string' ? v.slice(0, 300) : null);
+
+/**
+ * A places result checked field by field. Results are cached on the device between launches (see queryCache.ts), and a
+ * cached copy is data the app no longer controls: anything malformed is dropped rather than drawn, and links are
+ * checked again by the site card.
+ */
+export function cleanPlaces(raw: unknown): PlacesResult | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const at = r.at as Record<string, unknown> | undefined;
+  if (!at || !isNum(at.lat, -90, 90) || !isNum(at.lon, -180, 180) || !isNum(r.radiusKm, 0, 1000) || !Array.isArray(r.sites)) return null;
+  const sites: Site[] = [];
+  for (const s of r.sites.slice(0, 50) as Record<string, unknown>[]) {
+    if (!s || typeof s !== 'object' || typeof s.id !== 'string' || typeof s.name !== 'string' || typeof s.type !== 'string') continue;
+    if (!isNum(s.lat, -90, 90) || !isNum(s.lon, -180, 180) || !isNum(s.distanceKm, 0, 20000)) continue;
+    sites.push({
+      id: s.id.slice(0, 64),
+      name: s.name.slice(0, 200),
+      type: s.type.slice(0, 100),
+      lat: s.lat,
+      lon: s.lon,
+      distanceKm: s.distanceKm,
+      address: strOrNull(s.address),
+      hours: strOrNull(s.hours),
+      phone: strOrNull(s.phone),
+      website: safeUrl.safeWebUrl(s.website),
+      accepts: Array.isArray(s.accepts) ? s.accepts.filter((a): a is string => typeof a === 'string').slice(0, 30) : [],
+      confirmed: s.confirmed === true,
+      note: strOrNull(s.note),
+    });
+  }
+  return { sites, radiusKm: r.radiusKm, at: { lat: at.lat, lon: at.lon } };
+}
+
 type OsmElement = {
   type: string;
   id: number;
@@ -557,7 +593,8 @@ export function toSite(el: OsmElement, kind: PlaceKind, from: { lat: number; lon
     address: addressOf(tags),
     hours: tags.opening_hours ?? null,
     phone: tags.phone ?? tags['contact:phone'] ?? null,
-    website: tags.website ?? tags['contact:website'] ?? null,
+    // Map data is editable by anyone: only a plain http(s) page survives as a link (see ../lib/safe-url.js).
+    website: safeUrl.safeWebUrl(tags.website ?? tags['contact:website']),
     accepts: [...new Set(accepts)],
     confirmed,
     note: confirmed ? null : (likely?.why ?? 'Usually accepts this. Call ahead to check.'),

@@ -9,6 +9,7 @@ import { Button, Card, ChoiceCard, Icon, ProgressBar, Screen, Text } from '@/com
 import { ACHIEVEMENTS, isUnlocked } from '@/lib/achievements';
 import { dayKey, lastWeek, weekdayLetter } from '@/lib/dates';
 import { GOALS } from '@/lib/goals';
+import { clearCache } from '@/lib/queryCache';
 import { currentStreak, useProgress } from '@/stores/progress';
 import { useSettings, type ColorSchemePreference } from '@/stores/settings';
 import { makeStyles, useTheme, type HueName } from '@/theme';
@@ -164,6 +165,7 @@ export default function Profile() {
                   fullWidth
                   onPress={() => {
                     progress.reset();
+                    void clearCache();
                     setConfirmReset(false);
                   }}
                 />

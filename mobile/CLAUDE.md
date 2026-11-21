@@ -177,6 +177,20 @@ Then the rest of the app teaches itself: the first time each tab opens, `TabTour
 what the tab is for and how to use it, two or three steps, each with the same icon as the real control
 (content in `src/lib/tour.ts`, every claim true to the screen). Skip or Got it marks it seen; Profile → Replay the tour.
 
+## Security and stored data
+
+See `../SECURITY.md` for the whole picture. In practice:
+
+- **Secrets go in `src/lib/secureStorage.ts`** (Keychain / Keystore on phones), never AsyncStorage. Today the only one is
+  the leaderboard session.
+- **Persisted state is untrusted on the way back in.** A new field in a store gets a line in its `clean…` function
+  (`src/stores/sanitize.ts` has the helpers).
+- **The query cache is an allowlist** (`src/lib/queryCache.ts`): add a query only if its data is public, and validate it
+  with `select` before it is drawn. Bump `CACHE_VERSION` when a cached shape changes.
+- **Links from fetched data go through `safeUrl`** (`../lib/safe-url.js`), at parse time and again when opened.
+- **A new network host is added to the CSP on purpose** (`scripts/harden-web.mjs`), or the published build blocks it.
+  No inline scripts, no `eval`.
+
 ## Never do
 
 - Gradients, glassmorphism, glowing shadows.

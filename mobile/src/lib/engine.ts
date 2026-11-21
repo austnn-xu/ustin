@@ -1,3 +1,4 @@
+import './urlPolyfill';
 /**
  * The bridge to the shared knowledge base in `../lib`.
  *
@@ -246,6 +247,8 @@ export const rules: RulesApi = require('../../../lib/rules');
 export const lessons: LessonsApi = require('../../../lib/lessons');
 export const recognizer: RecognizerApi = require('../../../lib/recognizer');
 export const arena: ArenaApi = require('../../../lib/arena');
+/** Links built from map data: only http(s) pages and phone numbers get through. */
+export const safeUrl: { safeWebUrl: (raw: unknown) => string | null; safeTel: (raw: unknown) => string | null } = require('../../../lib/safe-url');
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 export const OUTCOME_ORDER: OutcomeId[] = ['recycle', 'compost', 'trash', 'dropoff', 'reuse'];

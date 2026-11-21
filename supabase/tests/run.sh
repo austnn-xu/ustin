@@ -10,5 +10,5 @@ ${BIN}initdb -D "$DIR/data" -A trust -U postgres >/dev/null
 ${BIN}pg_ctl -D "$DIR/data" -o "-p 54329 -k $DIR -c listen_addresses=''" -l "$DIR/log" -w start >/dev/null
 P="${BIN}psql -h $DIR -p 54329 -U postgres -q -d postgres"
 $P -v ON_ERROR_STOP=1 -f supabase-stub.sql
-$P -v ON_ERROR_STOP=1 -f ../migrations/20261121000000_arena.sql
+for m in ../migrations/*.sql; do $P -v ON_ERROR_STOP=1 -f "$m"; done
 $P -f arena.scenario.sql

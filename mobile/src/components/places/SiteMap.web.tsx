@@ -15,7 +15,16 @@ export function SiteMap({ center, sites, selectedId }: SiteMapProps) {
   const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${marker}`;
   return (
     <View style={styles.frame}>
-      <iframe title="Map of nearby drop-off sites" src={src} style={{ border: 0, width: '100%', height: '100%' }} loading="lazy" />
+      {/* Sandboxed: the map can run its own scripts and open links in a new tab, but cannot navigate this page, open
+          forms or dialogs, or learn which page embedded it. */}
+      <iframe
+        title="Map of nearby drop-off sites"
+        src={src}
+        style={{ border: 0, width: '100%', height: '100%' }}
+        loading="lazy"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+        referrerPolicy="no-referrer"
+      />
     </View>
   );
 }

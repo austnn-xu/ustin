@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { Coin } from '@/components/art/Coin';
 import { Mascot } from '@/components/art/Mascot';
 import { Avatar } from '@/components/arena/Avatar';
-import { BoardList, BoardMessage, BoardSkeleton, toEntries } from '@/components/arena/BoardList';
+import { BoardList, BoardMessage, BoardSkeleton, StaleNote, toEntries } from '@/components/arena/BoardList';
 import { NameSheet } from '@/components/arena/NameSheet';
 import { Segmented } from '@/components/arena/Segmented';
 import { StatsBar } from '@/components/StatsBar';
@@ -205,13 +205,14 @@ export default function Arena() {
             <BoardMessage />
           ) : board.isPending ? (
             <BoardSkeleton />
-          ) : board.isError ? (
+          ) : board.isError && !board.data?.length ? (
             <BoardMessage error={board.error} onRetry={() => void board.refetch()} />
           ) : board.data.length === 0 ? (
             <BoardMessage empty={period === 'week' ? 'Nobody is on the board yet this week. Play a match to be first.' : 'Nobody is on the board yet. Play a match to be first.'} />
           ) : (
             <>
               <BoardList entries={toEntries(board.data, 5)} />
+              {board.isError && <StaleNote at={board.dataUpdatedAt} onRetry={() => void board.refetch()} />}
               <Button label="See the full leaderboard" variant="ghost" fullWidth onPress={() => router.push(`/leaderboard?period=${period}`)} />
             </>
           )}

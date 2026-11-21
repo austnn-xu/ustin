@@ -6,7 +6,8 @@ import Animated from 'react-native-reanimated';
 import { Appear, Button, Card, Input, Text } from '@/components/ui';
 import { paintOf } from '@/lib/cosmetics';
 import { haptics } from '@/lib/haptics';
-import { ArenaError, arenaKeys, checkName, NAME, savePlayer, type Player } from '@/lib/leaderboard';
+import { ArenaError, arenaKeys, checkName, deleteMe, NAME, savePlayer, type Player } from '@/lib/leaderboard';
+import { useSettings } from '@/stores/settings';
 import { useProgress } from '@/stores/progress';
 import { easing, keyframes, makeStyles, useTheme } from '@/theme';
 import { Avatar } from './Avatar';
@@ -35,6 +36,30 @@ export function NameSheet({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { name, problem } = checkName(value);
+  const [removing, setRemoving] = useState<'ask' | 'busy' | null>(null);
+
+  // Two taps, the second on a red button that says exactly what goes: it cannot be undone.
+  const remove = async () => {
+    if (removing !== 'ask') {
+      haptics.medium();
+      setRemoving('ask');
+      return;
+    }
+    setRemoving('busy');
+    setError(null);
+    try {
+      await deleteMe();
+      queryClient.setQueryData(arenaKeys.me, null);
+      queryClient.removeQueries({ queryKey: ['arena'], exact: false });
+      useSettings.setState({ recentPins: [] });
+      haptics.success();
+      onCancel();
+    } catch (e) {
+      haptics.error();
+      setRemoving(null);
+      setError(e instanceof ArenaError ? e.message : 'Could not remove you right now. Try again.');
+    }
+  };
 
   const save = async () => {
     setTouched(true);
@@ -94,6 +119,25 @@ export function NameSheet({
               <Button label={saving ? 'Saving…' : 'Save name'} fullWidth disabled={saving || (touched && !!problem)} onPress={save} />
               <Button label={cancelLabel} variant="ghost" hue="slate" fullWidth onPress={onCancel} />
             </View>
+            {current && (
+              <View style={styles.remove}>
+                {removing === 'ask' && (
+                  <Text variant="callout" hue="red" align="center">
+                    This deletes your name, every match you played and every game you hosted from the leaderboard. It
+                    cannot be undone. Your coins, XP and lessons on this phone stay.
+                  </Text>
+                )}
+                <Button
+                  label={removing === 'busy' ? 'Removing…' : removing === 'ask' ? 'Yes, remove me for good' : 'Remove me from the leaderboard'}
+                  variant={removing === 'ask' ? 'danger' : 'ghost'}
+                  hue="red"
+                  size="md"
+                  fullWidth
+                  disabled={removing === 'busy'}
+                  onPress={remove}
+                />
+              </View>
+            )}
           </Card>
         </Appear>
       </KeyboardAvoidingView>
@@ -110,4 +154,5 @@ const useStyles = makeStyles((t) => ({
   head: { flexDirection: 'row', alignItems: 'center', gap: t.space[4] },
   flex: { flex: 1 },
   buttons: { gap: t.space[2] },
+  remove: { gap: t.space[2], borderTopWidth: t.layout.border, borderTopColor: t.colors.border, paddingTop: t.space[3] },
 }));

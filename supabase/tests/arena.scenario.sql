@@ -70,3 +70,26 @@ set role authenticated; select set_config('request.jwt.claim.sub', :'C', false);
 select * from set_player('Cara');
 select * from submit_run('abc', array[0,0,0,0,0,0,0,0,0,500], p_tin_score => 9000);
 select * from leaderboard('all', 1);
+
+reset role;
+update players set renamed_at = null;
+\echo == hardening: reserved names are refused
+set role authenticated; select set_config('request.jwt.claim.sub', :'C', false);
+select * from set_player('U.S. Tin');
+select * from set_player('ADMIN');
+select * from set_player('tin');
+\echo == hardening: one rename, then a second within the hour is refused
+select * from set_player('Cara B');
+select * from set_player('Cara C');
+\echo == hardening: changing only the paint is always fine
+select * from set_player('Cara B', 'purple');
+\echo == hardening: delete_me removes the player, their runs and their account
+select * from delete_me();
+reset role;
+select (select count(*) from players where name like 'Cara%') as players_left,
+       (select count(*) from match_runs where player_id = :'C') as runs_left,
+       (select count(*) from auth.users where id = :'C') as account_left;
+\echo == hardening: anon cannot delete anyone
+set role anon; select set_config('request.jwt.claim.sub', '', false);
+select * from delete_me();
+reset role;

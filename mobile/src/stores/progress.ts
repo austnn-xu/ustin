@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { DEFAULT_OWNED, findCosmetic, type Outfit, type Slot } from '@/lib/cosmetics';
 import { addDays, dayKey } from '@/lib/dates';
+import { count, countOrSkip, dayOrNull, isDay, isObj, map, outfit, owned, real } from './sanitize';
 
 export const XP = {
   lesson: 10,
@@ -260,6 +261,8 @@ export const useProgress = create<ProgressState>()(
         const { hearts: _h, heartsAt: _a, ...rest } = (persisted ?? {}) as Record<string, unknown>;
         return rest as Partial<ProgressState>;
       },
+      // Whatever comes back from storage is checked field by field before the app sees it (see sanitize.ts).
+      merge: (persisted, current) => ({ ...current, ...cleanProgress(persisted) }),
       partialize: (s) => ({
         xp: s.xp,
         xpByDay: s.xpByDay,
@@ -277,3 +280,43 @@ export const useProgress = create<ProgressState>()(
     },
   ),
 );
+
+/** Persisted progress, checked: wrong types and impossible values fall back to a fresh start for that field only. */
+export function cleanProgress(raw: unknown): Partial<ProgressState> {
+  if (!isObj(raw)) return {};
+  const streak = isObj(raw.streak) ? raw.streak : {};
+  const arena = isObj(raw.arena) ? raw.arena : {};
+  const have = owned(raw.owned);
+  const lessonRecord = (v: unknown): LessonRecord | undefined =>
+    isObj(v)
+      ? {
+          completions: count(v.completions, 1),
+          bestAccuracy: real(v.bestAccuracy, 0, 0, 1),
+          stars: count(v.stars, 1, 1, 3),
+          lastAt: count(v.lastAt, 0, 0, Number.MAX_SAFE_INTEGER),
+        }
+      : undefined;
+  const lastDay = dayOrNull(streak.lastDay);
+  return {
+    xp: count(raw.xp),
+    xpByDay: map(raw.xpByDay, countOrSkip, isDay),
+    streak: { count: lastDay ? count(streak.count) : 0, best: count(streak.best), lastDay },
+    lessons: map(raw.lessons, lessonRecord),
+    perfectLessons: count(raw.perfectLessons),
+    sorted: map(raw.sorted, countOrSkip),
+    mistakes: map(raw.mistakes, countOrSkip),
+    celebrated: map(raw.celebrated, countOrSkip),
+    coins: count(raw.coins),
+    owned: have,
+    equipped: outfit(raw.equipped, have),
+    arena: {
+      played: count(arena.played),
+      wins: count(arena.wins),
+      losses: count(arena.losses),
+      ties: count(arena.ties),
+      best: count(arena.best),
+      points: count(arena.points),
+      lastAt: typeof arena.lastAt === 'number' ? count(arena.lastAt, 0, 0, Number.MAX_SAFE_INTEGER) : null,
+    },
+  };
+}
