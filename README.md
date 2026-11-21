@@ -2,19 +2,31 @@
 
 **Learn where everything goes, one short lesson at a time.** Then look up anything in the moment, and find the nearest place that takes it.
 
-The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has five tabs:
+The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has six tabs:
 
 | Tab | What it does |
 |---|---|
 | **Learn** | A course of five-minute lessons laid out as a cartoon recycling route: 12 neighbourhoods (one per catalog shelf, plus *Food & methane*), 53 wheelie-bin stops, a sorting centre at the end of each unit, and Tin driving the truck to your next stop. XP, streaks, a daily goal, badges and coins. No hearts or lives: a wrong answer is explained and comes back once at the end of the lesson. |
+| **Arena** | Friendly competition, inspired by Kahoot. A match is 10 timed questions from the whole course: right answers score 500 to 1,000 points (faster is more), answer streaks add up to +500, and after every question you see the answer, why, and the race so far. Race a real player's recent run on the same questions, or Tin; host a game with a 6-digit PIN for friends; climb the **global leaderboard** (this week and all time). Every match pays coins (1 per right answer, +15 for a win, +10 for a perfect match) and XP. |
 | **What bin?** | Search 177 items or snap a photo (web build). Answers a follow-up only when it changes the verdict, then shows where *each part* goes, down to the resin code, and why. |
 | **Near me** | From your ZIP code or location, the nearest places that take the item: battery bins, e-waste, hazardous waste, clothing banks, pharmacies, transfer stations… Real data from OpenStreetMap. Every place is marked as *listed as accepting this* or *usually accepts, call ahead*. |
 | **Shop** | Spend coins (1 per right answer, +5 for 5 in a row, +10 for 10 in a row) on hats, glasses, neckwear and paint jobs for Tin, who then wears them all over the app. |
 | **Profile** | Streak, XP, badges, daily goal, location and appearance. |
 
-The first run teaches by doing: Tin asks where a takeaway coffee cup goes, then splits it into its three parts with the real verdict, explains the app in plain words, sets a daily goal in minutes, and coaches the first lesson step by step. After that, the first visit to each tab (the route, What bin?, Near me, the shop, your profile) gets a two-or-three-step tour from Tin, replayable from Profile. Throughout, motion follows one rule: nothing appears from nowhere, and things move from where they were.
+The first run teaches by doing: Tin asks where a takeaway coffee cup goes, then splits it into its three parts with the real verdict, explains the app in plain words, sets a daily goal in minutes, and coaches the first lesson step by step. After that, the first visit to each tab (the route, the Arena, What bin?, Near me, the shop, your profile) gets a two-or-three-step tour from Tin, replayable from Profile. Throughout, motion follows one rule: nothing appears from nowhere, and things move from where they were.
 
 Every lesson question on a shelf is generated from the same catalog and decision engine the lookup uses (`lib/lessons.js`), so a lesson can never teach an answer the app would contradict.
+
+## The Arena
+
+Matches come from `lib/arena.js`, shared with the tests like the lessons: ten questions drawn from every unit's review, so a match teaches exactly what the course teaches and cannot drift from the What-bin answers. A match is fully determined by its **seed**, which is what makes it fair to compare: two people on the same seed answer the same questions in the same order, side by side or days apart. That is how the Arena does multiplayer without everyone being online at once:
+
+- **Quick match** races a real player's recent run on its seed, revealing their points question by question; when nobody else has played yet (or you are offline), you race Tin, whose run is generated from the seed too.
+- **Game PINs** are Kahoot's PIN made for friends who are not in the same room at the same moment: the host gets six digits, everyone who enters them plays the same questions when they can, and the podium fills in live as they finish. A PIN lasts a week.
+- **Scoring**: a right answer is worth 1,000 points answered instantly, down to 500 on the buzzer, plus +100 for each answer in a streak after the first (up to +500). A wrong or missed answer scores nothing but still shows the answer and why.
+- **Rewards**: coins (1 per right answer, +15 for a win, +5 for a tie, +10 for a perfect match) and 10 XP per match, which also keeps the streak. Leaderboard points are your score plus +1,000 for beating a player (+500 for a tie, +500 for beating Tin).
+
+The **global leaderboard** runs on Supabase (`supabase/`): players sign in anonymously by picking a name, and every match is submitted through a database function that re-checks it against the same scoring rules before it counts. Setup is in [`supabase/README.md`](supabase/README.md); without it, the Arena still plays against Tin and says plainly that the leaderboard is not connected.
 
 **Food & methane** is the one topic unit (`lib/topics.js`), right after *Food scraps*: short hand-written cards on *why* food scraps go where they do. Food is the most common material in US landfills, where it rots without oxygen and gives off methane. Composting done right (damp, airy, turned) barely does, and not wasting food beats both. Every number on a card names its source (EPA, USDA, IPCC), shown under the answer, and a test refuses a statistic without one. It also covers the myth that composting is worse for methane than the trash, and the true part behind it: a soggy, packed-down pile can go airless and make methane, which is why you turn it and add dry browns.
 
@@ -145,7 +157,7 @@ No dependencies, no install, no build step for development.
 ```bash
 node server.js          # http://localhost:3000
 PORT=8080 node server.js
-npm test                # 58 checks across the engine, the catalog, the recogniser and the lessons
+npm test                # checks across the engine, the catalog, the recogniser, the lessons and the Arena
 ./build.sh              # assemble dist/ for static hosting
 ```
 
@@ -164,6 +176,8 @@ lib/streams.js             Outcomes, material streams, follow-up questions
 lib/rules.js               The decision engine
 lib/lessons.js             The course: units, lessons and generated exercises
 lib/topics.js              Topic units: sourced, hand-written cards (Food & methane)
+lib/arena.js               Arena matches: seeded question sets, timed scoring, rewards, Tin's run
+supabase/                  The global leaderboard: schema + functions, setup guide, SQL tests
 lib/recognizer.js          ILSVRC classes + material head -> catalog objects
 lib/imagenet-labels.js     The 1000 class names (generated)
 public/index.html          App shell and icon set
@@ -172,7 +186,7 @@ public/assets/vision.js    MobileNet loading and inference
 public/assets/material-head.json  The trained material classifier
 public/vendor/             TensorFlow.js, vendored
 server.js                  Dev server: static files + two JSON endpoints
-test/                      Engine, catalog and recognizer checks
+test/                      Engine, catalog, recognizer, lesson and Arena checks
 ```
 
 ### `lib/catalog.js`
@@ -229,4 +243,5 @@ The browser does not call these — the engine and the classifier both run clien
 - **Recognition is as good as MobileNet.** It is solid on bottles, cups, cans, cartons, packets, bags, food, electronics and clothing, and weak on everything the ILSVRC label space does not cover. The alternatives list, the material narrowing and the picker all exist because of this.
 - **The material head learned from posed photographs.** TrashNet is single objects on white posterboard. Cluttered, badly-lit real photos are harder than anything it was trained on.
 - **177 objects.** Anything outside the catalog still has no answer, though material narrowing now gets a user close.
-- **No accounts.** Progress (XP, streak, lessons) lives on the device and does not sync between devices.
+- **No accounts.** Progress (XP, streak, lessons, coins) lives on the device and does not sync between devices. The Arena's leaderboard name is an anonymous account tied to the device too: clear the browser's storage and it is gone.
+- **The leaderboard trusts the phone within limits.** Questions are generated on the device, so the server bounds what a submitted match can claim (no impossible scores, one run per game PIN, a cooldown) rather than checking each answer. Fine for friendly competition; not for prizes.

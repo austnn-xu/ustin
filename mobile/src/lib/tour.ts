@@ -12,11 +12,13 @@ import {
   Shirt,
   Split,
   Star,
+  Swords,
   Trophy,
+  Users,
 } from 'lucide-react-native';
 import type { Mood } from '@/components/art/Mascot';
 import type { HueName } from '@/theme';
-import { rules } from './engine';
+import { arena, rules } from './engine';
 import { COINS } from './cosmetics';
 import { visionSupported } from './vision';
 
@@ -30,7 +32,7 @@ export type TourStep = {
 };
 
 /** The tabs that have a tour, keyed by route name. */
-export type TourId = 'index' | 'scan' | 'nearby' | 'shop' | 'profile';
+export type TourId = 'index' | 'arena' | 'scan' | 'nearby' | 'shop' | 'profile';
 
 /**
  * The tour of the main app: the first time you open each tab, Tin walks you through what it is for and exactly how to
@@ -60,6 +62,32 @@ export const TOURS: Record<TourId, { title: string; steps: TourStep[] }> = {
         title: 'Keep the streak burning',
         body: 'Your streak, coins and XP sit at the top. One lesson or one lookup a day keeps the streak going.',
         mood: 'wow',
+      },
+    ],
+  },
+  arena: {
+    title: 'The Arena',
+    steps: [
+      {
+        icon: Swords,
+        hue: 'green',
+        title: 'Quick, timed matches',
+        body: `Play a match: ${arena.MATCH.questions} questions from the whole course, ${arena.MATCH.questionMs / 1000} seconds each. The faster you answer right, the more points. You race a real player's run on the same questions, or me.`,
+        mood: 'wow',
+      },
+      {
+        icon: Users,
+        hue: 'purple',
+        title: 'Play with friends',
+        body: 'Host a game and share its 6-digit PIN. Everyone gets the same questions and the podium fills in as they finish.',
+        mood: 'happy',
+      },
+      {
+        icon: Trophy,
+        hue: 'yellow',
+        title: 'Climb the global board',
+        body: `Every match pays coins and XP. Your score goes on the global leaderboard, with +${arena.REWARDS.pointsWin.toLocaleString('en-US')} for a win. The weekly board starts fresh every Monday.`,
+        mood: 'cheer',
       },
     ],
   },
@@ -129,8 +157,8 @@ export const TOURS: Record<TourId, { title: string; steps: TourStep[] }> = {
       {
         icon: Coins,
         hue: 'yellow',
-        title: 'Coins come from lessons',
-        body: `${COINS.correct} coin for every right answer, +${COINS.combo5} for 5 in a row and +${COINS.combo10} for 10 in a row.`,
+        title: 'Coins come from lessons and matches',
+        body: `${COINS.correct} coin for every right answer, +${COINS.combo5} for 5 in a row and +${COINS.combo10} for 10 in a row in lessons. Arena matches pay too, and winning pays more.`,
         mood: 'wow',
       },
       {

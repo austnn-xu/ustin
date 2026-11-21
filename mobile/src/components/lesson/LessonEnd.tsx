@@ -16,7 +16,7 @@ import { easing, keyframes, makeStyles, useTheme, type HueName } from '@/theme';
 import { useScreenSize } from '@/lib/useScreenSize';
 
 /** Counts up to `to` once, after `delay` ms, for celebratory numbers. */
-function useCountUp(to: number, ms = 900, delay = 0) {
+export function useCountUp(to: number, ms = 900, delay = 0) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     let frame = 0;
@@ -33,7 +33,7 @@ function useCountUp(to: number, ms = 900, delay = 0) {
   return value;
 }
 
-function StatTile({ label, value, icon, hue, art }: { label: string; value: string; icon?: LucideIcon; hue: HueName; art?: React.ReactNode }) {
+export function StatTile({ label, value, icon, hue, art }: { label: string; value: string; icon?: LucideIcon; hue: HueName; art?: React.ReactNode }) {
   const t = useTheme();
   const styles = useStyles();
   const h = t.colors.hue[hue];
@@ -201,7 +201,17 @@ function Flicker({ children }: { children: React.ReactNode }) {
 }
 
 /** "Wait, don't go!" — shown when closing a lesson part-way. The sheet springs up over a fading scrim. */
-export function QuitConfirm({ onStay, onQuit }: { onStay: () => void; onQuit: () => void }) {
+export function QuitConfirm({
+  onStay,
+  onQuit,
+  message = "Wait, don't go! You will lose your progress in this lesson.",
+  stayLabel = 'Keep learning',
+}: {
+  onStay: () => void;
+  onQuit: () => void;
+  message?: string;
+  stayLabel?: string;
+}) {
   const t = useTheme();
   const styles = useStyles();
   const p = useSharedValue(0);
@@ -217,10 +227,10 @@ export function QuitConfirm({ onStay, onQuit }: { onStay: () => void; onQuit: ()
       <Animated.View style={[styles.sheetWrap, sheet]}>
         <Card variant="floating" padding="lg" style={styles.sheet}>
           <MascotSays mood="sad" size="md">
-            Wait, don&apos;t go! You will lose your progress in this lesson.
+            {message}
           </MascotSays>
           <View style={styles.buttons}>
-            <Button label="Keep learning" variant="secondary" fullWidth onPress={onStay} />
+            <Button label={stayLabel} variant="secondary" fullWidth onPress={onStay} />
             <Button label="End session" variant="ghost" hue="orange" fullWidth onPress={onQuit} />
           </View>
         </Card>

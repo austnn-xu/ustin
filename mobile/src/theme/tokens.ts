@@ -51,6 +51,8 @@ export const layout = {
   /** Lucide stroke width. One value for the whole app — chunky to match the type. */
   iconStroke: 2.25,
   tabBar: 64,
+  /** A tab narrower than this drops its label and keeps its icon (and its accessible name). */
+  tabLabelMin: 60,
 } as const;
 
 export const radius = {
