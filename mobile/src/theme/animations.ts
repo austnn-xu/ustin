@@ -65,3 +65,15 @@ export function drift(distance: number) {
   }
   return k;
 }
+
+const drains = new Map<number, ReturnType<typeof css.keyframes>>();
+/** A bar emptying to the left across `width` pt, for a countdown (linear, once). Cached per width. */
+export function drain(width: number) {
+  const w = Math.round(width);
+  let k = drains.get(w);
+  if (!k) {
+    k = css.keyframes({ from: { transform: [{ translateX: 0 }] }, to: { transform: [{ translateX: -w }] } });
+    drains.set(w, k);
+  }
+  return k;
+}

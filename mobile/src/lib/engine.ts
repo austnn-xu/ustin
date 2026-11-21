@@ -197,10 +197,55 @@ type RecognizerApi = {
   ) => { material: MaterialReading; objects: CatalogObject[] } | null;
 };
 
+// ---------------------------------------------------------------------------
+// Arena (timed matches)
+// ---------------------------------------------------------------------------
+
+export type MatchExercise = Exercise & { unit: string; unitTitle: string };
+export type BuiltMatch = { seed: string; questionMs: number; exercises: MatchExercise[] };
+export type MatchOutcome = 'win' | 'loss' | 'tie' | 'solo';
+/** Who a match is against: a real player's run, Tin, or the players of a game PIN. */
+export type RivalKind = 'player' | 'tin' | 'room';
+export type MatchRewards = {
+  score: number;
+  correct: number;
+  outcome: MatchOutcome;
+  perfect: boolean;
+  coins: number;
+  /** Leaderboard points on top of the score, for the result. */
+  bonus: number;
+  /** Leaderboard points in all: score + bonus. */
+  earned: number;
+};
+
+type ArenaApi = {
+  MATCH: { questions: number; questionMs: number; maxPoints: number; minPoints: number; streakStep: number; streakCap: number };
+  MAX_QUESTION_POINTS: number;
+  REWARDS: {
+    coinPerCorrect: number;
+    coinsWin: number;
+    coinsTie: number;
+    coinsPerfect: number;
+    pointsWin: number;
+    pointsWinTin: number;
+    pointsTie: number;
+  };
+  newSeed: () => string;
+  buildMatch: (seed: string) => BuiltMatch;
+  pointsFor: (input: { correct: boolean; ms: number; streak: number }) => number;
+  streakBonus: (streak: number) => number;
+  total: (points: number[]) => number;
+  isPlausibleRun: (points: number[]) => boolean;
+  outcomeOf: (score: number, rivalScore: number | null) => MatchOutcome;
+  rewardsFor: (input: { points: number[]; rival: RivalKind | null; rivalScore: number | null }) => MatchRewards;
+  tinRun: (seed: string) => number[];
+};
+
 /* eslint-disable @typescript-eslint/no-require-imports */
 export const rules: RulesApi = require('../../../lib/rules');
 export const lessons: LessonsApi = require('../../../lib/lessons');
 export const recognizer: RecognizerApi = require('../../../lib/recognizer');
+export const arena: ArenaApi = require('../../../lib/arena');
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 export const OUTCOME_ORDER: OutcomeId[] = ['recycle', 'compost', 'trash', 'dropoff', 'reuse'];

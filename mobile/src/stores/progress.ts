@@ -12,7 +12,31 @@ export const XP = {
   newItem: 5,
   /** Looking up an item you have looked up before, once a day. */
   repeatItem: 1,
+  /** Finishing an Arena match, whatever the result: ten questions is real practice. */
+  match: 10,
 } as const;
+
+/** The Arena, as played on this device. The global leaderboard keeps its own count online. */
+export type ArenaStats = {
+  played: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  best: number;
+  /** Leaderboard points earned in all matches played here, posted or not. */
+  points: number;
+  lastAt: number | null;
+};
+
+export type MatchRecord = {
+  outcome: 'win' | 'loss' | 'tie' | 'solo';
+  score: number;
+  coins: number;
+  earned: number;
+  correct: number;
+};
+
+export type MatchResult = { xpEarned: number; streakExtended: boolean; streak: number };
 
 export type LessonRecord = {
   completions: number;
@@ -42,9 +66,12 @@ export type ProgressState = {
   owned: Record<string, number>;
   /** What Tin is wearing. */
   equipped: Outfit;
+  arena: ArenaStats;
 
   completeLesson: (input: { lessonId: string; review: boolean; correct: number; total: number }) => LessonResult;
   recordSort: (objectId: string) => SortResult;
+  /** A finished Arena match: pays its coins and XP, counts for the streak and the Arena stats. */
+  recordMatch: (match: MatchRecord) => MatchResult;
   recordMistakes: (objectIds: string[]) => void;
   markCelebrated: (ids: string[]) => void;
   earnCoins: (amount: number) => void;
@@ -80,6 +107,7 @@ const initial = {
   coins: 0,
   owned: Object.fromEntries(DEFAULT_OWNED.map((id) => [id, 0])) as Record<string, number>,
   equipped: { paint: 'paint-green' } as Outfit,
+  arena: { played: 0, wins: 0, losses: 0, ties: 0, best: 0, points: 0, lastAt: null } as ArenaStats,
 };
 
 /** The streak after doing something today. */
@@ -155,6 +183,29 @@ export const useProgress = create<ProgressState>()(
         return { isNew, xpEarned, streakExtended: extended };
       },
 
+      recordMatch: ({ outcome, score, coins, earned }) => {
+        const state = get();
+        const today = dayKey();
+        const { streak, extended } = bump(state.streak, today);
+        const a = state.arena;
+        set({
+          xp: state.xp + XP.match,
+          xpByDay: { ...state.xpByDay, [today]: (state.xpByDay[today] ?? 0) + XP.match },
+          streak,
+          coins: state.coins + coins,
+          arena: {
+            played: a.played + 1,
+            wins: a.wins + (outcome === 'win' ? 1 : 0),
+            losses: a.losses + (outcome === 'loss' ? 1 : 0),
+            ties: a.ties + (outcome === 'tie' ? 1 : 0),
+            best: Math.max(a.best, score),
+            points: a.points + earned,
+            lastAt: Date.now(),
+          },
+        });
+        return { xpEarned: XP.match, streakExtended: extended, streak: streak.count };
+      },
+
       recordMistakes: (objectIds) => {
         if (!objectIds.length) return;
         const mistakes = { ...get().mistakes };
@@ -203,7 +254,8 @@ export const useProgress = create<ProgressState>()(
       name: 'ustin-progress',
       storage: createJSONStorage(() => AsyncStorage),
       // v1 dropped hearts: mistakes no longer cost anything, they just come back at the end of the lesson.
-      version: 1,
+      // v1 dropped hearts; v2 added the Arena's stats (filled in from `initial` by the merge).
+      version: 2,
       migrate: (persisted) => {
         const { hearts: _h, heartsAt: _a, ...rest } = (persisted ?? {}) as Record<string, unknown>;
         return rest as Partial<ProgressState>;
@@ -220,6 +272,7 @@ export const useProgress = create<ProgressState>()(
         coins: s.coins,
         owned: s.owned,
         equipped: s.equipped,
+        arena: s.arena,
       }),
     },
   ),

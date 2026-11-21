@@ -23,6 +23,8 @@ type SettingsState = {
   lessonCoached: boolean;
   /** Tabs whose tour has been seen (see src/lib/tour.ts). */
   toursSeen: string[];
+  /** Game PINs this device hosted or joined lately, newest first, so their podiums are one tap away. */
+  recentPins: { code: string; at: number }[];
   setColorScheme: (scheme: ColorSchemePreference) => void;
   setDailyGoal: (goal: DailyGoal) => void;
   setPlace: (place: SavedPlace | null) => void;
@@ -31,6 +33,7 @@ type SettingsState = {
   finishTour: (id: string) => void;
   /** Show every tab's tour again, each on its next visit. */
   replayTours: () => void;
+  rememberPin: (code: string) => void;
 };
 
 export const useSettings = create<SettingsState>()(
@@ -42,6 +45,7 @@ export const useSettings = create<SettingsState>()(
       onboarded: false,
       lessonCoached: false,
       toursSeen: [],
+      recentPins: [],
       setColorScheme: (colorScheme) => set({ colorScheme }),
       setDailyGoal: (dailyGoal) => set({ dailyGoal }),
       setPlace: (place) => set({ place }),
@@ -49,6 +53,8 @@ export const useSettings = create<SettingsState>()(
       finishLessonCoaching: () => set({ lessonCoached: true }),
       finishTour: (id) => set((s) => ({ toursSeen: s.toursSeen.includes(id) ? s.toursSeen : [...s.toursSeen, id] })),
       replayTours: () => set({ toursSeen: [] }),
+      rememberPin: (code) =>
+        set((s) => ({ recentPins: [{ code, at: Date.now() }, ...s.recentPins.filter((p) => p.code !== code)].slice(0, 5) })),
     }),
     { name: 'ustin-settings', storage: createJSONStorage(() => AsyncStorage) },
   ),

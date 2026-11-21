@@ -21,7 +21,13 @@ Three jobs, one app:
    answer, and get where **each part** goes, down to the resin code, with the reason why.
 3. **Near me** — from a ZIP code or your location, find the nearest place that takes the item: drop-off sites,
    recycling centres, transfer stations, donation shops. Real data from OpenStreetMap, never invented places.
-4. **Shop** — coins earned in lessons (1 per right answer, +5 at 5 in a row, +10 at 10 in a row; see
+4. **Arena** — friendly competition, Kahoot-inspired: timed 10-question matches from the whole course (`../lib/arena.js`),
+   scored for speed and streaks, raced against a real player's run on the same seed or against Tin, game PINs for
+   friends, and a global leaderboard on Supabase (`src/lib/leaderboard.ts`, schema in `../supabase`). Every match still
+   teaches: each answer shows the why. Players are drawn as an initial on their Tin's paint colour (`Avatar`), never as
+   Tins, so one Tin per screen still holds. Matches pay coins and XP; winning pays more. Without Supabase configured the
+   Arena plays Tin offline and says the leaderboard is not connected; never fake a board.
+5. **Shop** — coins earned in lessons and matches (1 per right answer, +5 at 5 in a row, +10 at 10 in a row; see
    `src/lib/cosmetics.ts`) buy hats, glasses, neckwear and paint jobs for Tin. Try anything on before buying.
 
 It is **not** a delivery, booking or marketplace app. Never write copy about drivers, orders, pickups, prices or bookings.
@@ -71,14 +77,15 @@ Tin is a cartoon and moves like one, within the motion budget below: it breathes
 ## Layout
 
 ```
-src/app/              routes only (Expo Router): (tabs)/ learn · what-bin · near me · shop · profile, plus lesson/ and item/
+src/app/              routes only (Expo Router): (tabs)/ learn · arena · what-bin · near me · shop · profile, plus lesson/, item/,
+                      match, leaderboard and pin/
 src/theme/            tokens + ThemeProvider + makeStyles — the only place raw values live
 src/components/ui/    primitives: Text, Button, ChoiceCard, ProgressBar, Input, Chip, Skeleton, Icon, Screen, PressableScale,
                       the motion primitives Appear, Float and RollingNumber, and Deferred
 src/components/art/   the mascot and its outfits, coins, confetti, bins, item artwork, the route's town — the only place SVG
                       coordinates live
 src/components/       product components, composed from primitives
-src/lib/              engine bridge, places, vision, haptics, dates
+src/lib/              engine bridge, places, vision, haptics, dates, the leaderboard client
 src/stores/           zustand stores (progress, settings)
 ```
 

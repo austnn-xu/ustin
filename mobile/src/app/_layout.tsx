@@ -80,6 +80,9 @@ function ThemedStack() {
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="lesson/[id]" options={{ presentation: 'fullScreenModal', gestureEnabled: false, animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="match" options={{ presentation: 'fullScreenModal', gestureEnabled: false, animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="leaderboard" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="pin/[code]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="item/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="unit/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="guide/[id]" options={{ animation: 'slide_from_right' }} />

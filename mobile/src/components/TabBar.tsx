@@ -1,6 +1,6 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import type { LucideIcon } from 'lucide-react-native';
-import { House, MapPin, ScanSearch, Store, UserRound } from 'lucide-react-native';
+import { House, MapPin, ScanSearch, Store, Swords, UserRound } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -11,6 +11,7 @@ import { makeStyles, useTheme } from '@/theme';
 
 const TABS: Record<string, { icon: LucideIcon; label: string }> = {
   index: { icon: House, label: 'Learn' },
+  arena: { icon: Swords, label: 'Arena' },
   scan: { icon: ScanSearch, label: 'What bin?' },
   nearby: { icon: MapPin, label: 'Near me' },
   shop: { icon: Store, label: 'Shop' },
@@ -26,11 +27,13 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const t = useTheme();
   const styles = useStyles();
   const insets = useSafeAreaInsets();
-  // Five labels do not fit under 360px; the icons carry it there (each tab keeps its accessible name).
   const { narrow } = useScreenSize();
   const count = state.routes.filter((r) => TABS[r.name]).length;
   const [rowWidth, setRowWidth] = useState(0);
   const slot = (rowWidth - t.space[2] * 2) / Math.max(1, count);
+  // Six labels do not fit on a small phone ("What bin?" is the longest); the icons carry it there, and each tab keeps
+  // its accessible name.
+  const labels = !narrow && (rowWidth === 0 || slot >= t.layout.tabLabelMin);
   const x = useSharedValue(state.index);
 
   useEffect(() => {
@@ -88,7 +91,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               style={styles.tab}
             >
               <Icon icon={tab.icon} size="lg" hue={focused ? 'blue' : undefined} color="textTertiary" />
-              {!narrow && (
+              {labels && (
                 <Text variant="label" hue={focused ? 'blue' : undefined} color="textTertiary" numberOfLines={1} style={styles.label}>
                   {tab.label}
                 </Text>
@@ -123,7 +126,7 @@ const useStyles = makeStyles((t) => ({
     paddingVertical: t.space[1.5],
     marginHorizontal: t.space[0.5],
   },
-  /** Five tabs share the bar, so labels drop the label variant's caps and tracking to fit. */
+  /** Six tabs share the bar, so labels drop the label variant's caps and tracking to fit. */
   label: { textTransform: 'none', letterSpacing: 0 },
   pill: {
     position: 'absolute',

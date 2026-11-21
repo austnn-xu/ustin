@@ -22,3 +22,14 @@ export function weekdayLetter(key: string): string {
   return ['S', 'M', 'T', 'W', 'T', 'F', 'S'][new Date(y!, m! - 1, d!).getDay()]!;
 }
 
+
+/** "just now", "5 minutes ago", "yesterday", "3 days ago" — for when a rival played. */
+export function timeAgo(iso: string, now = Date.now()): string {
+  const minutes = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60_000));
+  if (minutes < 2) return 'just now';
+  if (minutes < 60) return `${minutes} minutes ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return hours === 1 ? 'an hour ago' : `${hours} hours ago`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? 'yesterday' : `${days} days ago`;
+}
