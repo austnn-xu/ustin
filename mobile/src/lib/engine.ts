@@ -1,4 +1,5 @@
 import './urlPolyfill';
+import type { LeagueId } from '@/theme';
 /**
  * The bridge to the shared knowledge base in `../lib`.
  *
@@ -247,6 +248,31 @@ export const rules: RulesApi = require('../../../lib/rules');
 export const lessons: LessonsApi = require('../../../lib/lessons');
 export const recognizer: RecognizerApi = require('../../../lib/recognizer');
 export const arena: ArenaApi = require('../../../lib/arena');
+
+type NumbersApi = {
+  /** 9 quadrillion: every counter stops here (see ../lib/numbers.js). */
+  MAX_POINTS: number;
+  clampPoints: (n: unknown) => number;
+  addPoints: (a: number, b: number) => number;
+  /** 9,999 · 12.3K · 4.56M · 7.8B · 1.2T · 9Qa */
+  compact: (n: unknown, from?: number) => string;
+};
+export const numbers: NumbersApi = require('../../../lib/numbers');
+
+export type LeagueInfo = { id: LeagueId; name: string; promote: number; demote: number; ranked?: boolean };
+type LeaguesApi = {
+  LEAGUES: LeagueInfo[];
+  PRISTINE: number;
+  GROUP_SIZE: number;
+  MIN_GROUP_FOR_PRISTINE: number;
+  RR: { k: number; minWin: number; maxChange: number; expectedVsLower: number };
+  weekResult: (input: { league: number; rank: number; size: number }) => 'promote' | 'stay' | 'demote';
+  zoneOf: (input: { league: number; rank: number; size: number }) => 'up' | 'safe' | 'down';
+  rrChange: (input: { myRR: number; rivalRR: number | null; result: number }) => number;
+  weekStart: (date?: Date) => string;
+  msUntilWeekEnd: (now?: Date) => number;
+};
+export const leagues: LeaguesApi = require('../../../lib/leagues');
 /** Links built from map data: only http(s) pages and phone numbers get through. */
 export const safeUrl: { safeWebUrl: (raw: unknown) => string | null; safeTel: (raw: unknown) => string | null } = require('../../../lib/safe-url');
 /* eslint-enable @typescript-eslint/no-require-imports */

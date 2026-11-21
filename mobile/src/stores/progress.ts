@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { DEFAULT_OWNED, findCosmetic, type Outfit, type Slot } from '@/lib/cosmetics';
 import { addDays, dayKey } from '@/lib/dates';
+import { numbers } from '@/lib/engine';
 import { count, countOrSkip, dayOrNull, isDay, isObj, map, outfit, owned, real } from './sanitize';
 
 export const XP = {
@@ -145,8 +146,8 @@ export const useProgress = create<ProgressState>()(
         const best = Math.max(prev?.bestAccuracy ?? 0, accuracy);
 
         set({
-          xp: state.xp + xpEarned,
-          xpByDay: { ...state.xpByDay, [today]: before + xpEarned },
+          xp: numbers.addPoints(state.xp, xpEarned),
+          xpByDay: { ...state.xpByDay, [today]: numbers.addPoints(before, xpEarned) },
           streak,
           perfectLessons: state.perfectLessons + (perfect ? 1 : 0),
           lessons: {
@@ -176,8 +177,8 @@ export const useProgress = create<ProgressState>()(
         const xpEarned = isNew ? XP.newItem : dayKey(new Date(last)) === today ? 0 : XP.repeatItem;
         const { streak, extended } = bump(state.streak, today);
         set({
-          xp: state.xp + xpEarned,
-          xpByDay: { ...state.xpByDay, [today]: (state.xpByDay[today] ?? 0) + xpEarned },
+          xp: numbers.addPoints(state.xp, xpEarned),
+          xpByDay: { ...state.xpByDay, [today]: numbers.addPoints(state.xpByDay[today] ?? 0, xpEarned) },
           streak,
           sorted: { ...state.sorted, [objectId]: Date.now() },
         });
@@ -190,17 +191,17 @@ export const useProgress = create<ProgressState>()(
         const { streak, extended } = bump(state.streak, today);
         const a = state.arena;
         set({
-          xp: state.xp + XP.match,
-          xpByDay: { ...state.xpByDay, [today]: (state.xpByDay[today] ?? 0) + XP.match },
+          xp: numbers.addPoints(state.xp, XP.match),
+          xpByDay: { ...state.xpByDay, [today]: numbers.addPoints(state.xpByDay[today] ?? 0, XP.match) },
           streak,
-          coins: state.coins + coins,
+          coins: numbers.addPoints(state.coins, coins),
           arena: {
             played: a.played + 1,
             wins: a.wins + (outcome === 'win' ? 1 : 0),
             losses: a.losses + (outcome === 'loss' ? 1 : 0),
             ties: a.ties + (outcome === 'tie' ? 1 : 0),
             best: Math.max(a.best, score),
-            points: a.points + earned,
+            points: numbers.addPoints(a.points, earned),
             lastAt: Date.now(),
           },
         });
@@ -222,7 +223,7 @@ export const useProgress = create<ProgressState>()(
       },
 
       earnCoins: (amount) => {
-        if (amount > 0) set({ coins: get().coins + amount });
+        if (amount > 0) set({ coins: numbers.addPoints(get().coins, amount) });
       },
 
       buy: (id) => {

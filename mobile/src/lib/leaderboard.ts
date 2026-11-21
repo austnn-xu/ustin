@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 import type { HueName } from '@/theme';
+import { leagues, numbers } from './engine';
 import { secureStorage } from './secureStorage';
 
 /**
@@ -139,19 +140,54 @@ export async function savePlayer(name: string, paint: HueName): Promise<Player> 
 // Matches
 // ---------------------------------------------------------------------------
 
-export type Opponent = { runId: string; seed: string; points: number[]; score: number; name: string; paint: HueName; playedAt: string };
+export type Opponent = {
+  runId: string;
+  seed: string;
+  points: number[];
+  score: number;
+  name: string;
+  paint: HueName;
+  league: number;
+  rr: number;
+  playedAt: string;
+};
 
 /** A recent run by someone else to race: same seed, same questions. Null when nobody else has played yet. */
 export async function findOpponent(): Promise<Opponent | null> {
   await ensureSession();
   const rows = await rpc<
-    { run_id: string; seed: string; points: number[]; score: number; name: string; paint: HueName; played_at: string }[]
+    { run_id: string; seed: string; points: number[]; score: number; name: string; paint: HueName; league: number; rr: number; played_at: string }[]
   >('find_opponent');
   const r = rows[0];
-  return r ? { runId: r.run_id, seed: r.seed, points: r.points, score: r.score, name: r.name, paint: r.paint, playedAt: r.played_at } : null;
+  return r
+    ? {
+        runId: r.run_id,
+        seed: r.seed,
+        points: r.points,
+        score: r.score,
+        name: r.name,
+        paint: r.paint,
+        league: okLeague(r.league),
+        rr: Number(r.rr) || 0,
+        playedAt: r.played_at,
+      }
+    : null;
 }
 
-export type SubmittedRun = { runId: string; outcome: 'win' | 'loss' | 'tie' | 'solo'; score: number; earned: number; rivalScore: number | null };
+export type SubmittedRun = {
+  runId: string;
+  outcome: 'win' | 'loss' | 'tie' | 'solo';
+  score: number;
+  earned: number;
+  rivalScore: number | null;
+  /** The league after this match (Pristine can drop to Ruby on a loss). */
+  league: number;
+  /** Pristine only: rating after the match, and how much this match moved it. */
+  rr: number;
+  rrChange: number;
+  /** Bronze–Ruby: this week's league points so far. */
+  leaguePoints: number;
+};
 
 export async function submitRun(input: {
   seed: string;
@@ -161,7 +197,19 @@ export async function submitRun(input: {
   tinScore?: number | null;
 }): Promise<SubmittedRun> {
   await ensureSession();
-  const rows = await rpc<{ run_id: string; outcome: SubmittedRun['outcome']; score: number; earned: number; rival_score: number | null }[]>(
+  const rows = await rpc<
+    {
+      run_id: string;
+      outcome: SubmittedRun['outcome'];
+      score: number;
+      earned: number;
+      rival_score: number | null;
+      league: number;
+      rr: number;
+      rr_change: number;
+      league_points: number;
+    }[]
+  >(
     'submit_run',
     {
       p_seed: input.seed,
@@ -172,7 +220,17 @@ export async function submitRun(input: {
     },
   );
   const r = rows[0]!;
-  return { runId: r.run_id, outcome: r.outcome, score: r.score, earned: r.earned, rivalScore: r.rival_score };
+  return {
+    runId: r.run_id,
+    outcome: r.outcome,
+    score: r.score,
+    earned: r.earned,
+    rivalScore: r.rival_score,
+    league: okLeague(r.league),
+    rr: Number(r.rr) || 0,
+    rrChange: Number(r.rr_change) || 0,
+    leaguePoints: numbers.clampPoints(Number(r.league_points)),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -181,21 +239,94 @@ export async function submitRun(input: {
 
 export type Period = 'week' | 'all';
 
-export type BoardRow = { rank: number; name: string; paint: HueName; points: number; wins: number; matches: number; isMe: boolean };
+export type BoardRow = { rank: number; name: string; paint: HueName; points: number; wins: number; matches: number; league: number; rr: number; isMe: boolean };
 
-export async function fetchLeaderboard(period: Period, limit = 50): Promise<BoardRow[]> {
+/** The global board shows the top 25 (and your own row wherever you are). */
+export const BOARD_SIZE = 25;
+
+export async function fetchLeaderboard(period: Period, limit = BOARD_SIZE): Promise<BoardRow[]> {
   const rows = await rpc<
-    { rank: number; name: string; paint: HueName; points: number; wins: number; matches: number; is_me: boolean }[]
+    { rank: number; name: string; paint: HueName; points: number; wins: number; matches: number; league: number; rr: number; is_me: boolean }[]
   >('leaderboard', { p_period: period, p_limit: limit });
   return rows.map((r) => ({
     rank: Number(r.rank),
     name: r.name,
     paint: r.paint,
-    points: Number(r.points),
+    points: numbers.clampPoints(Number(r.points)),
     wins: Number(r.wins),
     matches: Number(r.matches),
+    league: okLeague(r.league),
+    rr: Number(r.rr) || 0,
     isMe: !!r.is_me,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Leagues
+// ---------------------------------------------------------------------------
+
+const okLeague = (v: unknown) => (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= leagues.PRISTINE ? v : 0);
+
+export type MyLeague = {
+  league: number;
+  rr: number;
+  /** When this week's groups close. */
+  endsAt: string;
+  /** This week's group (Bronze–Ruby): null until the first match of the week. */
+  rank: number | null;
+  size: number | null;
+  points: number;
+  matches: number;
+  /** Pristine: place on the ladder. */
+  pristineRank: number | null;
+  pristineSize: number | null;
+};
+
+/** Where the signed-in player stands. Null when they have no leaderboard name yet. */
+export async function fetchMyLeague(): Promise<MyLeague | null> {
+  if (!(await hasSession())) return null;
+  const rows = await rpc<
+    {
+      league: number;
+      rr: number;
+      ends_at: string;
+      rank: number | null;
+      size: number | null;
+      points: number;
+      matches: number;
+      pristine_rank: number | null;
+      pristine_size: number | null;
+    }[]
+  >('my_league');
+  const r = rows[0];
+  if (!r) return null;
+  const n = (v: unknown) => (v == null ? null : Number(v));
+  return {
+    league: okLeague(r.league),
+    rr: Number(r.rr) || 0,
+    endsAt: r.ends_at,
+    rank: n(r.rank),
+    size: n(r.size),
+    points: numbers.clampPoints(Number(r.points)),
+    matches: Number(r.matches) || 0,
+    pristineRank: n(r.pristine_rank),
+    pristineSize: n(r.pristine_size),
+  };
+}
+
+export type GroupRow = { rank: number; name: string; paint: HueName; points: number; matches: number; isMe: boolean };
+
+/** This week's group, best first. */
+export async function fetchLeagueBoard(): Promise<GroupRow[]> {
+  if (!(await hasSession())) return [];
+  return rpc<unknown[]>('league_board') as Promise<GroupRow[]>;
+}
+
+export type LadderRow = { rank: number; name: string; paint: HueName; rr: number; isMe: boolean };
+
+/** Pristine, by RR: the top 25 plus your own place. */
+export async function fetchPristineBoard(limit = BOARD_SIZE): Promise<LadderRow[]> {
+  return rpc<LadderRow[]>('pristine_board', { p_limit: limit });
 }
 
 export type Room = { code: string; seed: string; host: string; players: number };
@@ -249,8 +380,33 @@ export function cleanBoard(rows: unknown): BoardRow[] {
       points: r.points,
       wins: okCount(r.wins) ? r.wins : 0,
       matches: okCount(r.matches) ? r.matches : 0,
+      league: okLeague(r.league),
+      rr: okCount(r.rr) ? r.rr : 0,
       isMe: r.isMe === true,
     }));
+}
+
+const rowBase = (r: Record<string, unknown>) => ({
+  rank: Number(r.rank),
+  name: String(r.name),
+  paint: PAINTS.includes(r.paint as HueName) ? (r.paint as HueName) : 'green',
+  isMe: r.isMe === true || r.is_me === true,
+});
+const isRow = (r: unknown): r is Record<string, unknown> =>
+  !!r && typeof r === 'object' && okName((r as Record<string, unknown>).name) && okCount(Number((r as Record<string, unknown>).rank));
+
+export function cleanGroup(rows: unknown): GroupRow[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.filter(isRow).slice(0, 60).map((r) => ({
+    ...rowBase(r),
+    points: numbers.clampPoints(Number(r.points)),
+    matches: okCount(Number(r.matches)) ? Number(r.matches) : 0,
+  }));
+}
+
+export function cleanLadder(rows: unknown): LadderRow[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.filter(isRow).slice(0, 101).map((r) => ({ ...rowBase(r), rr: okCount(Number(r.rr)) ? Number(r.rr) : 0 }));
 }
 
 export function cleanRoomBoard(rows: unknown): RoomRow[] {
@@ -270,6 +426,9 @@ export function cleanRoomBoard(rows: unknown): RoomRow[] {
 
 export const arenaKeys = {
   me: ['arena', 'me'] as const,
+  myLeague: ['arena', 'my-league'] as const,
+  group: ['arena', 'group'] as const,
+  ladder: ['arena', 'ladder'] as const,
   board: (period: Period) => ['arena', 'board', period] as const,
   room: (code: string) => ['arena', 'room', code] as const,
   roomBoard: (code: string) => ['arena', 'room-board', code] as const,
@@ -279,7 +438,32 @@ export function useMe() {
   return useQuery({ queryKey: arenaKeys.me, queryFn: fetchMe, enabled: leaderboardConfigured, staleTime: 10 * 60_000 });
 }
 
-export function useLeaderboard(period: Period, limit = 50) {
+export function useMyLeague() {
+  return useQuery({ queryKey: arenaKeys.myLeague, queryFn: fetchMyLeague, enabled: leaderboardConfigured, staleTime: 30_000 });
+}
+
+export function useLeagueBoard(enabled = true) {
+  return useQuery({
+    queryKey: arenaKeys.group,
+    queryFn: fetchLeagueBoard,
+    // Straight from the database function (snake_case is_me included): checked like every board.
+    select: (rows: unknown) => cleanGroup(rows),
+    enabled: leaderboardConfigured && enabled,
+    staleTime: 30_000,
+  });
+}
+
+export function usePristineBoard(enabled = true) {
+  return useQuery({
+    queryKey: arenaKeys.ladder,
+    queryFn: () => fetchPristineBoard(),
+    select: (rows: unknown) => cleanLadder(rows),
+    enabled: leaderboardConfigured && enabled,
+    staleTime: 30_000,
+  });
+}
+
+export function useLeaderboard(period: Period, limit = BOARD_SIZE) {
   return useQuery({
     queryKey: [...arenaKeys.board(period), limit],
     queryFn: () => fetchLeaderboard(period, limit),

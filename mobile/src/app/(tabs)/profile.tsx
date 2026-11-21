@@ -13,6 +13,8 @@ import { clearCache } from '@/lib/queryCache';
 import { currentStreak, useProgress } from '@/stores/progress';
 import { useSettings, type ColorSchemePreference } from '@/stores/settings';
 import { makeStyles, useTheme, type HueName } from '@/theme';
+import { SectionSwitch } from '@/components/SectionSwitch';
+import { numbers } from '@/lib/engine';
 
 const SCHEMES: { value: ColorSchemePreference; label: string }[] = [
   { value: 'system', label: 'System' },
@@ -32,6 +34,7 @@ export default function Profile() {
   return (
     <Screen scroll keyboard>
       <View style={styles.stack}>
+        <SectionSwitch current="profile" />
         <View style={styles.hero}>
           <Mascot mood={streak.doneToday ? 'cheer' : 'happy'} size="md" />
           <View style={styles.flex}>
@@ -41,7 +44,6 @@ export default function Profile() {
             </Text>
           </View>
         </View>
-        <Button label={`Dress up Tin · ${progress.coins} coins`} variant="secondary" fullWidth onPress={() => router.push('/shop')} />
 
         <View style={styles.grid}>
           <Stat icon={Flame} hue="orange" value={streak.count} label="Day streak" filled />
@@ -200,7 +202,7 @@ function Stat({ icon, hue, value, label, filled }: { icon: LucideIcon; hue: HueN
       <Icon icon={icon} size="lg" hue={hue} filled={filled} />
       <View style={styles.flex}>
         <Text variant="title" tabular>
-          {value}
+          {numbers.compact(value)}
         </Text>
         <Text variant="caption" color="textSecondary">
           {label}

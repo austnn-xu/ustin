@@ -26,7 +26,9 @@ Three jobs, one app:
    friends, and a global leaderboard on Supabase (`src/lib/leaderboard.ts`, schema in `../supabase`). Every match still
    teaches: each answer shows the why. Players are drawn as an initial on their Tin's paint colour (`Avatar`), never as
    Tins, so one Tin per screen still holds. Matches pay coins and XP; winning pays more. Without Supabase configured the
-   Arena plays Tin offline and says the leaderboard is not connected; never fake a board.
+   Arena plays Tin offline and says the leaderboard is not connected; never fake a board. Players climb eight leagues
+   (`../lib/leagues.js`): weekly groups of up to 30 from Bronze to Ruby, and Pristine, an RR ladder like Valorant's
+   Radiant. League colours (`t.colors.league`) are only for league badges and banners (`LeagueBadge`, `League.tsx`).
 5. **Shop** — coins earned in lessons and matches (1 per right answer, +5 at 5 in a row, +10 at 10 in a row; see
    `src/lib/cosmetics.ts`) buy hats, glasses, neckwear and paint jobs for Tin. Try anything on before buying.
 
@@ -77,8 +79,8 @@ Tin is a cartoon and moves like one, within the motion budget below: it breathes
 ## Layout
 
 ```
-src/app/              routes only (Expo Router): (tabs)/ learn · arena · what-bin · near me · shop · profile, plus lesson/, item/,
-                      match, leaderboard and pin/
+src/app/              routes only (Expo Router): (tabs)/ learn · arena · what-bin (+ near me) · settings (profile + shop),
+                      plus lesson/, item/, match, leaderboard and pin/
 src/theme/            tokens + ThemeProvider + makeStyles — the only place raw values live
 src/components/ui/    primitives: Text, Button, ChoiceCard, ProgressBar, Input, Chip, Skeleton, Icon, Screen, PressableScale,
                       the motion primitives Appear, Float and RollingNumber, and Deferred
@@ -190,6 +192,14 @@ See `../SECURITY.md` for the whole picture. In practice:
 - **Links from fetched data go through `safeUrl`** (`../lib/safe-url.js`), at parse time and again when opened.
 - **A new network host is added to the CSP on purpose** (`scripts/harden-web.mjs`), or the published build blocks it.
   No inline scripts, no `eval`.
+
+## Tabs and numbers
+
+- **Four tabs, no more.** Learn, Arena, What bin? (which also holds Near me) and Settings (Profile and Shop). A paired
+  screen keeps its own route and shows `SectionSwitch` at the top. A new screen joins a pair before it gets a tab.
+- **Every counter is short and capped.** Show totals through `RollingNumber` (compact by default) or
+  `numbers.compact`; add to them with `numbers.addPoints`, which stops at 9 quadrillion (`../lib/numbers.js`). Never
+  print a raw total.
 
 ## Never do
 

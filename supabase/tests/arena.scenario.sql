@@ -93,3 +93,86 @@ select (select count(*) from players where name like 'Cara%') as players_left,
 set role anon; select set_config('request.jwt.claim.sub', '', false);
 select * from delete_me();
 reset role;
+
+-- ===========================================================================
+-- Leagues (migration 20261123000000_leagues.sql)
+-- ===========================================================================
+reset role;
+\set D '00000000-0000-0000-0000-00000000000d'
+\set E '00000000-0000-0000-0000-00000000000e'
+insert into auth.users values (:'D'), (:'E');
+update match_runs set created_at = created_at - interval '1 minute';
+
+\echo == leagues: everyone starts in Bronze (0); a first match this week joins a group
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'D', false);
+select * from set_player('Dana');
+select outcome, league, rr, rr_change, league_points from submit_run('lg1', array[1000,0,0,0,0,0,0,0,0,0], p_tin_score => 0);
+select league, rank, size, points, matches from my_league();
+select * from league_board();
+reset role; update match_runs set created_at = created_at - interval '1 minute'; set role authenticated;
+select set_config('request.jwt.claim.sub', :'E', false);
+select * from set_player('Eli');
+select league_points from submit_run('lg2', array[900,0,0,0,0,0,0,0,0,0]);
+select rank, name, points from league_board();
+
+\echo == leagues: the week ends (moved back 7 days); first action of the new week promotes Bronze players
+reset role;
+update league_members set week = week - 7;
+update league_groups set week = week - 7;
+update match_runs set created_at = created_at - interval '7 days';
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'D', false);
+select league, rank, size, points from my_league();
+\echo == ...and is applied exactly once
+select league from my_league();
+
+\echo == leagues: a Gold group of 9 last week: top 7 go up to Emerald (3), ranks 8 and 9 drop to Silver (1)
+reset role;
+insert into auth.users select ('00000000-0000-0000-0000-0000000001' || lpad(i::text, 2, '0'))::uuid from generate_series(1, 9) i;
+insert into players (id, name, league) select ('00000000-0000-0000-0000-0000000001' || lpad(i::text, 2, '0'))::uuid, 'Gold' || i, 2 from generate_series(1, 9) i;
+with g as (insert into league_groups (week, league, size) values (week_start(now()) - 7, 2, 9) returning id)
+insert into league_members (group_id, player_id, week, points)
+select g.id, ('00000000-0000-0000-0000-0000000001' || lpad(i::text, 2, '0'))::uuid, week_start(now()) - 7, 1000 - i from g, generate_series(1, 9) i;
+select p.name, p.league as before from players p where p.name in ('Gold1', 'Gold8', 'Gold9') order by p.name;
+select settle_league(('00000000-0000-0000-0000-0000000001' || lpad(i::text, 2, '0'))::uuid) from generate_series(1, 9) i \g /dev/null
+select p.name, p.league as after from players p where p.name in ('Gold1', 'Gold7', 'Gold8', 'Gold9') order by p.name;
+
+\echo == Pristine: Elo RR. 100 RR beats a 500 RR player: +29 (lib/leagues.js agrees)
+update players set league = 7, rr = 100 where id = :'D';
+update players set league = 7, rr = 500 where id = :'E';
+update match_runs set created_at = created_at - interval '1 minute';
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'E', false);
+select league_points from submit_run('lgp', array[600,0,0,0,0,0,0,0,0,0], p_tin_score => 0) \g /dev/null
+select set_config('request.jwt.claim.sub', :'D', false);
+\echo == find_opponent prefers the same league (Eli, Pristine)
+select name, league, rr from find_opponent();
+reset role; select id as eli_run from match_runs where seed = 'lgp' and player_id = :'E' \gset
+set role authenticated; select set_config('request.jwt.claim.sub', :'D', false);
+select outcome, league, rr, rr_change, league_points from submit_run('lgp', array[1000,0,0,0,0,0,0,0,0,0], p_rival_run => :'eli_run');
+select league, rr, pristine_rank, pristine_size from my_league();
+select * from pristine_board();
+\echo == Pristine: a Tin match never moves RR
+reset role; update match_runs set created_at = created_at - interval '1 minute'; set role authenticated;
+select set_config('request.jwt.claim.sub', :'D', false);
+select outcome, rr, rr_change from submit_run('lgt', array[1000,0,0,0,0,0,0,0,0,0], p_tin_score => 0);
+\echo == Pristine: losing below 0 RR drops you to Ruby (6)
+reset role; update players set rr = 1 where id = :'D'; update match_runs set created_at = created_at - interval '1 minute'; set role authenticated;
+select outcome, league, rr, rr_change from submit_run('lgp', array[0,0,0,0,0,0,0,0,0,0], p_rival_run => :'eli_run');
+\echo == ...and the next match joins a Ruby group for this week
+reset role; update match_runs set created_at = created_at - interval '1 minute'; set role authenticated;
+select league, league_points from submit_run('lgr', array[700,0,0,0,0,0,0,0,0,0], p_tin_score => 0);
+select league, rank, size from my_league();
+
+\echo == totals stop at 9 quadrillion
+reset role;
+update league_members set points = 8999999999999999 where player_id = :'D';
+update match_runs set created_at = created_at - interval '1 minute';
+set role authenticated; select set_config('request.jwt.claim.sub', :'D', false);
+select league_points, league_points = 9000000000000000 as at_cap from submit_run('lgc', array[1000,1100,0,0,0,0,0,0,0,0], p_tin_score => 0);
+reset role;
+\echo == the global board: top 25 by default, with leagues
+set role anon; select set_config('request.jwt.claim.sub', '', false);
+select count(*) <= 25 as top25, bool_and(league between 0 and 7) as leagues from leaderboard('all');
+reset role;

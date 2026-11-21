@@ -2,16 +2,14 @@
 
 **Learn where everything goes, one short lesson at a time.** Then look up anything in the moment, and find the nearest place that takes it.
 
-The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has six tabs:
+The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has four tabs; two of them hold a pair of screens, switched at the top:
 
 | Tab | What it does |
 |---|---|
 | **Learn** | A course of five-minute lessons laid out as a cartoon recycling route: 12 neighbourhoods (one per catalog shelf, plus *Food & methane*), 53 wheelie-bin stops, a sorting centre at the end of each unit, and Tin driving the truck to your next stop. XP, streaks, a daily goal, badges and coins. No hearts or lives: a wrong answer is explained and comes back once at the end of the lesson. |
-| **Arena** | Friendly competition, inspired by Kahoot. A match is 10 timed questions from the whole course: right answers score 500 to 1,000 points (faster is more), answer streaks add up to +500, and after every question you see the answer, why, and the race so far. Race a real player's recent run on the same questions, or Tin; host a game with a 6-digit PIN for friends; climb the **global leaderboard** (this week and all time). Every match pays coins (1 per right answer, +15 for a win, +10 for a perfect match) and XP. |
-| **What bin?** | Search 177 items or snap a photo (web build). Answers a follow-up only when it changes the verdict, then shows where *each part* goes, down to the resin code, and why. |
-| **Near me** | From your ZIP code or location, the nearest places that take the item: battery bins, e-waste, hazardous waste, clothing banks, pharmacies, transfer stations… Real data from OpenStreetMap. Every place is marked as *listed as accepting this* or *usually accepts, call ahead*. |
-| **Shop** | Spend coins (1 per right answer, +5 for 5 in a row, +10 for 10 in a row) on hats, glasses, neckwear and paint jobs for Tin, who then wears them all over the app. |
-| **Profile** | Streak, XP, badges, daily goal, location and appearance. |
+| **Arena** | Friendly competition, inspired by Kahoot. A match is 10 timed questions from the whole course: right answers score 500 to 1,000 points (faster is more), answer streaks add up to +500, and after every question you see the answer, why, and the race so far. Race a real player's run at your level on the same questions, or Tin; host a game with a 6-digit PIN for friends; climb **eight leagues** from Bronze to Pristine. Every match pays coins (1 per right answer, +15 for a win, +10 for a perfect match) and XP. |
+| **What bin?** · *Near me* | **What bin?**: search 177 items or snap a photo (web build); answers a follow-up only when it changes the verdict, then shows where *each part* goes, down to the resin code, and why. **Near me**: from your ZIP code or location, the nearest places that take the item (battery bins, e-waste, hazardous waste, clothing banks, pharmacies, transfer stations…), from OpenStreetMap, each marked *listed as accepting this* or *usually accepts, call ahead*. |
+| **Settings** · *Profile, Shop* | **Profile**: streak, XP, badges, daily goal, location and appearance. **Shop**: spend coins (1 per right answer, +5 for 5 in a row, +10 for 10 in a row) on hats, glasses, neckwear and paint jobs for Tin, who then wears them all over the app. |
 
 The first run teaches by doing: Tin asks where a takeaway coffee cup goes, then splits it into its three parts with the real verdict, explains the app in plain words, sets a daily goal in minutes, and coaches the first lesson step by step. After that, the first visit to each tab (the route, the Arena, What bin?, Near me, the shop, your profile) gets a two-or-three-step tour from Tin, replayable from Profile. Throughout, motion follows one rule: nothing appears from nowhere, and things move from where they were.
 
@@ -24,9 +22,26 @@ Matches come from `lib/arena.js`, shared with the tests like the lessons: ten qu
 - **Quick match** races a real player's recent run on its seed, revealing their points question by question; when nobody else has played yet (or you are offline), you race Tin, whose run is generated from the seed too.
 - **Game PINs** are Kahoot's PIN made for friends who are not in the same room at the same moment: the host gets six digits, everyone who enters them plays the same questions when they can, and the podium fills in live as they finish. A PIN lasts a week.
 - **Scoring**: a right answer is worth 1,000 points answered instantly, down to 500 on the buzzer, plus +100 for each answer in a streak after the first (up to +500). A wrong or missed answer scores nothing but still shows the answer and why.
-- **Rewards**: coins (1 per right answer, +15 for a win, +5 for a tie, +10 for a perfect match) and 10 XP per match, which also keeps the streak. Leaderboard points are your score plus +1,000 for beating a player (+500 for a tie, +500 for beating Tin).
+- **Rewards**: coins (1 per right answer, +15 for a win, +5 for a tie, +10 for a perfect match) and 10 XP per match, which also keeps the streak. League points are your score plus +1,000 for beating a player (+500 for a tie, +500 for beating Tin).
 
-The **global leaderboard** runs on Supabase (`supabase/`): players sign in anonymously by picking a name, and every match is submitted through a database function that re-checks it against the same scoring rules before it counts. Setup is in [`supabase/README.md`](supabase/README.md); without it, the Arena still plays against Tin and says plainly that the leaderboard is not connected.
+### Leagues
+
+Competition is between people at the same level, the way Duolingo and chess do it (`lib/leagues.js`). There are eight leagues: **Bronze, Silver, Gold, Emerald, Diamond, Sapphire, Ruby** and **Pristine**.
+
+- **Bronze to Ruby** run in weeks (Monday 00:00 UTC). Your first match of the week puts you in a group of up to 30 players from your league; every match point counts. When the week ends, the top of the group moves up (10 in Bronze and Silver, 7 in Gold and Emerald, 5 in Diamond and Sapphire, 3 from Ruby into Pristine) and the bottom 5 move down (nobody leaves Bronze). Everyone starts the next week at zero. A Ruby group needs at least 5 players before anyone reaches Pristine.
+- **Pristine** works like Valorant's Radiant: no groups and no weekly reset, one ladder of every Pristine player ranked by **RR**. Quick matches against other players move RR Elo-style (+16 for beating an equal, more for an upset, less against a lower league; never more than ±40 at once). Drop below 0 RR and you are back in Ruby. Matches against Tin and game PINs never change RR, so it cannot be farmed.
+- **Matchmaking**: quick match races a run from your own league, and in Pristine the closest RR.
+- **The leaderboard** shows your league (your group with its promotion and demotion lines, or the Pristine ladder) and the global top 25, this week or all time, with a podium.
+
+### Keeping numbers sane
+
+Simulator games (Roblox's especially) break when they get popular: totals grow until they lose precision or overflow, or turn into walls of digits. US Tin uses the same three fixes those games settled on (`lib/numbers.js`):
+
+1. **A hard ceiling inside exact arithmetic.** Like Luau, JavaScript stores numbers as 64-bit floats, exact only up to 2^53 ≈ 9.007 quadrillion. Every counter (coins, XP, league and leaderboard points) saturates at **9 quadrillion**, in the app and in the database, so it stops instead of corrupting. At about 15,000 points a match, that is tens of billions of matches away.
+2. **Short suffixes**, rounded down: 9,999 → 12.3K → 4.56M → 7.8B → 1.2T → 9Qa, on every counter and board.
+3. **Resets.** The numbers people actually race on stay small: league points reset every week, and Pristine RR moves by tens. Only the all-time total keeps growing.
+
+The **leagues and leaderboard** run on Supabase (`supabase/`): players sign in anonymously by picking a name, and every match is submitted through a database function that re-checks it against the same scoring rules before it counts. Setup is in [`supabase/README.md`](supabase/README.md); without it, the Arena still plays against Tin and says plainly that the leaderboard is not connected.
 
 **Food & methane** is the one topic unit (`lib/topics.js`), right after *Food scraps*: short hand-written cards on *why* food scraps go where they do. Food is the most common material in US landfills, where it rots without oxygen and gives off methane. Composting done right (damp, airy, turned) barely does, and not wasting food beats both. Every number on a card names its source (EPA, USDA, IPCC), shown under the answer, and a test refuses a statistic without one. It also covers the myth that composting is worse for methane than the trash, and the true part behind it: a soggy, packed-down pile can go airless and make methane, which is why you turn it and add dry browns.
 
@@ -177,6 +192,8 @@ lib/rules.js               The decision engine
 lib/lessons.js             The course: units, lessons and generated exercises
 lib/topics.js              Topic units: sourced, hand-written cards (Food & methane)
 lib/arena.js               Arena matches: seeded question sets, timed scoring, rewards, Tin's run
+lib/leagues.js             Leagues: weekly groups, promotion and demotion, Pristine RR
+lib/numbers.js             The 9-quadrillion ceiling and K/M/B/T/Qa formatting
 supabase/                  The global leaderboard: schema + functions, setup guide, SQL tests
 lib/recognizer.js          ILSVRC classes + material head -> catalog objects
 lib/imagenet-labels.js     The 1000 class names (generated)

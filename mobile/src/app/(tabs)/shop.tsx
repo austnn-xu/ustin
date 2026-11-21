@@ -10,6 +10,8 @@ import { haptics } from '@/lib/haptics';
 import { useProgress } from '@/stores/progress';
 import { makeStyles, useTheme } from '@/theme';
 import { useScreenSize } from '@/lib/useScreenSize';
+import { SectionSwitch } from '@/components/SectionSwitch';
+import { numbers } from '@/lib/engine';
 
 /** The shop: spend lesson coins on things for Tin to wear, and try anything on before buying it. */
 export default function Shop() {
@@ -99,14 +101,15 @@ export default function Shop() {
     <Screen gutter={false} footer={action}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.column}>
+          <SectionSwitch current="shop" />
           <View style={styles.header}>
             <Text variant="display" style={styles.flex}>
               Shop
             </Text>
-            <View style={styles.wallet} accessibilityLabel={`${coins} coins`}>
+            <View style={styles.wallet} accessibilityLabel={`${coins.toLocaleString('en-US')} coins`}>
               <Coin size={t.layout.icon.lg} />
               <Text variant="title" hue="yellow" tabular>
-                {coins}
+                {numbers.compact(coins)}
               </Text>
             </View>
           </View>

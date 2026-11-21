@@ -5,36 +5,33 @@ import { View } from 'react-native';
 import { Coin } from '@/components/art/Coin';
 import { Mascot } from '@/components/art/Mascot';
 import { Avatar } from '@/components/arena/Avatar';
-import { BoardList, BoardMessage, BoardSkeleton, StaleNote, toEntries } from '@/components/arena/BoardList';
+import { BoardList, BoardMessage, BoardSkeleton } from '@/components/arena/BoardList';
+import { isPristine, LeagueBanner, LeagueLadder } from '@/components/arena/League';
 import { NameSheet } from '@/components/arena/NameSheet';
-import { Segmented } from '@/components/arena/Segmented';
 import { StatsBar } from '@/components/StatsBar';
 import { Button, Card, Icon, Input, ListRow, PressableScale, Screen, Text } from '@/components/ui';
-import { arena } from '@/lib/engine';
+import { arena, leagues, numbers } from '@/lib/engine';
 import { haptics } from '@/lib/haptics';
 import {
   ArenaError,
   createRoom,
   formatPin,
   leaderboardConfigured,
-  useLeaderboard,
+  useLeagueBoard,
   useMe,
-  type Period,
+  useMyLeague,
+  usePristineBoard,
 } from '@/lib/leaderboard';
 import { useProgress } from '@/stores/progress';
 import { useSettings } from '@/stores/settings';
 import { makeStyles, useTheme, type HueName } from '@/theme';
 
-const PERIODS: { value: Period; label: string }[] = [
-  { value: 'week', label: 'This week' },
-  { value: 'all', label: 'All time' },
-];
 
 type Pending = { then: 'quick' | 'host' } | null;
 
 /**
  * The Arena: friendly competition. Quick timed matches against a real player's run (or Tin), game PINs to play with
- * friends, and the global leaderboard. Coins and XP pay out like lessons; winning pays more.
+ * friends, and your league. Coins and XP pay out like lessons; winning pays more.
  */
 export default function Arena() {
   const t = useTheme();
@@ -42,8 +39,6 @@ export default function Arena() {
   const me = useMe();
   const stats = useProgress((s) => s.arena);
   const recentPins = useSettings((s) => s.recentPins);
-  const [period, setPeriod] = useState<Period>('week');
-  const board = useLeaderboard(period);
   const [naming, setNaming] = useState<Pending | 'rename'>(null);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
@@ -133,6 +128,8 @@ export default function Arena() {
           )}
         </Card>
 
+        <LeagueCard />
+
         <Card padding="lg" style={styles.gap}>
           <View style={styles.titleRow}>
             <Icon icon={Users} hue="purple" />
@@ -193,42 +190,12 @@ export default function Arena() {
           <Stat icon={Trophy} hue="purple" value={stats.points} label="Points earned" />
         </View>
 
-        <Card padding="lg" style={styles.gap}>
-          <View style={styles.titleRow}>
-            <Icon icon={Trophy} hue="yellow" filled />
-            <Text variant="heading" style={styles.flex}>
-              Global leaderboard
-            </Text>
-          </View>
-          {leaderboardConfigured && <Segmented options={PERIODS} value={period} onChange={setPeriod} accessibilityLabel="Leaderboard period" />}
-          {!leaderboardConfigured ? (
-            <BoardMessage />
-          ) : board.isPending ? (
-            <BoardSkeleton />
-          ) : board.isError && !board.data?.length ? (
-            <BoardMessage error={board.error} onRetry={() => void board.refetch()} />
-          ) : board.data.length === 0 ? (
-            <BoardMessage empty={period === 'week' ? 'Nobody is on the board yet this week. Play a match to be first.' : 'Nobody is on the board yet. Play a match to be first.'} />
-          ) : (
-            <>
-              <BoardList entries={toEntries(board.data, 5)} />
-              {board.isError && <StaleNote at={board.dataUpdatedAt} onRetry={() => void board.refetch()} />}
-              <Button label="See the full leaderboard" variant="ghost" fullWidth onPress={() => router.push(`/leaderboard?period=${period}`)} />
-            </>
-          )}
-          {period === 'week' && leaderboardConfigured && (
-            <Text variant="caption" color="textTertiary">
-              The weekly board starts fresh every Monday (UTC).
-            </Text>
-          )}
-        </Card>
-
         <Card variant="tinted" hue="yellow" style={styles.gap}>
           <Text variant="label" hue="yellow">
             What you earn
           </Text>
           <Earn art={<Coin size={t.layout.icon.md} />} text={`${REWARDS.coinPerCorrect} coin per right answer, +${REWARDS.coinsWin} for a win, +${REWARDS.coinsPerfect} for a perfect match`} />
-          <Earn art={<Icon icon={Trophy} hue="yellow" shade="text" />} text={`Leaderboard points: your score, +${REWARDS.pointsWin.toLocaleString('en-US')} for beating a player (+${REWARDS.pointsWinTin} for beating Tin)`} />
+          <Earn art={<Icon icon={Trophy} hue="yellow" shade="text" />} text={`League points: your score, +${REWARDS.pointsWin.toLocaleString('en-US')} for beating a player (+${REWARDS.pointsWinTin} for beating Tin). The top of your group moves up a league each week`} />
           <Earn art={<Icon icon={Flame} hue="orange" filled />} text="Every match counts for your streak and pays XP, like a lesson" />
         </Card>
       </View>
@@ -255,6 +222,79 @@ export default function Arena() {
   );
 }
 
+/**
+ * Your league, at a glance: the banner, then the top of your group (or the Pristine ladder) and your own row. The full
+ * table, and the global top 25, are one tap away.
+ */
+function LeagueCard() {
+  const styles = useStyles();
+  const my = useMyLeague();
+  const pristine = !!my.data && isPristine(my.data.league);
+  const group = useLeagueBoard(!!my.data && !pristine && my.data.rank !== null);
+  const ladder = usePristineBoard(pristine);
+
+  let preview: React.ReactNode = null;
+  if (my.data && !pristine && group.data?.length) {
+    const size = group.data.length;
+    preview = (
+      <BoardList
+        entries={group.data
+          .filter((r) => r.rank <= 3 || r.isMe)
+          .map((r) => ({
+            key: `${r.rank}-${r.name}`,
+            rank: r.rank,
+            name: r.name,
+            paint: r.paint,
+            value: r.points,
+            isMe: r.isMe,
+            zone: leagues.zoneOf({ league: my.data!.league, rank: r.rank, size }),
+          }))}
+      />
+    );
+  } else if (pristine && ladder.data?.length) {
+    preview = (
+      <BoardList
+        unit="RR"
+        entries={ladder.data
+          .filter((r) => r.rank <= 3 || r.isMe)
+          .map((r) => ({ key: `${r.rank}-${r.name}`, rank: r.rank, name: r.name, paint: r.paint, value: r.rr, isMe: r.isMe, league: leagues.PRISTINE }))}
+      />
+    );
+  }
+
+  return (
+    <Card padding="lg" style={styles.gap}>
+      <View style={styles.titleRow}>
+        <Icon icon={Trophy} hue="yellow" filled />
+        <Text variant="heading" style={styles.flex}>
+          Your league
+        </Text>
+      </View>
+      {!leaderboardConfigured ? (
+        <BoardMessage />
+      ) : my.isPending ? (
+        <BoardSkeleton rows={2} />
+      ) : my.isError && !my.data ? (
+        <BoardMessage error={my.error} onRetry={() => void my.refetch()} />
+      ) : !my.data ? (
+        <>
+          <LeagueLadder current={0} />
+          <Text variant="callout" color="textSecondary">
+            Pick a name and play a match to start in Bronze. Each week you race a group of up to 30 players at your level;
+            the top move up, all the way to Pristine.
+          </Text>
+        </>
+      ) : (
+        <>
+          <LeagueBanner me={my.data} size="md" />
+          {preview}
+        </>
+      )}
+      {leaderboardConfigured && <Button label="Open the leaderboard" variant="ghost" fullWidth onPress={() => router.push('/leaderboard')} />}
+    </Card>
+  );
+}
+
 function Stat({ icon, hue, value, label }: { icon: typeof Target; hue: HueName; value: number; label: string }) {
   const styles = useStyles();
   return (
@@ -262,7 +302,7 @@ function Stat({ icon, hue, value, label }: { icon: typeof Target; hue: HueName; 
       <Icon icon={icon} hue={hue} filled={icon === Zap} />
       <View style={styles.flex}>
         <Text variant="heading" tabular numberOfLines={1}>
-          {value.toLocaleString('en-US')}
+          {numbers.compact(value)}
         </Text>
         <Text variant="caption" color="textSecondary" numberOfLines={1}>
           {label}

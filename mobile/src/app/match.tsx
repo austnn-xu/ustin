@@ -5,7 +5,9 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mascot } from '@/components/art/Mascot';
+import { LeagueBadge } from '@/components/art/LeagueBadge';
 import { Avatar } from '@/components/arena/Avatar';
+import { isPristine, leagueId, leagueName } from '@/components/arena/League';
 import { MatchEnd, type MatchSummary } from '@/components/arena/MatchEnd';
 import { MatchTimer } from '@/components/arena/MatchTimer';
 import { NameSheet } from '@/components/arena/NameSheet';
@@ -16,7 +18,7 @@ import { QuitConfirm, StreakCelebration } from '@/components/lesson/LessonEnd';
 import { Appear, Button, Card, Icon, PressableScale, ProgressBar, RollingNumber, Text } from '@/components/ui';
 import { paintOf } from '@/lib/cosmetics';
 import { timeAgo } from '@/lib/dates';
-import { arena, lessons } from '@/lib/engine';
+import { arena, lessons, numbers } from '@/lib/engine';
 import { haptics } from '@/lib/haptics';
 import {
   ArenaError,
@@ -88,7 +90,12 @@ export default function MatchScreen() {
         else {
           const opp = await findOpponent();
           next = opp
-            ? { seed: opp.seed, rival: { kind: 'player', runId: opp.runId, name: opp.name, paint: opp.paint, points: opp.points, playedAt: opp.playedAt }, me, online: true }
+            ? {
+                seed: opp.seed,
+                rival: { kind: 'player', runId: opp.runId, name: opp.name, paint: opp.paint, points: opp.points, playedAt: opp.playedAt, league: opp.league, rr: opp.rr },
+                me,
+                online: true,
+              }
             : tin(me, true);
         }
       } catch {
@@ -207,7 +214,7 @@ function Intro({ setup, onStart, onLeave }: { setup: Setup; onStart: () => void;
 
   const sub =
     rival.kind === 'player'
-      ? `Played these same ${MATCH.questions} questions ${timeAgo(rival.playedAt)}. Their answers are revealed as you go.`
+      ? `Matched from your league. Played these same ${MATCH.questions} questions ${timeAgo(rival.playedAt)}; their answers are revealed as you go.`
       : rival.kind === 'tin'
         ? 'Tin, the computer. Right about 7 times in 10, and not the fastest.'
         : `Hosted by ${rival.host} · ${rival.players === 0 ? 'nobody has played yet' : rival.players === 1 ? '1 player so far' : `${rival.players} players so far`}`;
@@ -250,6 +257,14 @@ function Intro({ setup, onStart, onLeave }: { setup: Setup; onStart: () => void;
               <Text variant="heading" numberOfLines={1}>
                 {rivalName(rival)}
               </Text>
+              {rival.kind === 'player' && (
+                <View style={styles.rivalLeague}>
+                  <LeagueBadge league={leagueId(rival.league)} size={t.layout.icon.md} />
+                  <Text variant="caption" color="textSecondary" numberOfLines={1}>
+                    {isPristine(rival.league) ? `Pristine · ${numbers.compact(rival.rr)} RR` : `${leagueName(rival.league)} League`}
+                  </Text>
+                </View>
+              )}
             </View>
           </Appear>
           <Text variant="body" color="textSecondary" align="center">
@@ -481,6 +496,7 @@ const useStyles = makeStyles((t) => ({
   introBody: { flexGrow: 1, justifyContent: 'center', paddingVertical: t.space[6] },
   versus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: t.space[3], paddingVertical: t.space[4] },
   fighter: { flex: 1, alignItems: 'center', gap: t.space[2], minWidth: 0 },
+  rivalLeague: { flexDirection: 'row', alignItems: 'center', gap: t.space[1] },
   rules: { gap: t.space[3], marginTop: t.space[2] },
   rule: { flexDirection: 'row', alignItems: 'flex-start', gap: t.space[3] },
   footer: { paddingTop: t.space[4], paddingBottom: t.space[6], borderTopWidth: t.layout.border, borderTopColor: t.colors.border },

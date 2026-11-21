@@ -81,7 +81,20 @@ export type SceneColors = {
   shadow: string;
 };
 
-export type Palette = ColorTokens & { hue: Record<HueName, Hue>; mascot: MascotColors; scene: SceneColors };
+/**
+ * The eight Arena leagues. Like the town's `scene` colours these are a closed set with one job: league badges, league
+ * banners and the league chip next to a name. They are never used for actions, feedback or bins. `facet` is the light
+ * face of a badge's gem.
+ */
+export type LeagueId = 'bronze' | 'silver' | 'gold' | 'emerald' | 'diamond' | 'sapphire' | 'ruby' | 'pristine';
+export type LeagueColor = Hue & { facet: string };
+
+export type Palette = ColorTokens & {
+  hue: Record<HueName, Hue>;
+  mascot: MascotColors;
+  scene: SceneColors;
+  league: Record<LeagueId, LeagueColor>;
+};
 
 const mascot: MascotColors = {
   body: '#CDD7DD',
@@ -124,6 +137,16 @@ export const light: Palette = {
     slate: { base: '#5B6470', depth: '#434A54', subtle: '#E9ECEF', text: '#434A54' },
   },
   mascot,
+  league: {
+    bronze: { base: '#C7793A', depth: '#96562A', subtle: '#F7E6D8', text: '#8E5023', facet: '#E3A877' },
+    silver: { base: '#A7B4C2', depth: '#7B8896', subtle: '#EDF1F5', text: '#5E6B79', facet: '#D6DEE6' },
+    gold: { base: '#F2B705', depth: '#C08F00', subtle: '#FFF4CC', text: '#9A7300', facet: '#FFDA5C' },
+    emerald: { base: '#1FB37A', depth: '#138A5B', subtle: '#D6F5E8', text: '#0F7A50', facet: '#6EDDB0' },
+    diamond: { base: '#5CC8EA', depth: '#2E9CC0', subtle: '#E0F6FD', text: '#1D7FA0', facet: '#B4ECFB' },
+    sapphire: { base: '#2E5BEA', depth: '#1F40B0', subtle: '#DDE5FD', text: '#2645B8', facet: '#7F9DF5' },
+    ruby: { base: '#E0245E', depth: '#A9163F', subtle: '#FCDDE7', text: '#B31749', facet: '#F17A9C' },
+    pristine: { base: '#E9E3FF', depth: '#A493F0', subtle: '#F3F0FF', text: '#6C55D9', facet: '#FFFFFF' },
+  },
   scene: {
     sky: '#E2F4FD',
     cloud: '#FFFFFF',
@@ -172,6 +195,16 @@ export const dark: Palette = {
     slate: { base: '#8A96A3', depth: '#5F6A76', subtle: '#26313A', text: '#A9B4BF' },
   },
   mascot,
+  league: {
+    bronze: { base: '#D08446', depth: '#9A5C2C', subtle: '#3A2A1E', text: '#E3A06A', facet: '#E9AE7D' },
+    silver: { base: '#B4C0CC', depth: '#808C99', subtle: '#2A333C', text: '#C8D2DC', facet: '#DCE3EA' },
+    gold: { base: '#FFC21A', depth: '#C99500', subtle: '#3A3210', text: '#FFD24D', facet: '#FFE07A' },
+    emerald: { base: '#2CC98B', depth: '#1B935F', subtle: '#133628', text: '#4BDDA2', facet: '#7CE6BC' },
+    diamond: { base: '#7EDCF5', depth: '#45A9C9', subtle: '#12303A', text: '#8FE3F8', facet: '#C4F1FC' },
+    sapphire: { base: '#4C74F5', depth: '#2F4EC2', subtle: '#1A2446', text: '#7E9BFA', facet: '#93ABFA' },
+    ruby: { base: '#F0386F', depth: '#B21F4C', subtle: '#3D1824', text: '#FF6F97', facet: '#FF8DB0' },
+    pristine: { base: '#EEE9FF', depth: '#A493F0', subtle: '#2A2440', text: '#C9BCFF', facet: '#FFFFFF' },
+  },
   scene: {
     sky: '#10222B',
     cloud: '#2A3F4A',

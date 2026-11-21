@@ -1,6 +1,6 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import type { LucideIcon } from 'lucide-react-native';
-import { House, MapPin, ScanSearch, Store, Swords, UserRound } from 'lucide-react-native';
+import { House, ScanSearch, Settings, Swords } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -9,14 +9,19 @@ import { Icon, PressableScale, Text } from '@/components/ui';
 import { useScreenSize } from '@/lib/useScreenSize';
 import { makeStyles, useTheme } from '@/theme';
 
-const TABS: Record<string, { icon: LucideIcon; label: string }> = {
-  index: { icon: House, label: 'Learn' },
-  arena: { icon: Swords, label: 'Arena' },
-  scan: { icon: ScanSearch, label: 'What bin?' },
-  nearby: { icon: MapPin, label: 'Near me' },
-  shop: { icon: Store, label: 'Shop' },
-  profile: { icon: UserRound, label: 'Profile' },
-};
+/**
+ * Four tabs. Two of them hold a pair of screens, switched at the top of the screen (see SectionSwitch): What bin? also
+ * holds Near me, and Settings holds your profile and the shop. Fewer, bigger targets; every screen still has its own
+ * route, so links like /nearby or /shop keep working.
+ */
+const TABS: { name: string; icon: LucideIcon; label: string; also?: string[] }[] = [
+  { name: 'index', icon: House, label: 'Learn' },
+  { name: 'arena', icon: Swords, label: 'Arena' },
+  { name: 'scan', icon: ScanSearch, label: 'What bin?', also: ['nearby'] },
+  { name: 'profile', icon: Settings, label: 'Settings', also: ['shop'] },
+];
+
+const tabOf = (route: string | undefined) => Math.max(0, TABS.findIndex((tab) => tab.name === route || tab.also?.includes(route ?? '')));
 
 /**
  * The tab bar. The active tab sits in a blue outlined tile that slides across to whichever tab you pick, so you see
@@ -28,22 +33,22 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const styles = useStyles();
   const insets = useSafeAreaInsets();
   const { narrow } = useScreenSize();
-  const count = state.routes.filter((r) => TABS[r.name]).length;
+  const count = TABS.length;
   const [rowWidth, setRowWidth] = useState(0);
   const slot = (rowWidth - t.space[2] * 2) / Math.max(1, count);
-  // Six labels do not fit on a small phone ("What bin?" is the longest); the icons carry it there, and each tab keeps
-  // its accessible name.
+  // On the narrowest phones the icons carry it; each tab keeps its accessible name.
   const labels = !narrow && (rowWidth === 0 || slot >= t.layout.tabLabelMin);
-  const x = useSharedValue(state.index);
+  const current = tabOf(state.routes[state.index]?.name);
+  const x = useSharedValue(current);
 
   useEffect(() => {
-    x.value = withSpring(state.index, t.motion.spring.standard);
-  }, [state.index, x, t.motion.spring.standard]);
+    x.value = withSpring(current, t.motion.spring.standard);
+  }, [current, x, t.motion.spring.standard]);
 
   // Build the other tabs quietly in the background once the app settles, one at a time and only when the browser is idle
   // (never during a scroll or a tap), so the first visit to each is instant.
   useEffect(() => {
-    const names = state.routes.map((r) => r.name).filter((n) => TABS[n] && n !== state.routes[state.index]?.name);
+    const names = TABS.flatMap((tab) => [tab.name, ...(tab.also ?? [])]).filter((n) => n !== state.routes[state.index]?.name);
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     const whenIdle = (fn: () => void) =>
@@ -70,10 +75,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, t.space[2]) }]}>
       <View style={styles.row} onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}>
         {rowWidth > 0 && <Animated.View style={[styles.pill, { width: slot - t.space[1] }, pill]} pointerEvents="none" />}
-        {state.routes.map((route, index) => {
-          const tab = TABS[route.name];
-          if (!tab) return null;
-          const focused = state.index === index;
+        {TABS.map((tab, index) => {
+          const route = state.routes.find((r) => r.name === tab.name);
+          if (!route) return null;
+          const focused = current === index;
           return (
             <PressableScale
               key={route.key}
@@ -83,6 +88,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityLabel={tab.label}
               onPress={() => {
                 const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+                // Already here (on either screen of the pair): stay put.
                 if (focused || event.defaultPrevented) return;
                 // Slide the highlight now, in the same frame as the tap, rather than after the screen has switched.
                 x.value = withSpring(index, t.motion.spring.standard);

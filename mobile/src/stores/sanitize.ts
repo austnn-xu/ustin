@@ -1,4 +1,5 @@
 import { COSMETICS, DEFAULT_OWNED, type Outfit, type Slot } from '@/lib/cosmetics';
+import { numbers } from '@/lib/engine';
 import { isTourId } from '@/lib/tour';
 
 /**
@@ -15,8 +16,8 @@ type Obj = Record<string, unknown>;
 
 /** Most entries a persisted map may keep: far above real use, low enough that a bloated value cannot stall startup. */
 const MAX_KEYS = 5000;
-/** Ceiling for any counter (coins, XP, points): big enough for years of play, far below float trouble. */
-export const MAX_COUNT = 100_000_000;
+/** Ceiling for any counter (coins, XP, points): the app-wide 9 quadrillion (see ../lib/numbers.js). */
+export const MAX_COUNT = numbers.MAX_POINTS;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
