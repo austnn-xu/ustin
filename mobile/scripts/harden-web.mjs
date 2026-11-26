@@ -53,9 +53,10 @@ if (supabase) {
 const CONNECT = [
   'https://api.zippopotam.us', // US ZIP → coordinates
   'https://nominatim.openstreetmap.org', // other postcodes, reverse geocoding
-  'https://overpass-api.de', // nearby places (and its two mirrors)
+  'https://overpass-api.de', // nearby places (and its three mirrors)
   'https://overpass.kumi.systems',
   'https://overpass.private.coffee',
+  'https://overpass.openstreetmap.fr',
   'https://storage.googleapis.com', // MobileNet weights (tfjs-models), photo recognition
   ...supabaseOrigins, // the Arena's leaderboard
 ];

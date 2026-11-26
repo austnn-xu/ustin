@@ -283,6 +283,20 @@ export const names: {
   roll: (random?: () => number) => string;
   isRolled: (name: unknown) => boolean;
 } = require('../../../lib/names');
+/** Overpass (OpenStreetMap place search) without waiting forever: staggered mirrors and one deadline (see ../lib/overpass.js). */
+export const overpassNet: {
+  DEFAULTS: { timeoutMs: number; staggerMs: number; deadlineMs: number };
+  fetchOverpass: (
+    query: string,
+    options: { endpoints: string[]; fetch: (url: string, init: RequestInit) => Promise<Response>; signal?: AbortSignal; timeoutMs?: number; staggerMs?: number; onSuccess?: (endpoint: string) => void },
+  ) => Promise<unknown[]>;
+  widen: <T>(input: {
+    radii: number[];
+    run: (radius: number, signal: AbortSignal) => Promise<T>;
+    enough: (value: T) => boolean;
+    deadlineMs?: number;
+  }) => Promise<{ value: T; radius: number }>;
+} = require('../../../lib/overpass');
 /** Links built from map data: only http(s) pages and phone numbers get through. */
 export const safeUrl: { safeWebUrl: (raw: unknown) => string | null; safeTel: (raw: unknown) => string | null } = require('../../../lib/safe-url');
 /* eslint-enable @typescript-eslint/no-require-imports */

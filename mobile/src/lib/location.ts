@@ -41,7 +41,13 @@ export function useLocate() {
         setError('Location is off for US Tin. Enter a ZIP code instead, or allow location in your settings.');
         return null;
       }
-      const fix = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      // A GPS fix can take forever indoors (and on some browsers never answers): wait ten seconds, then settle for the
+      // last place the phone knew.
+      const fix = await Promise.race([
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 10_000)),
+      ]).then((found) => found ?? Location.getLastKnownPositionAsync());
+      if (!fix) throw new Error('no fix');
       const { latitude: lat, longitude: lon } = fix.coords;
       const named = await reverseGeocode(lat, lon);
       return save({ label: named.label, lat, lon, zip: named.zip, source: 'gps' });

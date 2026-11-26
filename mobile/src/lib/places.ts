@@ -16,7 +16,7 @@ import {
 } from 'lucide-react-native';
 import { Platform } from 'react-native';
 import type { HueName } from '@/theme';
-import { safeUrl, type OutcomeId, type Verdict } from './engine';
+import { overpassNet, safeUrl, type OutcomeId, type Verdict } from './engine';
 
 export type PlaceKind =
   | 'recycling'
@@ -317,7 +317,7 @@ export function kindsForVerdict(verdict: Verdict): PlaceKind[] {
 
 export type GeoPoint = { lat: number; lon: number; label: string; zip?: string };
 
-async function getJSON<T>(url: string, ms = 15_000): Promise<T> {
+async function getJSON<T>(url: string, ms = 8_000): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
@@ -340,7 +340,7 @@ export async function geocode(query: string): Promise<GeoPoint> {
   if (zip) {
     try {
       type Zippo = { places: { 'place name': string; latitude: string; longitude: string; 'state abbreviation': string }[] };
-      const data = await getJSON<Zippo>(`https://api.zippopotam.us/us/${zip}`);
+      const data = await getJSON<Zippo>(`https://api.zippopotam.us/us/${zip}`, 6_000);
       const p = data.places[0];
       if (p) return { lat: Number(p.latitude), lon: Number(p.longitude), label: `${p['place name']}, ${p['state abbreviation']} ${zip}`, zip };
     } catch {
@@ -352,7 +352,7 @@ export async function geocode(query: string): Promise<GeoPoint> {
   const params = zip ? `postalcode=${zip}&country=us` : `q=${encodeURIComponent(q)}`;
   let data: Nom;
   try {
-    data = await getJSON<Nom>(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&${params}`);
+    data = await getJSON<Nom>(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&${params}`, 10_000);
   } catch {
     throw new LookupError('Could not reach the map service. Check your connection and try again.');
   }
@@ -366,7 +366,7 @@ export async function geocode(query: string): Promise<GeoPoint> {
 export async function reverseGeocode(lat: number, lon: number): Promise<{ label: string; zip?: string }> {
   try {
     type Rev = { address?: Record<string, string> };
-    const data = await getJSON<Rev>(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat=${lat}&lon=${lon}`, 8000);
+    const data = await getJSON<Rev>(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat=${lat}&lon=${lon}`, 4_000);
     const a = data.address ?? {};
     const area = a.suburb ?? a.neighbourhood ?? a.city ?? a.town ?? a.village ?? a.county;
     return { label: area ? `Near ${area}` : 'Current location', zip: a.postcode };
@@ -451,6 +451,7 @@ const OVERPASS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.openstreetmap.fr/api/interpreter',
 ];
 
 const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -468,31 +469,24 @@ function matches(sel: Selector, tags: Record<string, string>) {
 export function buildQuery(kind: PlaceKind, lat: number, lon: number, radiusM: number) {
   const around = `(around:${Math.round(radiusM)},${lat.toFixed(5)},${lon.toFixed(5)})`;
   const lines = KINDS[kind].selectors.map((s) => `  nwr${around}${toOverpass(s)};`).join('\n');
-  return `[out:json][timeout:25];\n(\n${lines}\n);\nout tags center 300;`;
+  // A short server-side limit: a query that cannot finish in ten seconds is better re-asked elsewhere than waited on.
+  return `[out:json][timeout:10];\n(\n${lines}\n);\nout tags center 100;`;
 }
 
-async function overpass(query: string): Promise<OsmElement[]> {
-  let lastError: unknown = null;
-  for (const endpoint of OVERPASS) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 30_000);
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `data=${encodeURIComponent(query)}`,
-        signal: controller.signal,
-      });
-      if (!res.ok) throw new Error(`Overpass ${res.status}`);
-      const data = (await res.json()) as { elements?: OsmElement[] };
-      return data.elements ?? [];
-    } catch (err) {
-      lastError = err;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error('Overpass unavailable');
+/** The mirror that answered last goes first next time, so a dead one is only waited on once, not once per radius. */
+let lastGood: string | null = null;
+
+/** One query, asked of the mirrors a moment apart; the first good answer wins (see ../lib/overpass.js). */
+function overpass(query: string, signal?: AbortSignal): Promise<OsmElement[]> {
+  const endpoints = lastGood ? [lastGood, ...OVERPASS.filter((e) => e !== lastGood)] : OVERPASS;
+  return overpassNet.fetchOverpass(query, {
+    endpoints,
+    fetch: (url, init) => fetch(url, init),
+    signal,
+    onSuccess: (endpoint) => {
+      lastGood = endpoint;
+    },
+  }) as Promise<OsmElement[]>;
 }
 
 export function distanceKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }) {
@@ -605,27 +599,31 @@ export function toSite(el: OsmElement, kind: PlaceKind, from: { lat: number; lon
 const RADII = { dense: [2500, 8000, 25000], normal: [8000, 25000, 60000] };
 const ENOUGH = 5;
 
+/** OpenStreetMap elements to sites, one per place (a place is often mapped as both a building and a point). */
+function sitesFrom(elements: OsmElement[], kind: PlaceKind, from: { lat: number; lon: number }): Site[] {
+  const seen = new Set<string>();
+  return elements
+    .map((el) => toSite(el, kind, from))
+    .filter((s): s is Site => !!s)
+    .filter((s) => {
+      const key = `${s.name}|${s.lat.toFixed(3)}|${s.lon.toFixed(3)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+/**
+ * Nearby places, nearest first. The whole search has one deadline (about half a minute at the very worst); if a
+ * smaller radius already found places by then, those are shown rather than an error.
+ */
 export async function findPlaces(kind: PlaceKind, lat: number, lon: number): Promise<PlacesResult> {
-  const radii = KINDS[kind].dense ? RADII.dense : RADII.normal;
   const from = { lat, lon };
-  let sites: Site[] = [];
-  let radius = radii[0]!;
-  for (const r of radii) {
-    radius = r;
-    const elements = await overpass(buildQuery(kind, lat, lon, r));
-    const seen = new Set<string>();
-    sites = elements
-      .map((el) => toSite(el, kind, from))
-      .filter((s): s is Site => !!s)
-      .filter((s) => {
-        // The same place is often mapped as both a building and a point; keep one.
-        const key = `${s.name}|${s.lat.toFixed(3)}|${s.lon.toFixed(3)}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    if (sites.length >= ENOUGH) break;
-  }
+  const { value: sites, radius } = await overpassNet.widen<Site[]>({
+    radii: KINDS[kind].dense ? RADII.dense : RADII.normal,
+    run: async (r, signal) => sitesFrom(await overpass(buildQuery(kind, lat, lon, r), signal), kind, from),
+    enough: (found) => found.length >= ENOUGH,
+  });
   // Nearest first, with a head start for places confirmed to accept it — but a "usually accepts" that is much
   // closer still wins.
   sites.sort((a, b) => a.distanceKm * (a.confirmed ? 1 : 1.6) - b.distanceKm * (b.confirmed ? 1 : 1.6));
