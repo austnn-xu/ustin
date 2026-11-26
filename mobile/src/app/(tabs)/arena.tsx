@@ -86,7 +86,32 @@ export default function Arena() {
   };
 
   return (
-    <Screen scroll keyboard header={<StatsBar title="Arena" />}>
+    <Screen
+      scroll
+      keyboard
+      header={<StatsBar title="Arena" />}
+      // Over the whole screen, not inside the scrolling page, so it is always where you are looking.
+      overlay={
+        naming && (
+        <NameSheet
+          current={naming === 'rename' ? me.data?.name : null}
+          cancelLabel={naming !== 'rename' && naming.then === 'quick' ? 'Practice without a name' : 'Not now'}
+          onCancel={() => {
+            const next = naming;
+            setNaming(null);
+            if (next !== 'rename' && next.then === 'quick') router.push('/match?offline=1');
+          }}
+          onDone={() => {
+            const next = naming;
+            setNaming(null);
+            if (next === 'rename') return;
+            if (next.then === 'quick') router.push('/match');
+            else void host();
+          }}
+        />
+        )
+      }
+    >
       <View style={styles.stack}>
         <Card padding="lg" style={styles.hero}>
           <View style={styles.heroHead}>
@@ -104,7 +129,7 @@ export default function Arena() {
               haptic="selection"
               onPress={() => setNaming(named ? 'rename' : { then: 'quick' })}
               style={styles.who}
-              accessibilityLabel={named ? `Playing as ${me.data!.name}. Change name` : 'Pick a leaderboard name'}
+              accessibilityLabel={named ? `Playing as ${me.data!.name}. Change name` : 'Roll a leaderboard name'}
             >
               {named ? (
                 <>
@@ -120,7 +145,7 @@ export default function Arena() {
                 <>
                   <Icon icon={Trophy} hue="blue" />
                   <Text variant="callout" hue="blue" style={styles.flex}>
-                    Pick a name to get on the global leaderboard
+                    Roll a name to get on the global leaderboard
                   </Text>
                 </>
               )}
@@ -128,8 +153,20 @@ export default function Arena() {
           )}
         </Card>
 
-        <LeagueCard />
+        {/* Without the online leaderboard, leagues and PINs cannot work: say so once instead of on every card. */}
+        {!leaderboardConfigured && (
+          <Card padding="lg" style={styles.gap}>
+            <View style={styles.titleRow}>
+              <Icon icon={Trophy} hue="yellow" filled />
+              <Text variant="heading">Leagues and game PINs</Text>
+            </View>
+            <BoardMessage />
+          </Card>
+        )}
 
+        {leaderboardConfigured && <LeagueCard />}
+
+        {leaderboardConfigured && (
         <Card padding="lg" style={styles.gap}>
           <View style={styles.titleRow}>
             <Icon icon={Users} hue="purple" />
@@ -139,8 +176,7 @@ export default function Arena() {
             Host a game and share its 6-digit PIN. Everyone who joins answers the same questions, and the podium fills in as
             each friend finishes.
           </Text>
-          {leaderboardConfigured ? (
-            <>
+          <>
               <Button label={hosting ? 'Starting…' : 'Host a game'} variant="secondary" fullWidth disabled={hosting} onPress={host} />
               {hostError && (
                 <Text variant="callout" hue="red">
@@ -168,9 +204,6 @@ export default function Arena() {
                 <Button label="Join" variant="neutral" labelHue="purple" onPress={join} />
               </View>
             </>
-          ) : (
-            <BoardMessage />
-          )}
           {recentPins.length > 0 && (
             <View>
               <Text variant="label" color="textTertiary" style={styles.recentLabel}>
@@ -182,6 +215,7 @@ export default function Arena() {
             </View>
           )}
         </Card>
+        )}
 
         <View style={styles.grid}>
           <Stat icon={Swords} hue="blue" value={stats.played} label="Matches" />
@@ -199,25 +233,6 @@ export default function Arena() {
           <Earn art={<Icon icon={Flame} hue="orange" filled />} text="Every match counts for your streak and pays XP, like a lesson" />
         </Card>
       </View>
-
-      {naming && (
-        <NameSheet
-          current={naming === 'rename' ? me.data?.name : null}
-          cancelLabel={naming !== 'rename' && naming.then === 'quick' ? 'Practice without a name' : 'Not now'}
-          onCancel={() => {
-            const next = naming;
-            setNaming(null);
-            if (next !== 'rename' && next.then === 'quick') router.push('/match?offline=1');
-          }}
-          onDone={() => {
-            const next = naming;
-            setNaming(null);
-            if (next === 'rename') return;
-            if (next.then === 'quick') router.push('/match');
-            else void host();
-          }}
-        />
-      )}
     </Screen>
   );
 }
@@ -280,7 +295,7 @@ function LeagueCard() {
         <>
           <LeagueLadder current={0} />
           <Text variant="callout" color="textSecondary">
-            Pick a name and play a match to start in Bronze. Each week you race a group of up to 30 players at your level;
+            Roll a name and play a match to start in Bronze. Each week you race a group of up to 30 players at your level;
             the top move up, all the way to Pristine.
           </Text>
         </>

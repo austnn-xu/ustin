@@ -1,20 +1,22 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { AtSign } from 'lucide-react-native';
+import { Dices } from 'lucide-react-native';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { Appear, Button, Card, Input, Text } from '@/components/ui';
+import { Appear, Button, Card, Text } from '@/components/ui';
 import { paintOf } from '@/lib/cosmetics';
 import { haptics } from '@/lib/haptics';
-import { ArenaError, arenaKeys, checkName, deleteMe, NAME, savePlayer, type Player } from '@/lib/leaderboard';
+import { ArenaError, arenaKeys, deleteMe, rollName, savePlayer, type Player } from '@/lib/leaderboard';
 import { useSettings } from '@/stores/settings';
 import { useProgress } from '@/stores/progress';
 import { easing, keyframes, makeStyles, useTheme } from '@/theme';
 import { Avatar } from './Avatar';
 
 /**
- * Pick (or change) the name you show on the global leaderboard. It rises over a dimmed screen. Choosing a name is what
- * signs this device in (anonymously): nothing is posted until you have one, and "Not now" plays against Tin offline.
+ * Roll (or re-roll) the name you show on the global leaderboard. Names are three random family-friendly words, like
+ * "Happy Mossy Otter": nobody types one, so nothing unkind or personal can reach the board. It rises over a dimmed
+ * screen. Keeping a name is what signs this device in (anonymously): nothing is posted until you have one, and
+ * "Not now" plays against Tin offline.
  */
 export function NameSheet({
   current,
@@ -31,11 +33,9 @@ export function NameSheet({
   const styles = useStyles();
   const queryClient = useQueryClient();
   const paint = paintOf(useProgress((s) => s.equipped)) ?? 'green';
-  const [value, setValue] = useState(current ?? '');
-  const [touched, setTouched] = useState(false);
+  const [name, setName] = useState(() => rollName());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { name, problem } = checkName(value);
   const [removing, setRemoving] = useState<'ask' | 'busy' | null>(null);
 
   // Two taps, the second on a red button that says exactly what goes: it cannot be undone.
@@ -61,20 +61,45 @@ export function NameSheet({
     }
   };
 
+  const reroll = () => {
+    if (saving) return;
+    haptics.selection();
+    setName((previous) => {
+      // Never land on the same name twice in a row.
+      for (let i = 0; i < 5; i++) {
+        const next = rollName();
+        if (next !== previous) return next;
+      }
+      return rollName();
+    });
+    setError(null);
+  };
+
   const save = async () => {
-    setTouched(true);
-    if (problem || saving) return;
+    if (saving) return;
     setSaving(true);
     setError(null);
     try {
-      const player = await savePlayer(name, paint);
+      let player: Player | null = null;
+      let chosen = name;
+      // With hundreds of millions of names a clash is rare; if someone has this one, quietly roll another.
+      for (let attempt = 0; attempt < 5 && !player; attempt++) {
+        try {
+          player = await savePlayer(chosen, paint);
+        } catch (e) {
+          if (!(e instanceof ArenaError) || e.kind !== 'taken' || attempt === 4) throw e;
+          chosen = rollName();
+          setName(chosen);
+        }
+      }
+      if (!player) return;
       queryClient.setQueryData(arenaKeys.me, player);
       void queryClient.invalidateQueries({ queryKey: ['arena', 'board'] });
       haptics.success();
       onDone(player);
     } catch (e) {
       haptics.error();
-      setError(e instanceof ArenaError ? e.message : 'Could not save that name.');
+      setError(e instanceof ArenaError ? e.message : 'Could not save that name. Try again.');
     } finally {
       setSaving(false);
     }
@@ -89,34 +114,32 @@ export function NameSheet({
         <Appear style={styles.sheetWrap}>
           <Card variant="floating" padding="lg" style={styles.sheet}>
             <View style={styles.head}>
-              <Avatar name={name || '?'} paint={paint} size="lg" />
+              <Avatar name={name} paint={paint} size="lg" />
               <View style={styles.flex}>
-                <Text variant="title">{current ? 'Change your name' : 'Your leaderboard name'}</Text>
+                <Text variant="title">{current ? 'Roll a new name' : 'Roll your name'}</Text>
                 <Text variant="callout" color="textSecondary">
-                  Everyone sees it on the global leaderboard, so skip your full name. Your avatar is Tin&apos;s paint colour.
+                  Three random words, so nobody has to share their real name. Your avatar is Tin&apos;s paint colour.
                 </Text>
               </View>
             </View>
-            <Input
-              value={value}
-              onChangeText={(v) => {
-                setValue(v);
-                setError(null);
-              }}
-              placeholder="e.g. BinBoss"
-              icon={AtSign}
-              maxLength={NAME.max + 4}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={save}
-              accessibilityLabel="Leaderboard name"
-              error={error ?? (touched && problem ? problem : undefined)}
-              hint={`${NAME.min} to ${NAME.max} characters`}
-            />
+            <View style={styles.rolled} accessibilityLiveRegion="polite">
+              <Text variant="display" align="center" accessibilityLabel={`Your name: ${name}`}>
+                {name}
+              </Text>
+              {current && (
+                <Text variant="callout" color="textSecondary" align="center">
+                  {`Right now you are ${current}`}
+                </Text>
+              )}
+              {error && (
+                <Text variant="callout" hue="red" align="center">
+                  {error}
+                </Text>
+              )}
+            </View>
             <View style={styles.buttons}>
-              <Button label={saving ? 'Saving…' : 'Save name'} fullWidth disabled={saving || (touched && !!problem)} onPress={save} />
+              <Button label={saving ? 'Saving…' : 'Use this name'} fullWidth disabled={saving} onPress={save} />
+              <Button label="Roll again" icon={Dices} variant="secondary" fullWidth disabled={saving} onPress={reroll} />
               <Button label={cancelLabel} variant="ghost" hue="slate" fullWidth onPress={onCancel} />
             </View>
             {current && (
@@ -153,6 +176,7 @@ const useStyles = makeStyles((t) => ({
   sheet: { gap: t.space[4], width: '100%', maxWidth: t.layout.maxWidth, alignSelf: 'center', marginBottom: t.space[4] },
   head: { flexDirection: 'row', alignItems: 'center', gap: t.space[4] },
   flex: { flex: 1 },
+  rolled: { gap: t.space[2], alignItems: 'center', paddingVertical: t.space[2] },
   buttons: { gap: t.space[2] },
   remove: { gap: t.space[2], borderTopWidth: t.layout.border, borderTopColor: t.colors.border, paddingTop: t.space[3] },
 }));

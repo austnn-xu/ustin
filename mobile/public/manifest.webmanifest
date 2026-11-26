@@ -1,0 +1,19 @@
+{
+  "name": "US Tin",
+  "short_name": "US Tin",
+  "description": "Learn where things go, one lesson at a time, and find the nearest drop-off for anything.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#22A447",
+  "icons": [
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

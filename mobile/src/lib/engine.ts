@@ -273,6 +273,16 @@ type LeaguesApi = {
   msUntilWeekEnd: (now?: Date) => number;
 };
 export const leagues: LeaguesApi = require('../../../lib/leagues');
+/** Leaderboard names are rolled from three word lists, never typed (see ../lib/names.js). */
+export const names: {
+  FIRST: string[];
+  MIDDLE: string[];
+  LAST: string[];
+  MAX_LENGTH: number;
+  COMBINATIONS: number;
+  roll: (random?: () => number) => string;
+  isRolled: (name: unknown) => boolean;
+} = require('../../../lib/names');
 /** Links built from map data: only http(s) pages and phone numbers get through. */
 export const safeUrl: { safeWebUrl: (raw: unknown) => string | null; safeTel: (raw: unknown) => string | null } = require('../../../lib/safe-url');
 /* eslint-enable @typescript-eslint/no-require-imports */

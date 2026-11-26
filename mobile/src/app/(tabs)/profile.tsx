@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
-import { BookOpen, Check, Flame, Lock, Map as MapIcon, ScanLine, Zap } from 'lucide-react-native';
+import { BookOpen, Check, Flame, Lock, Map as MapIcon, ScanLine, ShieldCheck, Zap } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Mascot } from '@/components/art/Mascot';
@@ -187,6 +187,7 @@ export default function Profile() {
                 router.navigate('/');
               }}
             />
+            <Button label="Privacy and about" icon={ShieldCheck} variant="neutral" fullWidth onPress={() => router.push('/privacy')} />
             <Button label="Reset progress" variant="ghost" hue="red" fullWidth onPress={() => setConfirmReset(true)} />
           </>
         )}

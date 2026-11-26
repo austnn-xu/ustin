@@ -24,7 +24,7 @@ Three jobs, one app:
 4. **Arena** — friendly competition, Kahoot-inspired: timed 10-question matches from the whole course (`../lib/arena.js`),
    scored for speed and streaks, raced against a real player's run on the same seed or against Tin, game PINs for
    friends, and a global leaderboard on Supabase (`src/lib/leaderboard.ts`, schema in `../supabase`). Every match still
-   teaches: each answer shows the why. Players are drawn as an initial on their Tin's paint colour (`Avatar`), never as
+   teaches: each answer shows the why. Players never type a name: they roll one of three random family-friendly words (`../lib/names.js`, `NameSheet`), and the database refuses anything else. Players are drawn as an initial on their Tin's paint colour (`Avatar`), never as
    Tins, so one Tin per screen still holds. Matches pay coins and XP; winning pays more. Without Supabase configured the
    Arena plays Tin offline and says the leaderboard is not connected; never fake a board. Players climb eight leagues
    (`../lib/leagues.js`): weekly groups of up to 30 from Bronze to Ruby, and Pristine, an RR ladder like Valorant's

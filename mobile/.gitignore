@@ -46,3 +46,4 @@ screenshots/
 # copied from ../public by scripts/web-assets.mjs
 /public/vendor/
 /public/models/
+mobile/shots/

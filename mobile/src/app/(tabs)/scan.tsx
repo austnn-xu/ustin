@@ -51,7 +51,7 @@ export default function WhatBin() {
           <Input
             value={query}
             onChangeText={setQuery}
-            placeholder={`Search ${rules.OBJECTS.length} items: "pizza box", "battery"…`}
+            placeholder={`Search ${rules.OBJECTS.length} items`}
             icon={Search}
             clearable
             returnKeyType="search"

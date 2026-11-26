@@ -89,8 +89,36 @@ const tags = [
   '<meta name="referrer" content="strict-origin-when-cross-origin">',
 ].join('\n    ');
 
+// Page metadata: a real title, installable on a phone's home screen, and a proper link preview when shared.
+const base = (process.env.EXPO_BASE_URL ?? '').replace(/\/$/, '');
+const site = (process.env.SITE_URL ?? 'https://austnn-xu.github.io/ustin').replace(/\/$/, '');
+const TITLE = 'US Tin: learn where things go';
+const DESCRIPTION = 'Learn where everything goes, one short lesson at a time. Look up any item and find the nearest drop-off.';
+const meta = [
+  `<link rel="manifest" href="${base}/manifest.webmanifest">`,
+  `<link rel="apple-touch-icon" href="${base}/apple-touch-icon.png">`,
+  '<meta name="apple-mobile-web-app-capable" content="yes">',
+  '<meta name="mobile-web-app-capable" content="yes">',
+  '<meta name="apple-mobile-web-app-title" content="US Tin">',
+  '<meta property="og:type" content="website">',
+  '<meta property="og:site_name" content="US Tin">',
+  `<meta property="og:title" content="${TITLE}">`,
+  `<meta property="og:description" content="${DESCRIPTION}">`,
+  `<meta property="og:image" content="${site}/apple-touch-icon.png">`,
+  `<meta property="og:url" content="${site}/">`,
+  '<meta name="twitter:card" content="summary">',
+].join('\n    ');
+
 for (const file of files) {
   let html = readFileSync(file, 'utf8');
+  // Idempotent page metadata. viewport-fit=cover lets the app draw under the notch; screens already use safe areas.
+  html = html
+    .replace(/\s*<link rel="manifest"[^>]*>/gi, '')
+    .replace(/\s*<link rel="apple-touch-icon"[^>]*>/gi, '')
+    .replace(/\s*<meta (?:name="(?:apple-mobile-web-app-capable|mobile-web-app-capable|apple-mobile-web-app-title|twitter:card)"|property="og:[^"]*")[^>]*>/gi, '')
+    .replace(/<title>[^<]*<\/title>/i, `<title>${TITLE}</title>`)
+    .replace(/(<meta name="viewport" content="[^"]*?)(,\s*viewport-fit=cover)?"/i, '$1, viewport-fit=cover"')
+    .replace(/(<meta name="description"[^>]*>)/i, `$1\n    ${meta}`);
   const inline = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>/gi)];
   if (inline.length) {
     console.error(`harden-web: ${file} has ${inline.length} inline <script>; the CSP would block it. Move it to a file.`);

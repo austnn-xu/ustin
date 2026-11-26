@@ -10,9 +10,8 @@ WT=$(mktemp -d)
 rm -rf dist
 node scripts/web-assets.mjs
 EXPO_OFFLINE=1 EXPO_BASE_URL=/ustin npx expo export --platform web
-sed -i 's#<title>US Tin</title>#<title>US Tin — learn where things go</title>#' dist/index.html
 cp dist/index.html dist/404.html   # SPA fallback so deep links survive a refresh
-node scripts/harden-web.mjs dist   # Content-Security-Policy + referrer policy (see SECURITY.md)
+EXPO_BASE_URL=/ustin node scripts/harden-web.mjs dist   # Content-Security-Policy + referrer policy (see SECURITY.md)
 touch dist/.nojekyll               # Pages' Jekyll would drop the _expo/ folder
 
 git -C "$REPO_ROOT" fetch -q origin gh-pages

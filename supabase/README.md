@@ -27,7 +27,7 @@ one, the app still plays Arena matches against Tin and says the leaderboard is n
 
 | Table | Holds |
 |---|---|
-| `players` | One row per anonymous account: leaderboard name (unique, 2–16 characters) and Tin's paint colour for the avatar |
+| `players` | One row per anonymous account: leaderboard name (unique; a rolled name of three words, see below) and Tin's paint colour for the avatar |
 | `match_runs` | Every finished match: seed, points per question, score, rival, result, and the leaderboard points it earned |
 | `rooms` | Game PINs: six digits → a seed, for a week |
 
@@ -37,7 +37,7 @@ these functions:
 | Function | Who | Does |
 |---|---|---|
 | `leaderboard(period, limit)` | anyone | The top players this week (from Monday 00:00 UTC) or all time, plus your own row |
-| `set_player(name, paint)` / `me()` | signed in | Pick or change your name; read it back |
+| `set_player(name, paint)` / `me()` | signed in | Set or change your name (it must be a rolled name); read it back |
 | `find_opponent()` | signed in | A random recent run by someone else, to race on the same questions |
 | `submit_run(seed, points, …)` | signed in | Re-scores a finished match and records it (see below) |
 | `create_room()` / `join_room(code)` / `room_board(code)` | signed in / anyone | Game PINs and their podiums |
@@ -50,7 +50,7 @@ their league; weeks are settled lazily, on each player's first action of a later
 Pristine is an RR ladder updated inside `submit_run`. Every total is capped at 9 quadrillion (`points_cap()`). The rules
 mirror `lib/leagues.js` and `lib/numbers.js`; `test/leagues.test.js` keeps them identical.
 
-Names that impersonate the app, Tin or staff are refused, a name can change once an hour, and every function has a
+Names are rolled, not typed: the `name_words` table holds the three word lists (generated from `lib/names.js` by `node supabase/gen-names-migration.js`) and `set_player` refuses any new name that is not one word from each. Names that impersonate the app, Tin or staff are refused, a name can change once an hour, and every function has a
 statement timeout. The full picture is in [`SECURITY.md`](../SECURITY.md).
 
 ## How much it trusts a submitted match
