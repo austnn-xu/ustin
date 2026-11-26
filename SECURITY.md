@@ -16,7 +16,7 @@ not in a public issue. Include what you found, how to reproduce it, and what it 
 | Settings: theme, daily goal, saved ZIP or approximate location, recent game PINs | On the device | Same validation. Location is only ever sent to OpenStreetMap services, never to the leaderboard. |
 | Leaderboard session (anonymous) | **iOS/Android:** the OS Keychain / Keystore via expo-secure-store, device-only (not in backups). **Web:** localStorage | The only secret the app holds. See "The web build" for why the browser copy is protected by policy rather than encryption. |
 | Cached answers (nearby places, leaderboards) | On the device, kept up to 24 h | An allowlist of public data only (`mobile/src/lib/queryCache.ts`). The player's identity, PIN lookups and errors are never cached. Restored copies are validated before they are drawn. Reset progress clears it. |
-| Leaderboard: name, Tin's paint colour, match scores, game PINs | Supabase (Postgres) | Row level security on, no direct table access; every read and write goes through a database function that checks it. |
+| Leaderboard: name, Tin's paint colour and outfit (hat, glasses, neckwear), match scores, game PINs | Supabase (Postgres) | Row level security on, no direct table access; every read and write goes through a database function that checks it. |
 
 ## The leaderboard
 

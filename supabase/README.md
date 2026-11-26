@@ -38,6 +38,8 @@ these functions:
 |---|---|---|
 | `leaderboard(period, limit)` | anyone | The top players this week (from Monday 00:00 UTC) or all time, plus your own row |
 | `set_player(name, paint)` / `me()` | signed in | Set or change your name (it must be a rolled name); read it back |
+| `set_outfit(outfit)` | signed in | Save the hat, glasses and neckwear Tin wears (well-formed ids only; anything else is dropped) |
+| `player_outfits(names)` | anyone | The outfits of up to 100 named players, so boards and matches can draw each player's own Tin |
 | `find_opponent()` | signed in | A random recent run by someone else, to race on the same questions |
 | `submit_run(seed, points, …)` | signed in | Re-scores a finished match and records it (see below) |
 | `create_room()` / `join_room(code)` / `room_board(code)` | signed in / anyone | Game PINs and their podiums |

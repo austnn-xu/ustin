@@ -12,7 +12,7 @@ export type Mood = 'happy' | 'cheer' | 'worried' | 'sad' | 'thinking' | 'sleepy'
 
 export type MascotProps = {
   mood?: Mood;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /** Color of Tin's label band, unless the outfit paints it. */
   hue?: HueName;
   /** What Tin wears. Omit to wear the outfit the user has equipped; pass null for bare Tin. */

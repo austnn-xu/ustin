@@ -1,10 +1,13 @@
 import './urlPolyfill';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 import type { HueName } from '@/theme';
+import { cleanOutfit, type Outfit } from './cosmetics';
 import { leagues, names, numbers } from './engine';
 import { secureStorage } from './secureStorage';
+import { useProgress } from '@/stores/progress';
 
 /**
  * The Arena's online half: the global leaderboard, rivals to race and game PINs, on Supabase.
@@ -159,7 +162,79 @@ export async function deleteMe(): Promise<void> {
 export async function savePlayer(name: string, paint: HueName): Promise<Player> {
   await ensureSession();
   const rows = await rpc<Player[]>('set_player', { p_name: name, p_paint: paint });
+  // Start out on the board wearing what Tin is wearing now (best effort: the name is what matters).
+  void saveOutfit(useProgress.getState().equipped).catch(() => {});
   return rows[0]!;
+}
+
+// ---------------------------------------------------------------------------
+// Outfits: players are drawn as their own Tin
+// ---------------------------------------------------------------------------
+
+/** Tell the leaderboard what Tin is wearing (hat, glasses, neckwear), so everyone sees the same Tin on a board. */
+export async function saveOutfit(outfit: Outfit): Promise<void> {
+  if (!(await hasSession())) return;
+  const { hat, eyes, neck } = outfit;
+  await rpc('set_outfit', { p_outfit: { ...(hat && { hat }), ...(eyes && { eyes }), ...(neck && { neck }) } });
+}
+
+type Waiter = { resolve: (outfit: Outfit) => void; reject: (error: unknown) => void };
+const outfitQueue = new Map<string, Waiter[]>();
+let outfitFlush: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * A board draws a dozen players at once. Each avatar asks for its own outfit, and the asks made within a few
+ * milliseconds of each other go to the server as one call.
+ */
+function loadOutfit(name: string): Promise<Outfit> {
+  return new Promise((resolve, reject) => {
+    const key = name.toLowerCase();
+    outfitQueue.set(key, [...(outfitQueue.get(key) ?? []), { resolve, reject }]);
+    if (!outfitFlush) outfitFlush = setTimeout(flushOutfits, 40);
+  });
+}
+
+async function flushOutfits() {
+  outfitFlush = null;
+  const batch = [...outfitQueue.entries()].slice(0, 100);
+  for (const [key] of batch) outfitQueue.delete(key);
+  try {
+    const rows = await rpc<{ name: string; outfit: unknown }[]>('player_outfits', { p_names: batch.map(([key]) => key) });
+    const found = new Map((Array.isArray(rows) ? rows : []).map((r) => [String(r.name).toLowerCase(), cleanOutfit(r.outfit)]));
+    for (const [key, waiters] of batch) waiters.forEach((w) => w.resolve(found.get(key) ?? {}));
+  } catch (e) {
+    for (const [, waiters] of batch) waiters.forEach((w) => w.reject(e));
+  }
+  // More than a hundred names at once: the rest go in the next call.
+  if (outfitQueue.size && !outfitFlush) outfitFlush = setTimeout(flushOutfits, 0);
+}
+
+/** What the player with this name is wearing (only for rolled names; nothing is asked without the leaderboard). */
+export function usePlayerOutfit(name: string, enabled = true) {
+  return useQuery({
+    queryKey: ['arena', 'outfit', name.toLowerCase()],
+    queryFn: () => loadOutfit(name),
+    enabled: leaderboardConfigured && enabled && names.isRolled(name),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+}
+
+/**
+ * Keep my outfit on the leaderboard in step with the shop: whenever what Tin wears changes (and once on open) while I
+ * have a name, save it. Mount it on the Arena screens.
+ */
+export function useOutfitSync(named: boolean) {
+  const equipped = useProgress((s) => s.equipped);
+  const key = JSON.stringify([equipped.hat ?? null, equipped.eyes ?? null, equipped.neck ?? null]);
+  const lastSaved = useRef<string | null>(null);
+  useEffect(() => {
+    if (!leaderboardConfigured || !named || lastSaved.current === key) return;
+    lastSaved.current = key;
+    saveOutfit(equipped).catch(() => {
+      lastSaved.current = null; // try again next time
+    });
+  }, [named, key]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 // ---------------------------------------------------------------------------

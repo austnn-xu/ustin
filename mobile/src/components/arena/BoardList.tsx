@@ -114,7 +114,7 @@ function Row({ entry: e, unit }: { entry: BoardEntry; unit: string }) {
           </Text>
         )}
       </View>
-      <Avatar name={e.name} paint={e.paint} size="sm" />
+      <Avatar name={e.name} paint={e.paint} size="sm" own={e.isMe} />
       <View style={styles.flex}>
         <View style={styles.nameRow}>
           {e.league !== undefined && <LeagueBadge league={LEAGUE_IDS[e.league] ?? 'bronze'} size={t.layout.icon.md} />}

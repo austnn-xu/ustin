@@ -183,3 +183,26 @@ reset role;
 set role anon; select set_config('request.jwt.claim.sub', '', false);
 select count(*) <= 25 as top25, bool_and(league between 0 and 7) as leagues from leaderboard('all');
 reset role;
+
+\echo == outfits: only well-formed hat / glasses / neckwear ids are kept
+reset role;
+set role authenticated; select set_config('request.jwt.claim.sub', :'A', false);
+select set_outfit('{"hat":"hat-cap","eyes":"eyes-shades","neck":"neck-bowtie","paint":"paint-red","evil":"x","extra":{"a":1}}');
+select set_outfit('{"hat":"HAT-cap","eyes":"hat-cap","neck":"<script>"}');
+select set_outfit('"not an object"');
+select set_outfit(null);
+select set_outfit('{"hat":"hat-propeller"}');
+\echo == outfits: anyone can look up the outfits for names on screen (case-insensitive)
+reset role; set role anon;
+select * from player_outfits(array['happy mossy otter', 'No Such Player']);
+select * from player_outfits(null);
+\echo == outfits: anon cannot save one
+select set_outfit('{"hat":"hat-cap"}');
+reset role;
+\echo == outfits: direct table writes are still closed
+set role authenticated; select set_config('request.jwt.claim.sub', :'A', false);
+update players set outfit = '{"hat":"hat-cap"}';
+reset role;
+\echo == outfits: the constraint refuses a bad outfit even as the owner
+update players set outfit = '{"hat":"nonsense!"}' where id = :'A';
+

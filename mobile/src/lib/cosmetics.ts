@@ -61,6 +61,20 @@ export const DEFAULT_OWNED = ['paint-green'];
 
 export const findCosmetic = (id: string | undefined) => (id ? COSMETICS.find((c) => c.id === id) ?? null : null);
 
+/**
+ * Someone else's outfit, as it arrived from the leaderboard: only a hat, glasses and neckwear that really exist in the
+ * shop, each in its own slot. (Paint is stored separately and drawn from the player's colour.) Anything else is dropped.
+ */
+export function cleanOutfit(raw: unknown): Outfit {
+  const out: Outfit = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const slot of ['hat', 'eyes', 'neck'] as const) {
+    const id = (raw as Record<string, unknown>)[slot];
+    if (typeof id === 'string' && findCosmetic(id)?.slot === slot) out[slot] = id;
+  }
+  return out;
+}
+
 /** The band hue an outfit paints Tin with, if any. */
 export const paintOf = (outfit: Outfit | null | undefined): HueName | undefined => findCosmetic(outfit?.paint)?.hue;
 
