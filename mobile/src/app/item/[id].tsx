@@ -221,6 +221,10 @@ function Verdict({ object, answers, record, header, onRedo }: VerdictProps) {
           </Text>
         )}
 
+        <Text variant="caption" color="textTertiary">
+          General US guidance. Rules differ by town and hauler, so if your local program says otherwise, follow it.
+        </Text>
+
         {onRedo && <Button label="Change my answers" variant="ghost" fullWidth onPress={onRedo} />}
         <Button label="Sort another item" variant="ghost" fullWidth onPress={() => router.replace('/scan')} />
       </View>

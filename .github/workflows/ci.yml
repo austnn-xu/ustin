@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    branches: [main, claude/trash-disposal-mvp-xjiyw5]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - name: Knowledge base tests
+        run: npm test
+      - name: Install app dependencies
+        working-directory: mobile
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        working-directory: mobile
+        run: npm run typecheck
+      - name: Design tokens
+        working-directory: mobile
+        run: npm run check:tokens
+      - name: Export the web build
+        working-directory: mobile
+        run: npm run export:web
+      - name: Build is hardened
+        working-directory: mobile
+        run: grep -q "Content-Security-Policy" dist/index.html

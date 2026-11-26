@@ -128,8 +128,20 @@ export default function Arena() {
           )}
         </Card>
 
-        <LeagueCard />
+        {/* Without the online leaderboard, leagues and PINs cannot work: say so once instead of on every card. */}
+        {!leaderboardConfigured && (
+          <Card padding="lg" style={styles.gap}>
+            <View style={styles.titleRow}>
+              <Icon icon={Trophy} hue="yellow" filled />
+              <Text variant="heading">Leagues and game PINs</Text>
+            </View>
+            <BoardMessage />
+          </Card>
+        )}
 
+        {leaderboardConfigured && <LeagueCard />}
+
+        {leaderboardConfigured && (
         <Card padding="lg" style={styles.gap}>
           <View style={styles.titleRow}>
             <Icon icon={Users} hue="purple" />
@@ -139,8 +151,7 @@ export default function Arena() {
             Host a game and share its 6-digit PIN. Everyone who joins answers the same questions, and the podium fills in as
             each friend finishes.
           </Text>
-          {leaderboardConfigured ? (
-            <>
+          <>
               <Button label={hosting ? 'Starting…' : 'Host a game'} variant="secondary" fullWidth disabled={hosting} onPress={host} />
               {hostError && (
                 <Text variant="callout" hue="red">
@@ -168,9 +179,6 @@ export default function Arena() {
                 <Button label="Join" variant="neutral" labelHue="purple" onPress={join} />
               </View>
             </>
-          ) : (
-            <BoardMessage />
-          )}
           {recentPins.length > 0 && (
             <View>
               <Text variant="label" color="textTertiary" style={styles.recentLabel}>
@@ -182,6 +190,7 @@ export default function Arena() {
             </View>
           )}
         </Card>
+        )}
 
         <View style={styles.grid}>
           <Stat icon={Swords} hue="blue" value={stats.played} label="Matches" />

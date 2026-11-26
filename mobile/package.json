@@ -54,7 +54,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "check:tokens": "node scripts/check-tokens.mjs",
-    "export:web": "node scripts/web-assets.mjs && EXPO_OFFLINE=1 EXPO_BASE_URL=/ustin expo export --platform web && node scripts/harden-web.mjs dist",
+    "export:web": "node scripts/web-assets.mjs && EXPO_OFFLINE=1 EXPO_BASE_URL=/ustin expo export --platform web && EXPO_BASE_URL=/ustin node scripts/harden-web.mjs dist",
     "publish:web": "./scripts/publish-web.sh"
   },
   "private": true

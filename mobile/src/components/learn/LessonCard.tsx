@@ -17,12 +17,11 @@ export function LessonCard({ unit, lesson, index, state }: { unit: Unit; lesson:
   const names = lesson.objects.map((id) => rules.findObject(id)?.label).filter(Boolean) as string[];
   const shown = lesson.summary ?? (lesson.review ? `Everything in ${unit.title}: ${names.length} items` : names.join(' · '));
   const xp = lesson.review ? XP.review : XP.lesson;
-  const regular = unit.lessons.filter((l) => !l.review).length;
 
   return (
     <View style={[styles.card, locked ? styles.lockedCard : { backgroundColor: hue.base, borderBottomColor: hue.depth }]}>
       <Text variant="heading" style={!locked && styles.onColor} color="textSecondary">
-        {lesson.review ? 'Sorting center: unit review' : `Stop ${index + 1} of ${regular}`}
+        {lesson.review ? 'Sorting center: unit review' : `Stop ${index + 1} of ${unit.lessons.length}`}
       </Text>
       <Text variant="callout" style={!locked && styles.onColor} color="textTertiary" numberOfLines={3}>
         {locked ? 'Finish the stops before this one to unlock it.' : shown}
