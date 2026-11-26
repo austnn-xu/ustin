@@ -11,11 +11,17 @@ select * from players;
 insert into match_runs (player_id, seed, points, score, correct, outcome, earned) values (:'A','x','{}',0,0,'solo',99999);
 \echo == submit before a name
 select * from submit_run('abc', array[0,0,0,0,0,0,0,0,0,0]);
-\echo == bad names
+\echo == bad names: a typed name, a malformed one, or one that is not three listed words is refused
 select * from set_player('x');
 select * from set_player('<script>');
-select * from set_player('   Alice   Smith  ', 'blue');
-select * from set_player('Alice', 'blue');
+select * from set_player('Alice');
+select * from set_player('Alice Smith');
+select * from set_player('happy mossy otter');
+select * from set_player('Happy Otter');
+select * from set_player('Happy Mossy Otter Extra');
+select * from set_player('Otter Mossy Happy');
+\echo == a rolled name (extra spaces are tidied first)
+select * from set_player('   Happy   Mossy  Otter  ', 'blue');
 select * from me();
 \echo == impossible runs
 select * from submit_run('abc', array[1500,0,0,0,0,0,0,0,0,0]);
@@ -30,8 +36,9 @@ reset role;
 update match_runs set created_at = created_at - interval '1 minute';
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'B', false);
-select * from set_player('alice');
-select * from set_player('Bob', 'red');
+\echo == the same rolled name is taken
+select * from set_player('Happy Mossy Otter');
+select * from set_player('Brave Frosty Fox', 'red');
 \echo == B finds A as opponent and beats them (+1000)
 select name, score, seed from find_opponent();
 select * from submit_run('abc', array[1000,1100,1200,1300,1400,1500,1500,1500,1500,1500], p_rival_run => (select run_id from find_opponent()));
@@ -67,7 +74,7 @@ select * from find_opponent();
 reset role;
 \echo == C: own row outside top 1
 set role authenticated; select set_config('request.jwt.claim.sub', :'C', false);
-select * from set_player('Cara');
+select * from set_player('Calm Golden Heron');
 select * from submit_run('abc', array[0,0,0,0,0,0,0,0,0,500], p_tin_score => 9000);
 select * from leaderboard('all', 1);
 
@@ -79,14 +86,14 @@ select * from set_player('U.S. Tin');
 select * from set_player('ADMIN');
 select * from set_player('tin');
 \echo == hardening: one rename, then a second within the hour is refused
-select * from set_player('Cara B');
-select * from set_player('Cara C');
+select * from set_player('Cheery Silver Finch');
+select * from set_player('Bold Copper Lark');
 \echo == hardening: changing only the paint is always fine
-select * from set_player('Cara B', 'purple');
+select * from set_player('Cheery Silver Finch', 'purple');
 \echo == hardening: delete_me removes the player, their runs and their account
 select * from delete_me();
 reset role;
-select (select count(*) from players where name like 'Cara%') as players_left,
+select (select count(*) from players where name in ('Calm Golden Heron', 'Cheery Silver Finch')) as players_left,
        (select count(*) from match_runs where player_id = :'C') as runs_left,
        (select count(*) from auth.users where id = :'C') as account_left;
 \echo == hardening: anon cannot delete anyone
@@ -106,13 +113,13 @@ update match_runs set created_at = created_at - interval '1 minute';
 \echo == leagues: everyone starts in Bronze (0); a first match this week joins a group
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'D', false);
-select * from set_player('Dana');
+select * from set_player('Eager Sandy Koala');
 select outcome, league, rr, rr_change, league_points from submit_run('lg1', array[1000,0,0,0,0,0,0,0,0,0], p_tin_score => 0);
 select league, rank, size, points, matches from my_league();
 select * from league_board();
 reset role; update match_runs set created_at = created_at - interval '1 minute'; set role authenticated;
 select set_config('request.jwt.claim.sub', :'E', false);
-select * from set_player('Eli');
+select * from set_player('Gentle Olive Lynx');
 select league_points from submit_run('lg2', array[900,0,0,0,0,0,0,0,0,0]);
 select rank, name, points from league_board();
 

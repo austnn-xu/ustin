@@ -87,7 +87,7 @@ function LeagueView({ me, loading, error, onRetry }: { me: MyLeague | null | und
           Leagues start with a name
         </Text>
         <Text variant="callout" hue="blue">
-          Pick a leaderboard name in the Arena and play a match: you start in Bronze, in a group of players at your level.
+          Roll a leaderboard name in the Arena and play a match: you start in Bronze, in a group of players at your level.
         </Text>
         <Button label="Go to the Arena" variant="secondary" onPress={() => router.replace('/arena')} />
       </Card>

@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 import type { HueName } from '@/theme';
-import { leagues, numbers } from './engine';
+import { leagues, names, numbers } from './engine';
 import { secureStorage } from './secureStorage';
 
 /**
@@ -60,7 +60,7 @@ function toArenaError(error: { code?: string; message?: string } | null | undefi
   if (code === '23505' && /name/i.test(message)) return new ArenaError('taken', 'Someone already has that name. Try another.');
   if (code === '23505') return new ArenaError('played', 'You already played this game.');
   if (code === '23514' && /reserved/i.test(message)) return new ArenaError('invalid', 'That name is reserved. Try another.');
-  if (code === '23514') return new ArenaError('invalid', 'Names are 2 to 16 letters, numbers, spaces, dots, dashes or underscores.');
+  if (code === '22023' || code === '23514') return new ArenaError('invalid', 'That name did not work. Roll another.');
   if (code === 'P0002' && /PIN/i.test(message)) return new ArenaError('ended', 'That game PIN has ended or does not exist.');
   if (code === '53400') return new ArenaError('slow', message || 'Slow down a little and try again.');
   if (!code || /fetch|network|timed? ?out/i.test(message)) {
@@ -99,16 +99,8 @@ async function hasSession() {
 // Names
 // ---------------------------------------------------------------------------
 
-export const NAME = { min: 2, max: 16, shape: /^[A-Za-z0-9][A-Za-z0-9 _.-]*$/ } as const;
-
-/** Tidy a name the way the server will (trim, single spaces) and say what is wrong with it, if anything. */
-export function checkName(raw: string): { name: string; problem: string | null } {
-  const name = raw.replace(/\s+/g, ' ').trim();
-  if (name.length < NAME.min) return { name, problem: `At least ${NAME.min} characters` };
-  if (name.length > NAME.max) return { name, problem: `At most ${NAME.max} characters` };
-  if (!NAME.shape.test(name)) return { name, problem: 'Letters, numbers, spaces, dots, dashes or underscores' };
-  return { name, problem: null };
-}
+/** A new name: three words, one from each list, e.g. "Happy Mossy Otter". Players roll one; they never type it. */
+export const rollName = (): string => names.roll();
 
 export type Player = { name: string; paint: HueName };
 

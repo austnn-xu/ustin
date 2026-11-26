@@ -26,7 +26,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: 'The leaderboard',
     body: [
-      'When the online Arena is available and you pick a name, that name, your Tin’s paint colour, your match scores and any game PINs you host are stored with an anonymous account so others can see the board. No email or real name is needed, so please do not use one.',
+      'When the online Arena is available you roll a name: three random, family-friendly words like Happy Mossy Otter. That name, your Tin’s paint colour, your match scores and any game PINs you host are stored with an anonymous account so others can see the board. You never type a name, and no email or real name is needed.',
       'To delete all of it, go to Arena, tap your name, then Remove me from the leaderboard. Your matches, PINs and the anonymous account are erased.',
     ],
   },

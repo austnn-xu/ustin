@@ -41,7 +41,7 @@ Simulator games (Roblox's especially) break when they get popular: totals grow u
 2. **Short suffixes**, rounded down: 9,999 → 12.3K → 4.56M → 7.8B → 1.2T → 9Qa, on every counter and board.
 3. **Resets.** The numbers people actually race on stay small: league points reset every week, and Pristine RR moves by tens. Only the all-time total keeps growing.
 
-The **leagues and leaderboard** run on Supabase (`supabase/`): players sign in anonymously by picking a name, and every match is submitted through a database function that re-checks it against the same scoring rules before it counts. Setup is in [`supabase/README.md`](supabase/README.md); without it, the Arena still plays against Tin and says plainly that the leaderboard is not connected.
+The **leagues and leaderboard** run on Supabase (`supabase/`): players sign in anonymously by rolling a name (three random family-friendly words, like *Happy Mossy Otter*; nobody types one), and every match is submitted through a database function that re-checks it against the same scoring rules before it counts. Setup is in [`supabase/README.md`](supabase/README.md); without it, the Arena still plays against Tin and says plainly that the leaderboard is not connected.
 
 **Food & methane** is the one topic unit (`lib/topics.js`), right after *Food scraps*: short hand-written cards on *why* food scraps go where they do. Food is the most common material in US landfills, where it rots without oxygen and gives off methane. Composting done right (damp, airy, turned) barely does, and not wasting food beats both. Every number on a card names its source (EPA, USDA, IPCC), shown under the answer, and a test refuses a statistic without one. It also covers the myth that composting is worse for methane than the trash, and the true part behind it: a soggy, packed-down pile can go airless and make methane, which is why you turn it and add dry browns.
 
@@ -194,6 +194,7 @@ lib/topics.js              Topic units: sourced, hand-written cards (Food & meth
 lib/arena.js               Arena matches: seeded question sets, timed scoring, rewards, Tin's run
 lib/leagues.js             Leagues: weekly groups, promotion and demotion, Pristine RR
 lib/numbers.js             The 9-quadrillion ceiling and K/M/B/T/Qa formatting
+lib/names.js               The three word lists leaderboard names are rolled from (500+ words each)
 supabase/                  The global leaderboard: schema + functions, setup guide, SQL tests
 lib/recognizer.js          ILSVRC classes + material head -> catalog objects
 lib/imagenet-labels.js     The 1000 class names (generated)

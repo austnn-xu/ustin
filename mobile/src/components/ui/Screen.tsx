@@ -21,6 +21,8 @@ export type ScreenProps = {
   refreshControl?: React.ReactElement<RefreshControlProps>;
   /** Paint the whole screen, safe areas included, with this color instead of `bg` (scene screens). Pass a token. */
   background?: string;
+  /** Drawn over the whole screen (a sheet over a dimmed screen), outside the scroll area so it never scrolls away. */
+  overlay?: ReactNode;
   /** Let the body run edge to edge on wide screens instead of the readable column (scene screens lay out their own). */
   wide?: boolean;
 };
@@ -38,6 +40,7 @@ export function Screen({
   refreshControl,
   background,
   wide = false,
+  overlay,
 }: ScreenProps) {
   const t = useTheme();
   const styles = useStyles();
@@ -83,6 +86,7 @@ export function Screen({
       ) : (
         body
       )}
+      {overlay}
     </SafeAreaView>
   );
 }

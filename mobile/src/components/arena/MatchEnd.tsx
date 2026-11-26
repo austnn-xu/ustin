@@ -210,7 +210,7 @@ function PostCard({
         <Icon icon={CloudOff} hue="slate" shade="text" />
         <Text variant="callout" hue="slate" style={styles.flex}>
           {leaderboardConfigured
-            ? 'Practice match: not posted to the leaderboard. Pick a name in the Arena to compete.'
+            ? 'Practice match: not posted to the leaderboard. Roll a name in the Arena to compete.'
             : 'The global leaderboard is not connected in this version, so this match stays on your phone.'}
         </Text>
       </Card>
