@@ -2,9 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>US Tin — learn where things go</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' data: blob: https://api.zippopotam.us https://nominatim.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://overpass.private.coffee https://storage.googleapis.com; frame-src https://www.openstreetmap.org; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+    <title>US Tin: learn where things go</title>
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
       /* These styles make the body full-height */
@@ -25,6 +27,18 @@
     </style>
   <meta name="theme-color" content="#22A447">
 <meta name="description" content="Learn where things go, one lesson at a time — and find the nearest drop-off for anything.">
+    <link rel="manifest" href="/ustin/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/ustin/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="US Tin">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="US Tin">
+    <meta property="og:title" content="US Tin: learn where things go">
+    <meta property="og:description" content="Learn where everything goes, one short lesson at a time. Look up any item and find the nearest drop-off.">
+    <meta property="og:image" content="https://austnn-xu.github.io/ustin/apple-touch-icon.png">
+    <meta property="og:url" content="https://austnn-xu.github.io/ustin/">
+    <meta name="twitter:card" content="summary">
 <link rel="icon" href="/ustin/favicon.ico"/></head>
 
   <body>
@@ -34,6 +48,6 @@
     </noscript>
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
-  <script src="/ustin/_expo/static/js/web/entry-d88ebde6fcff17e0f9a8fb8c7a6bd8f2.js" defer></script>
+  <script src="/ustin/_expo/static/js/web/entry-13f283f855d70e3c5d940f9687746644.js" defer></script>
 </body>
 </html>
