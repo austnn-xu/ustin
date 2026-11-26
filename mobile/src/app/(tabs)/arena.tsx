@@ -17,6 +17,7 @@ import {
   createRoom,
   formatPin,
   leaderboardConfigured,
+  useOutfitSync,
   useLeagueBoard,
   useMe,
   useMyLeague,
@@ -47,6 +48,8 @@ export default function Arena() {
   const { MATCH, REWARDS } = arena;
 
   const named = !!me.data;
+  // Keep what Tin is wearing on the leaderboard in step with the shop, so everyone sees the same Tin.
+  useOutfitSync(named);
   // Ask for a name only once we know there is none; while it loads, the match screen sorts it out.
   const needsName = leaderboardConfigured && me.isSuccess && !me.data;
 
@@ -133,7 +136,7 @@ export default function Arena() {
             >
               {named ? (
                 <>
-                  <Avatar name={me.data!.name} paint={me.data!.paint} size="sm" />
+                  <Avatar name={me.data!.name} paint={me.data!.paint} size="sm" own />
                   <Text variant="callout" color="textSecondary" style={styles.flex} numberOfLines={1}>
                     {`Playing as ${me.data!.name}`}
                   </Text>

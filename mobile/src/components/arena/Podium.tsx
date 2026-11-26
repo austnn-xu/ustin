@@ -31,7 +31,7 @@ export function Podium({ entries }: { entries: PodiumEntry[] }) {
         e ? (
           <Appear key={e.key} index={arrive[i]} style={styles.col}>
             {(e.rank ?? places[i]) === 1 && <Icon icon={Crown} hue="yellow" filled size="lg" />}
-            <Avatar name={e.name} paint={e.paint} size={places[i] === 1 ? 'lg' : 'md'} />
+            <Avatar name={e.name} paint={e.paint} size={places[i] === 1 ? 'xl' : 'md'} own={e.isMe} />
             <Text variant="bodyStrong" numberOfLines={1} align="center" hue={e.isMe ? 'blue' : undefined}>
               {e.isMe ? 'You' : e.name}
             </Text>

@@ -114,7 +114,7 @@ export function NameSheet({
         <Appear style={styles.sheetWrap}>
           <Card variant="floating" padding="lg" style={styles.sheet}>
             <View style={styles.head}>
-              <Avatar name={name} paint={paint} size="lg" />
+              <Avatar name={name} paint={paint} size="lg" own />
               <View style={styles.flex}>
                 <Text variant="title">{current ? 'Roll a new name' : 'Roll your name'}</Text>
                 <Text variant="callout" color="textSecondary">

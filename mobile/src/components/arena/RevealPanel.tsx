@@ -100,7 +100,7 @@ export function RevealPanel({ result, title, answer, explain, points, streakBonu
         <View style={styles.standings} accessibilityLabel="Standings">
           {standings.map((s) => (
             <View key={s.name + s.isMe} style={styles.standing}>
-              <Avatar name={s.name} paint={s.paint} size="sm" />
+              <Avatar name={s.name} paint={s.paint} size="sm" own={s.isMe} />
               <View style={styles.flex}>
                 <Text variant="bodyStrong" numberOfLines={1}>
                   {s.isMe ? 'You' : s.name}

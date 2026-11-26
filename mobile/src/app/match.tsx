@@ -238,7 +238,7 @@ function Intro({ setup, onStart, onLeave }: { setup: Setup; onStart: () => void;
         <View style={styles.column}>
           <Appear from="pop" style={styles.versus}>
             <View style={styles.fighter}>
-              <Avatar name={setup.me?.name ?? 'You'} paint={setup.me?.paint ?? myPaint} size="lg" />
+              <Avatar name={setup.me?.name ?? 'You'} paint={setup.me?.paint ?? myPaint} size="xl" own />
               <Text variant="heading" numberOfLines={1}>
                 You
               </Text>
@@ -250,9 +250,9 @@ function Intro({ setup, onStart, onLeave }: { setup: Setup; onStart: () => void;
               {rival.kind === 'tin' ? (
                 <Mascot mood="wow" size="sm" />
               ) : rival.kind === 'player' ? (
-                <Avatar name={rival.name} paint={rival.paint} size="lg" />
+                <Avatar name={rival.name} paint={rival.paint} size="xl" />
               ) : (
-                <Avatar name="#" paint="purple" size="lg" />
+                <Avatar name="#" paint="purple" size="xl" />
               )}
               <Text variant="heading" numberOfLines={1}>
                 {rivalName(rival)}
