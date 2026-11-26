@@ -27,7 +27,7 @@ export default function Guidebook() {
       <Screen>
         <View style={styles.missing}>
           <MascotSays mood="thinking" layout="above" size="lg">
-            That guidebook does not exist.
+            I can't find that guidebook.
           </MascotSays>
           <Button label="Back to the path" onPress={() => router.replace('/')} />
         </View>
@@ -81,8 +81,8 @@ export default function Guidebook() {
 
         <MascotSays mood="happy" size="sm">
           {unit.guide
-            ? `Here is the whole idea in ${unit.guide.length} points. The lessons ask about each one.`
-            : `Here is everything on the ${unit.shelf.toLowerCase()} shelf. Tap any item to see every part and why.`}
+            ? `The whole idea, in ${unit.guide.length} points.`
+            : `Everything on this shelf. Tap one for the details.`}
         </MascotSays>
 
         {unit.guide?.map((point, i) => (

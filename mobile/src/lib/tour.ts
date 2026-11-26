@@ -6,7 +6,6 @@ import {
   Flame,
   ListChecks,
   MapPin,
-  Navigation,
   Search,
   Settings2,
   Shirt,
@@ -19,7 +18,6 @@ import {
 import type { Mood } from '@/components/art/Mascot';
 import type { HueName } from '@/theme';
 import { arena, rules } from './engine';
-import { COINS } from './cosmetics';
 import { visionSupported } from './vision';
 
 export type TourStep = {
@@ -42,27 +40,8 @@ export const TOURS: Record<TourId, { title: string; steps: TourStep[] }> = {
   index: {
     title: 'Your route',
     steps: [
-      {
-        icon: Star,
-        hue: 'green',
-        title: 'Each bin is a lesson',
-        body: 'Tap the bin with the Start tag, then Start. Every lesson takes about five minutes.',
-        mood: 'happy',
-      },
-      {
-        icon: CircleCheck,
-        hue: 'blue',
-        title: 'Finish a stop, drive on',
-        body: 'Done stops get stars and the truck moves to the next one. A sorting centre at the end of each neighbourhood reviews everything in it.',
-        mood: 'cheer',
-      },
-      {
-        icon: Flame,
-        hue: 'orange',
-        title: 'Keep the streak burning',
-        body: 'Your streak, coins and XP sit at the top. One lesson or one lookup a day keeps the streak going.',
-        mood: 'wow',
-      },
+      { icon: Star, hue: 'green', title: 'Each bin is a lesson', body: 'Tap the next bin to start. Five minutes each.', mood: 'happy' },
+      { icon: Flame, hue: 'orange', title: 'Keep your streak', body: 'One lesson a day keeps the flame lit.', mood: 'wow' },
     ],
   },
   arena: {
@@ -71,129 +50,43 @@ export const TOURS: Record<TourId, { title: string; steps: TourStep[] }> = {
       {
         icon: Swords,
         hue: 'green',
-        title: 'Quick, timed matches',
-        body: `Play a match: ${arena.MATCH.questions} questions from the whole course, ${arena.MATCH.questionMs / 1000} seconds each. The faster you answer right, the more points. You race a real player's run on the same questions, or me.`,
+        title: 'Quick matches',
+        body: `${arena.MATCH.questions} questions, ${arena.MATCH.questionMs / 1000} seconds each. Faster means more points.`,
         mood: 'wow',
       },
-      {
-        icon: Users,
-        hue: 'purple',
-        title: 'Play with friends',
-        body: 'Host a game and share its 6-digit PIN. Everyone gets the same questions and the podium fills in as they finish.',
-        mood: 'happy',
-      },
-      {
-        icon: Trophy,
-        hue: 'yellow',
-        title: 'Climb the leagues',
-        body: `Every match pays coins and XP, and its points go to your league: each week you race a group of up to 30 players at your level, and the top move up. Bronze, Silver, Gold, Emerald, Diamond, Sapphire, Ruby, and at the top, Pristine, ranked by RR.`,
-        mood: 'cheer',
-      },
+      { icon: Users, hue: 'purple', title: 'Play with friends', body: 'Share a game PIN. Everyone gets the same questions.', mood: 'happy' },
+      { icon: Trophy, hue: 'yellow', title: 'Climb the leagues', body: 'Top of your group moves up each week.', mood: 'cheer' },
     ],
   },
   scan: {
     title: 'What bin?',
     steps: [
-      {
-        icon: Search,
-        hue: 'blue',
-        title: 'Look anything up',
-        body: `Holding something right now? Type what it is. I know ${rules.OBJECTS.length} everyday things, from pizza boxes to batteries.`,
-        mood: 'happy',
-      },
+      { icon: Search, hue: 'blue', title: 'Look it up', body: `Type anything. I know ${rules.OBJECTS.length} things.`, mood: 'happy' },
       visionSupported
-        ? {
-            icon: Camera,
-            hue: 'blue',
-            title: 'Or show me a photo',
-            body: 'Tap Camera or Upload. I recognise it right here on your phone; the photo never leaves it.',
-            mood: 'thinking',
-          }
-        : {
-            icon: ListChecks,
-            hue: 'blue',
-            title: 'One question at most',
-            body: 'If the answer depends on something, like whether a pizza box is greasy, I ask. Otherwise you get the answer straight away.',
-            mood: 'thinking',
-          },
-      {
-        icon: Split,
-        hue: 'green',
-        title: 'Every part, and why',
-        body: 'Most things are a few materials. I show where each part goes, down to the plastic number, and the reason. Need a drop-off? Switch to Near me at the top.',
-        mood: 'cheer',
-      },
+        ? { icon: Camera, hue: 'blue', title: 'Or snap it', body: 'Your photo never leaves your phone.', mood: 'thinking' }
+        : { icon: ListChecks, hue: 'blue', title: 'One quick question', body: "If it changes the answer, I'll ask.", mood: 'thinking' },
+      { icon: Split, hue: 'green', title: 'Every part, and why', body: 'Where each bit goes, and the reason.', mood: 'cheer' },
     ],
   },
   nearby: {
     title: 'Near me',
     steps: [
-      {
-        icon: MapPin,
-        hue: 'orange',
-        title: 'For things no bin takes',
-        body: 'Batteries, paint, old phones, medicine. Pick what you are getting rid of from the row of chips.',
-        mood: 'thinking',
-      },
-      {
-        icon: CircleCheck,
-        hue: 'green',
-        title: 'Real places, honestly marked',
-        body: 'The nearest places come from OpenStreetMap. "Listed as accepting this" means the map says so; an orange note means they usually do, so call ahead.',
-        mood: 'happy',
-      },
-      {
-        icon: Navigation,
-        hue: 'blue',
-        title: 'Get there',
-        body: 'Tap a place on the map or in the list, then Directions. Set your ZIP code here first if you have not yet.',
-        mood: 'cheer',
-      },
+      { icon: MapPin, hue: 'orange', title: 'For things no bin takes', body: 'Batteries, paint, old phones. Pick one below.', mood: 'thinking' },
+      { icon: CircleCheck, hue: 'green', title: 'Real places', body: 'From OpenStreetMap. Orange means call ahead.', mood: 'happy' },
     ],
   },
   shop: {
     title: 'The shop',
     steps: [
-      {
-        icon: Coins,
-        hue: 'yellow',
-        title: 'Coins come from lessons and matches',
-        body: `${COINS.correct} coin for every right answer, +${COINS.combo5} for 5 in a row and +${COINS.combo10} for 10 in a row in lessons. Arena matches pay too, and winning pays more.`,
-        mood: 'wow',
-      },
-      {
-        icon: Shirt,
-        hue: 'purple',
-        title: 'Try before you buy',
-        body: 'Tap any hat, glasses, neckwear or paint job and I will put it on, free, so you can see it first.',
-        mood: 'happy',
-      },
-      {
-        icon: Star,
-        hue: 'green',
-        title: 'I wear it everywhere',
-        body: 'Buy it and I keep it on: on the route, in lessons and when I answer your questions.',
-        mood: 'cheer',
-      },
+      { icon: Coins, hue: 'yellow', title: 'Earn coins', body: 'Right answers pay. Winning pays more.', mood: 'wow' },
+      { icon: Shirt, hue: 'purple', title: 'Try it on', body: "Tap anything to try it. It's free.", mood: 'happy' },
     ],
   },
   profile: {
     title: 'Your profile',
     steps: [
-      {
-        icon: Trophy,
-        hue: 'purple',
-        title: 'Everything you have done',
-        body: 'Your streak, XP, lessons, items sorted and badges, all in one place.',
-        mood: 'cheer',
-      },
-      {
-        icon: Settings2,
-        hue: 'blue',
-        title: 'Make it yours',
-        body: 'Change your daily goal, where you live or light and dark mode any time, and replay this tour. The shop is right next door: switch at the top.',
-        mood: 'happy',
-      },
+      { icon: Trophy, hue: 'purple', title: 'Your progress', body: 'Streak, XP and badges, all here.', mood: 'cheer' },
+      { icon: Settings2, hue: 'blue', title: 'Make it yours', body: 'Goal, location, dark mode. Change them anytime.', mood: 'happy' },
     ],
   },
 };

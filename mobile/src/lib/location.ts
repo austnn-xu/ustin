@@ -25,7 +25,7 @@ export function useLocate() {
       const p = await geocode(query);
       return save({ label: p.label, lat: p.lat, lon: p.lon, zip: p.zip, source: 'zip' });
     } catch (err) {
-      setError(err instanceof LookupError ? err.message : 'Could not look that up. Try again in a moment.');
+      setError(err instanceof LookupError ? err.message : "Couldn't look that up. Try again.");
       return null;
     } finally {
       setBusy(null);
@@ -38,7 +38,7 @@ export function useLocate() {
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (permission.status !== 'granted') {
-        setError('Location is off for US Tin. Enter a ZIP code instead, or allow location in your settings.');
+        setError('Location is off. Try a ZIP code.');
         return null;
       }
       // A GPS fix can take forever indoors (and on some browsers never answers): wait ten seconds, then settle for the
@@ -52,7 +52,7 @@ export function useLocate() {
       const named = await reverseGeocode(lat, lon);
       return save({ label: named.label, lat, lon, zip: named.zip, source: 'gps' });
     } catch {
-      setError('Could not get your location. Enter a ZIP code instead.');
+      setError("Couldn't find you. Try a ZIP code.");
       return null;
     } finally {
       setBusy(null);

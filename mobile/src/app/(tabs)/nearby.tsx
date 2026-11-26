@@ -83,7 +83,7 @@ export default function Nearby() {
             <Card padding="lg" style={styles.gap}>
               {!place && (
                 <MascotSays mood="thinking" size="sm">
-                  Where should I look? Give me a ZIP code, or let me use your location.
+                  Where should I look?
                 </MascotSays>
               )}
               <LocationPicker onDone={() => setEditing(false)} />
@@ -107,7 +107,7 @@ export default function Nearby() {
             ) : query.isError ? (
               <Card padding="lg" style={styles.gap}>
                 <MascotSays mood="sad" size="sm">
-                  The map service did not answer in time. It is free and shared, so it gets busy. Try again, or use one of these searches:
+                  The map is busy right now. Try again, or search here:
                 </MascotSays>
                 <Button label="Try again" variant="secondary" fullWidth onPress={() => query.refetch()} />
                 <LinksOut kind={kind} />
@@ -115,9 +115,9 @@ export default function Nearby() {
             ) : query.data.sites.length === 0 ? (
               <Card padding="lg" style={styles.gap}>
                 <MascotSays mood="worried" size="sm">
-                  {`I could not find a mapped ${info.label.toLowerCase()} spot within ${Math.round(
+                  {`Nothing mapped within ${Math.round(
                     miles ? query.data.radiusKm * 0.621 : query.data.radiusKm,
-                  )} ${miles ? 'miles' : 'km'}. These searches know more places:`}
+                  )} ${miles ? 'miles' : 'km'}. Try these:`}
                 </MascotSays>
                 <LinksOut kind={kind} />
               </Card>
@@ -125,7 +125,7 @@ export default function Nearby() {
               <>
                 <SiteMap center={query.data.at} sites={query.data.sites} selectedId={selected} onSelect={setSelected} />
                 <Text variant="label" color="textSecondary">
-                  {`${query.data.sites.length} ${query.data.sites.length === 1 ? 'place' : 'places'} for ${info.label.toLowerCase()}, nearest first`}
+                  {`${query.data.sites.length} ${query.data.sites.length === 1 ? 'place' : 'places'}, nearest first`}
                 </Text>
                 {query.data.sites.map((s) => (
                   <SiteCard key={s.id} site={s} miles={miles} selected={s.id === selected} onPress={() => setSelected(s.id)} />
@@ -191,7 +191,7 @@ function Loading() {
   return (
     <View style={styles.gap}>
       <MascotSays mood="thinking" size="sm">
-        {slow ? 'The map service is slow right now. Still looking, it will not be long…' : 'Checking the map for places near you…'}
+        {slow ? 'The map is slow today. Still looking…' : 'Checking the map…'}
       </MascotSays>
       <Skeleton height={t.space[20] * 3} radius="lg" />
       {[0, 1, 2].map((i) => (

@@ -14,7 +14,7 @@ import { currentStreak, useProgress } from '@/stores/progress';
 import { useSettings, type ColorSchemePreference } from '@/stores/settings';
 import { makeStyles, useTheme, type HueName } from '@/theme';
 import { SectionSwitch } from '@/components/SectionSwitch';
-import { numbers } from '@/lib/engine';
+import { StatRow } from '@/components/StatRow';
 
 const SCHEMES: { value: ColorSchemePreference; label: string }[] = [
   { value: 'system', label: 'System' },
@@ -40,17 +40,19 @@ export default function Profile() {
           <View style={styles.flex}>
             <Text variant="display">Your progress</Text>
             <Text variant="body" color="textSecondary">
-              {streak.doneToday ? 'You showed up today. Tin is proud of you!' : 'A quick lesson keeps your streak alive.'}
+              {streak.doneToday ? 'You showed up today!' : 'One lesson keeps your streak alive.'}
             </Text>
           </View>
         </View>
 
-        <View style={styles.grid}>
-          <Stat icon={Flame} hue="orange" value={streak.count} label="Day streak" filled />
-          <Stat icon={Zap} hue="yellow" value={progress.xp} label="Total XP" filled />
-          <Stat icon={BookOpen} hue="green" value={Object.keys(progress.lessons).length} label="Lessons done" />
-          <Stat icon={ScanLine} hue="blue" value={Object.keys(progress.sorted).length} label="Items sorted" />
-        </View>
+        <StatRow
+          stats={[
+            { icon: Flame, hue: 'orange', value: streak.count, label: 'Streak', filled: true },
+            { icon: Zap, hue: 'yellow', value: progress.xp, label: 'XP', filled: true },
+            { icon: BookOpen, hue: 'green', value: Object.keys(progress.lessons).length, label: 'Lessons' },
+            { icon: ScanLine, hue: 'blue', value: Object.keys(progress.sorted).length, label: 'Sorted' },
+          ]}
+        />
 
         <Card style={styles.gap}>
           <View style={styles.between}>
@@ -154,7 +156,7 @@ export default function Profile() {
         {confirmReset ? (
           <Card variant="tinted" hue="red" style={styles.gap}>
             <Text variant="bodyStrong" hue="red">
-              Reset all progress? Your XP, streak, lessons, badges, coins and Tin's outfits will be gone for good.
+              Reset everything? XP, streak, badges, coins and outfits will be gone.
             </Text>
             <View style={styles.row}>
               <View style={styles.flex}>
@@ -196,23 +198,6 @@ export default function Profile() {
   );
 }
 
-function Stat({ icon, hue, value, label, filled }: { icon: LucideIcon; hue: HueName; value: number; label: string; filled?: boolean }) {
-  const styles = useStyles();
-  return (
-    <Card style={styles.stat}>
-      <Icon icon={icon} size="lg" hue={hue} filled={filled} />
-      <View style={styles.flex}>
-        <Text variant="title" tabular>
-          {numbers.compact(value)}
-        </Text>
-        <Text variant="caption" color="textSecondary">
-          {label}
-        </Text>
-      </View>
-    </Card>
-  );
-}
-
 function BadgeTile({ icon, hue }: { icon: LucideIcon; hue: HueName | null }) {
   const t = useTheme();
   const styles = useStyles();
@@ -231,8 +216,6 @@ const useStyles = makeStyles((t) => ({
   gap: { gap: t.space[3] },
   row: { flexDirection: 'row', gap: t.space[3] },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space[3] },
-  stat: { flexBasis: '46%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
   week: { flexDirection: 'row', justifyContent: 'space-between' },
   day: { alignItems: 'center', gap: t.space[1] },
   dot: {

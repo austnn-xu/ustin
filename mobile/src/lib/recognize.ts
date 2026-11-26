@@ -41,8 +41,8 @@ export function useRecognition() {
         uri,
         message:
           err instanceof Error && /load|fetch|network/i.test(err.message)
-            ? 'I could not download my recognition model. Check your connection, or search instead.'
-            : 'Something went wrong reading that photo. Try another, or search instead.',
+            ? "I couldn't load my eyes. Try searching instead."
+            : "Couldn't read that photo. Try another?",
       });
     }
   }, []);

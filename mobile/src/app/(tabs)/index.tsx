@@ -45,7 +45,7 @@ export default function Learn() {
   };
 
   const { count, doneToday } = currentStreak(streak);
-  const nudge = doneToday ? 'Nice haul today! Tin is proud of you.' : count > 0 ? `Your ${count}-day streak is waiting!` : "Hop in, let's sort!";
+  const nudge = doneToday ? 'Nice haul today!' : count > 0 ? `Your ${count}-day streak is waiting!` : "Hop in, let's sort!";
 
   return (
     <Screen gutter={false} wide header={<StatsBar />} background={t.colors.scene.sky}>
@@ -132,8 +132,8 @@ function EndOfTheRoad({ done }: { done: boolean }) {
           </Text>
           <Text variant="body" color="textSecondary" align="center">
             {done
-              ? 'Keep your streak going by sorting real things with What bin?'
-              : `Finish all ${lessons.UNITS.length} routes to master the full catalog: ${rules.OBJECTS.length} everyday items.`}
+              ? 'Keep sorting real things in What bin?'
+              : `${lessons.UNITS.length} routes, ${rules.OBJECTS.length} items. You've got this.`}
           </Text>
           {done && <Button label="What bin?" variant="secondary" onPress={() => router.push('/scan')} />}
         </Card>

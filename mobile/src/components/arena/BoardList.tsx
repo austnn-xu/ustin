@@ -154,10 +154,10 @@ export function StaleNote({ at, onRetry }: { at: number; onRetry: () => void }) 
   const styles = useStyles();
   const when = at ? new Date(at).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'earlier';
   return (
-    <PressableScale haptic="selection" onPress={onRetry} style={styles.stale} accessibilityLabel={`Offline. Showing the board from ${when}. Tap to try again`}>
+    <PressableScale haptic="selection" onPress={onRetry} style={styles.stale} accessibilityLabel={`Offline. Board from ${when}. Tap to retry`}>
       <Icon icon={CloudOff} size="sm" color="textTertiary" />
       <Text variant="caption" color="textSecondary" style={styles.flex}>
-        {`Offline: showing the board from ${when}.`}
+        {`Offline. Board from ${when}.`}
       </Text>
       <Text variant="caption" hue="blue">
         Retry
@@ -202,7 +202,7 @@ export function BoardMessage({
       <Card variant="tinted" hue="slate" style={styles.message}>
         <Icon icon={CloudOff} hue="slate" shade="text" />
         <Text variant="callout" hue="slate" style={styles.flex}>
-          The global leaderboard is not connected in this version of the app. Matches against Tin still pay coins and XP.
+          The leaderboard is offline. You can still play me for coins.
         </Text>
       </Card>
     );

@@ -71,10 +71,10 @@ export function LessonComplete({ summary, onContinue }: { summary: LessonSummary
   const coins = useCountUp(summary.coins, 900, t.motion.stagger * 2);
   const title = summary.perfect ? 'Perfect lesson!' : summary.accuracy >= 0.8 ? 'Lesson complete!' : 'You made it!';
   const line = summary.perfect
-    ? 'Not a single mistake. You really know your bins.'
+    ? 'You know your bins.'
     : summary.accuracy >= 0.8
-      ? 'Great sorting. Every right answer keeps something out of landfill.'
-      : 'The tricky ones are the ones worth learning. You will get them next time.';
+      ? 'Great sorting!'
+      : "Tricky ones! You'll get them next time.";
 
   return (
     <Screen scroll footer={<Button label="Continue" fullWidth onPress={onContinue} />}>
@@ -169,8 +169,8 @@ export function StreakCelebration({ streak, onContinue }: { streak: number; onCo
             </View>
             <Text variant="callout" color="textSecondary" align="center">
               {streak === 1
-                ? 'A new streak starts today. Come back tomorrow to grow it!'
-                : 'Do a lesson or look up an item every day to keep it burning.'}
+                ? 'Day one! See you tomorrow.'
+                : 'Come back tomorrow to keep it going.'}
             </Text>
           </Card>
         </Appear>
@@ -204,7 +204,7 @@ function Flicker({ children }: { children: React.ReactNode }) {
 export function QuitConfirm({
   onStay,
   onQuit,
-  message = "Wait, don't go! You will lose your progress in this lesson.",
+  message = "Wait! You'll lose this lesson's progress.",
   stayLabel = 'Keep learning',
 }: {
   onStay: () => void;

@@ -228,7 +228,7 @@ function MissingLesson() {
   return (
     <SafeAreaView style={[styles.root, styles.missing]}>
       <MascotSays mood="thinking" layout="above" size="lg">
-        Hmm, that lesson does not exist. It may have moved when the course was updated.
+        Hmm, I can't find that lesson.
       </MascotSays>
       <Button label="Back to the path" onPress={() => router.replace('/')} />
     </SafeAreaView>

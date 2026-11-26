@@ -130,9 +130,9 @@ function Verdict({ object, answers, record, header, onRedo }: VerdictProps) {
   const mixed = outcomes.length > 1;
   const curbside = outcomes.some((o) => o === 'recycle' || o === 'trash' || o === 'compost');
   const say = verdict.hazard
-    ? 'Careful with this one! It must never go in a household bin.'
+    ? 'Careful! Never in a home bin.'
     : mixed
-      ? `This one splits up: ${verdict.components.length} parts, ${outcomes.length} different bins.`
+      ? `${verdict.components.length} parts, ${outcomes.length} bins.`
       : verdict.components.length > 1
         ? `All ${verdict.components.length} parts go in ${BIN[headline.id].phrase}.`
         : `Easy! This goes in ${BIN[headline.id].phrase}.`;
@@ -172,7 +172,7 @@ function Verdict({ object, answers, record, header, onRedo }: VerdictProps) {
           <Card variant="tinted" hue="red" style={styles.note}>
             <Icon icon={TriangleAlert} hue="red" shade="text" />
             <Text variant="bodyStrong" hue="red" style={styles.flex}>
-              Do not put this in any household bin. It can start fires or poison water.
+              Keep it out of every home bin. It can start fires or poison water.
             </Text>
           </Card>
         )}
@@ -216,13 +216,12 @@ function Verdict({ object, answers, record, header, onRedo }: VerdictProps) {
 
         {curbside && (
           <Text variant="caption" color="textTertiary">
-            Curbside pickup is the easy route for recycling and trash. The map is for when you do not have it, or the
-            bin is full.
+            No curbside bin? Use the map.
           </Text>
         )}
 
         <Text variant="caption" color="textTertiary">
-          General US guidance. Rules differ by town and hauler, so if your local program says otherwise, follow it.
+          Rules vary by town. If yours says different, go with yours.
         </Text>
 
         {onRedo && <Button label="Change my answers" variant="ghost" fullWidth onPress={onRedo} />}
@@ -239,7 +238,7 @@ function MissingItem() {
     <Screen>
       <View style={styles.missing}>
         <MascotSays mood="thinking" size="lg" layout="above">
-          I do not know that item. Try searching for it in What bin?
+          I don't know that one yet.
         </MascotSays>
         <Button label="Search items" variant="secondary" onPress={() => router.replace('/scan')} />
       </View>

@@ -6,8 +6,8 @@ import { PressableScale } from './PressableScale';
 export type CardProps = {
   children: ReactNode;
   /**
-   * outlined — default: 2px border on surface, the Duolingo card.
-   * tinted   — a hue's subtle fill with its border, for callouts (tips, warnings).
+   * outlined — default: a white card with a soft 2px edge, sitting on the paper background.
+   * tinted   — a hue's soft fill and no outline, for callouts (tips, warnings). No box-in-a-box.
    * floating — raised surface + shadow. ONLY for things above content (popovers).
    */
   variant?: 'outlined' | 'tinted' | 'floating';
@@ -32,7 +32,7 @@ export function Card({ children, variant = 'outlined', hue = 'blue', padding = '
 }
 
 const useStyles = makeStyles((t) => {
-  const tint = (h: HueName) => ({ backgroundColor: t.colors.hue[h].subtle, borderColor: t.colors.hue[h].base });
+  const tint = (h: HueName) => ({ backgroundColor: t.colors.hue[h].subtle, borderColor: t.colors.hue[h].subtle });
   return {
     base: { borderRadius: t.radius.lg, borderWidth: t.layout.border, overflow: 'hidden' },
     outlined: { backgroundColor: t.colors.surface, borderColor: t.colors.border },

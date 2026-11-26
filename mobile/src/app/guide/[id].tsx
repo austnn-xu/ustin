@@ -31,7 +31,7 @@ export default function GuideScreen() {
       <Screen>
         <View style={styles.missing}>
           <MascotSays mood="thinking" layout="above" size="lg">
-            That guide does not exist. It may have moved when the course was updated.
+            I can't find that guide.
           </MascotSays>
           <Button label="Back to the path" onPress={() => router.replace('/')} />
         </View>
@@ -117,7 +117,7 @@ export default function GuideScreen() {
         ) : (
           <View style={styles.stack}>
             <MascotSays mood="cheer" size="md">
-              {`That's your bin! ${extra.steps.length} steps and no store-bought bin needed.`}
+              {`That's your bin! No store needed.`}
             </MascotSays>
             <Text variant="heading">If something seems off</Text>
             <Card padding="none">

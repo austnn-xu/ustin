@@ -70,10 +70,10 @@ function toArenaError(error: RawError | null | undefined, where = 'request'): Ar
   const code = error?.code ?? '';
   const message = error?.message ?? '';
   const status = error?.status ?? 0;
-  if (code === '23505' && /name/i.test(message)) return new ArenaError('taken', 'Someone already has that name. Try another.');
+  if (code === '23505' && /name/i.test(message)) return new ArenaError('taken', 'Taken! Roll another.');
   if (code === '23505') return new ArenaError('played', 'You already played this game.');
   if (code === '23514' && /reserved/i.test(message)) return new ArenaError('invalid', 'That name is reserved. Try another.');
-  if (code === '22023' || code === '23514') return new ArenaError('invalid', 'That name did not work. Roll another.');
+  if (code === '22023' || code === '23514') return new ArenaError('invalid', "That one didn't work. Roll another.");
   if (code === 'P0002' && /PIN/i.test(message)) return new ArenaError('ended', 'That game PIN has ended or does not exist.');
   if (code === '53400') return new ArenaError('slow', message || 'Slow down a little and try again.');
 
@@ -82,16 +82,16 @@ function toArenaError(error: RawError | null | undefined, where = 'request'): Ar
   console.warn(`[arena] ${where} failed`, { code, status, message });
 
   if (/anonymous/i.test(`${code} ${message}`) && /disabled|not enabled|not allowed/i.test(`${code} ${message}`)) {
-    return new ArenaError('setup', 'The leaderboard is not switched on for new players yet (anonymous sign-ins are off in Supabase).');
+    return new ArenaError('setup', "The leaderboard isn't open yet. It's not you.");
   }
   if (status === 401 || status === 403 || /api key|apikey|invalid jwt|jwt/i.test(message)) {
-    return new ArenaError('setup', 'The leaderboard turned this app away (its Supabase key was rejected). That is a setup problem, not your connection.');
+    return new ArenaError('setup', "The leaderboard isn't set up right. It's not you.");
   }
   if (code === 'PGRST202' || code === '42883' || /could not find the function|schema cache/i.test(message)) {
-    return new ArenaError('setup', 'The leaderboard is not fully set up yet (a database update is missing). That is not your connection.');
+    return new ArenaError('setup', "The leaderboard isn't set up right. It's not you.");
   }
   if (status >= 500 || /timed? ?out|too many requests|rate limit/i.test(message)) {
-    return new ArenaError('offline', 'The leaderboard server is busy or waking up. Try again in a moment.');
+    return new ArenaError('offline', 'The leaderboard is busy. Try again soon.');
   }
   // No answer at all: the browser is offline, or the project is paused, the URL is wrong, or the request was blocked.
   const browserOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
@@ -99,8 +99,8 @@ function toArenaError(error: RawError | null | undefined, where = 'request'): Ar
     return new ArenaError(
       'offline',
       browserOffline
-        ? 'You seem to be offline. Check your connection and try again.'
-        : 'The leaderboard did not answer. Your connection looks fine, so the server may be down or still starting up. Try again in a moment.',
+        ? "You're offline."
+        : "The leaderboard isn't answering. It's not you. Try again soon.",
     );
   }
   return new ArenaError('unknown', message || 'Something went wrong.');

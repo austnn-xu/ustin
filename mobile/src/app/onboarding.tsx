@@ -1,6 +1,5 @@
 import { router } from 'expo-router';
-import type { LucideIcon } from 'lucide-react-native';
-import { ChevronLeft, House, MapPin, ScanSearch, Store } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { useMemo, useState, useTransition } from 'react';
 import { View } from 'react-native';
 import { BIN, BinArt } from '@/components/art/Bin';
@@ -12,24 +11,22 @@ import { Appear, Button, Card, ChoiceCard, Icon, PressableScale, ProgressBar, Sc
 import { lessons, rules, type OutcomeId } from '@/lib/engine';
 import { GOALS } from '@/lib/goals';
 import { haptics } from '@/lib/haptics';
-import { visionSupported } from '@/lib/vision';
 import { useScreenSize } from '@/lib/useScreenSize';
 import { XP } from '@/stores/progress';
 import { useSettings, type DailyGoal } from '@/stores/settings';
-import { makeStyles, useTheme, type HueName } from '@/theme';
+import { makeStyles, useTheme } from '@/theme';
 
 /**
  * First run, one idea per screen:
  *   hello  — meet Tin
  *   try    — a real question to answer (a takeaway coffee cup), so the point of the app is felt, not described
- *   how    — the three things the app does, in plain words
  *   goal   — how much time a day, in minutes
  *   place  — where you live, for drop-offs (optional)
  *   ready  — exactly what happens next, then straight into lesson one
  * Steps slide in the direction you are going: forward from the right, back from the left. That slide is each step's
  * only motion; the coffee-cup reveal is the one sequence, because it is the point of the whole first run.
  */
-const STEPS = ['hello', 'try', 'how', 'goal', 'place', 'ready'] as const;
+const STEPS = ['hello', 'try', 'goal', 'place', 'ready'] as const;
 type Step = (typeof STEPS)[number];
 
 /** The cup is the demo because it is the problem in one object: three materials, three destinations. */
@@ -80,7 +77,7 @@ export default function Onboarding() {
       <View style={styles.buttons}>
         <Button label="Let's go" fullWidth onPress={() => go(1)} />
         <Button
-          label="I just need to look something up"
+          label="Just look something up"
           variant="ghost"
           fullWidth
           onPress={() => {
@@ -94,7 +91,7 @@ export default function Onboarding() {
     ) : step === 'place' ? (
       <Button label={place ? 'Continue' : 'Skip for now'} variant={place ? 'primary' : 'neutral'} fullWidth onPress={() => go(index + 1)} />
     ) : step === 'ready' ? (
-      <Button label="Start my first lesson" fullWidth onPress={start} />
+      <Button label="Start lesson 1" fullWidth onPress={start} />
     ) : (
       next
     );
@@ -104,7 +101,6 @@ export default function Onboarding() {
       <Appear key={step} from={dir > 0 ? 'right' : 'left'} style={styles.grow}>
         {step === 'hello' && <Hello />}
         {step === 'try' && <TryIt pick={pick} onPick={setPick} />}
-        {step === 'how' && <HowItWorks />}
         {step === 'goal' && <Goal />}
         {step === 'place' && <Place />}
         {step === 'ready' && <Ready />}
@@ -125,29 +121,13 @@ function Hello() {
         </Text>
       </Appear>
       <Appear index={3}>
-        <Text variant="heading" align="center">
-          {"I'll teach you where everything goes, one bin at a time."}
-        </Text>
-      </Appear>
-      <Appear index={4}>
-        <Text variant="body" color="textSecondary" align="center">
-          A minute of setup, a quick quiz, then your first five-minute lesson.
-        </Text>
-      </Appear>
-      <Appear index={5}>
-        <Text variant="caption" color="textTertiary" align="center">
-          (Psst: you can tap me.)
+        <Text variant="heading" color="textSecondary" align="center">
+          {"Let's learn what goes where."}
         </Text>
       </Appear>
     </View>
   );
 }
-
-/** "the lid", "the lid and the sleeve", "the lid, the sleeve and the cup body". */
-const theParts = (labels: string[]) => {
-  const parts = labels.map((l) => `the ${l.toLowerCase()}`);
-  return parts.length <= 1 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
-};
 
 /** A real question with a twist: the cup is three things. Whatever you pick, the reveal teaches the whole idea. */
 function TryIt({ pick, onPick }: { pick: OutcomeId | null; onPick: (outcome: OutcomeId) => void }) {
@@ -163,13 +143,15 @@ function TryIt({ pick, onPick }: { pick: OutcomeId | null; onPick: (outcome: Out
   const reveal = !pick
     ? null
     : right.length === 0
-      ? `Not this one! No part of it goes in ${BIN[pick].phrase}. Here's the trick: it's ${verdict.components.length} things.`
-      : `Partly right! ${capitalise(theParts(right.map((c) => c.label)))} ${right.length === 1 ? 'goes' : 'go'} in ${BIN[pick].phrase}, but ${theParts(rest.map((c) => c.label))} ${rest.length === 1 ? "doesn't" : "don't"}.`;
+      ? `Ooh, not quite. It's ${verdict.components.length} things!`
+      : rest.length === 0
+        ? 'Yes! You know your bins.'
+        : `Close! It's ${verdict.components.length} things.`;
 
   return (
     <View style={styles.stack}>
       <MascotSays mood={pick ? (right.length ? 'wow' : 'worried') : 'thinking'} size="sm" typing>
-        {reveal ?? 'Quick one. You just finished a coffee. Where does the cup go?'}
+        {reveal ?? 'Coffee done. Where does the cup go?'}
       </MascotSays>
       <ItemCard item={item} />
 
@@ -226,77 +208,10 @@ function TryIt({ pick, onPick }: { pick: OutcomeId | null; onPick: (outcome: Out
               <Text variant="bodyStrong" hue="green">
                 {verdict.tip ?? 'One object, several materials.'}
               </Text>
-              <Text variant="caption" hue="green">
-                {"That's what I teach: where each part goes, and why. Most people get this one wrong, so you're already ahead."}
-              </Text>
             </Card>
           </Appear>
         </View>
       )}
-    </View>
-  );
-}
-
-const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-const WAYS: { icon: LucideIcon; hue: HueName; title: string; body: string }[] = [
-  {
-    icon: House,
-    hue: 'green',
-    title: 'Learn on the route',
-    body: 'Five-minute lessons. Each bin on the road is one stop; finish it and the truck drives on to the next.',
-  },
-  {
-    icon: ScanSearch,
-    hue: 'blue',
-    title: 'What bin?',
-    body: visionSupported
-      ? 'Holding something right now? Type it or snap a photo, and I will tell you where each part goes.'
-      : 'Holding something right now? Look it up and I will tell you where each part goes.',
-  },
-  {
-    icon: MapPin,
-    hue: 'orange',
-    title: 'Near me',
-    body: 'Batteries, paint, old phones: I will find the nearest place that takes them, on a map.',
-  },
-  {
-    icon: Store,
-    hue: 'purple',
-    title: 'Shop',
-    body: 'Right answers earn coins. Spend them on hats, glasses and paint jobs for me.',
-  },
-];
-
-function HowItWorks() {
-  const t = useTheme();
-  const styles = useStyles();
-  return (
-    <View style={styles.stack}>
-      <MascotSays mood="happy" size="sm">
-        Here is what is inside. I will show you around each one the first time you open it.
-      </MascotSays>
-      {WAYS.map((w) => (
-        <Card key={w.title} style={styles.way}>
-          <View style={[styles.wayIcon, { backgroundColor: t.colors.hue[w.hue].subtle }]}>
-            <Icon icon={w.icon} hue={w.hue} size="lg" />
-          </View>
-          <View style={styles.flex}>
-            <Text variant="heading">{w.title}</Text>
-            <Text variant="callout" color="textSecondary">
-              {w.body}
-            </Text>
-          </View>
-        </Card>
-      ))}
-      <Card variant="tinted" hue="green">
-        <Text variant="bodyStrong" hue="green">
-          Mistakes are free.
-        </Text>
-        <Text variant="caption" hue="green">
-          No hearts, no lives. Get one wrong and I show you why, then it comes back once at the end so you can nail it.
-        </Text>
-      </Card>
     </View>
   );
 }
@@ -310,7 +225,7 @@ function Goal() {
   return (
     <View style={styles.stack}>
       <MascotSays mood={GOAL_MOOD[goal]} size="sm">
-        How much time can you give me each day?
+        How much time a day?
       </MascotSays>
       {GOALS.map((g) => {
         const minutes = (g.value / XP.lesson) * MINUTES_PER_LESSON;
@@ -336,9 +251,6 @@ function Goal() {
           </ChoiceCard>
         );
       })}
-      <Text variant="caption" color="textTertiary" align="center">
-        You can change this any time in Profile.
-      </Text>
     </View>
   );
 }
@@ -350,22 +262,16 @@ function Place() {
     <View style={styles.stack}>
       <MascotSays mood={place ? 'cheer' : 'thinking'} size="sm">
         {place
-          ? `Got it: ${place.label}. I will look for drop-offs near there.`
-          : 'Where do you live? Some things, like batteries, cannot go in any bin, so I will find the nearest drop-off.'}
+          ? `${place.label}. Got it!`
+          : "Where are you? I'll find drop-offs nearby."}
       </MascotSays>
       <LocationPicker />
       <Text variant="caption" color="textTertiary">
-        Your location stays on this device. It is only sent to OpenStreetMap to find places near you.
+        Only used to find places near you.
       </Text>
     </View>
   );
 }
-
-const LESSON_STEPS = [
-  { n: '1', text: 'Tap the answer you think is right' },
-  { n: '2', text: 'Tap Check' },
-  { n: '3', text: 'Read why. That part is the lesson' },
-];
 
 function Ready() {
   const t = useTheme();
@@ -386,30 +292,15 @@ function Ready() {
 
       <Card style={styles.firstStop}>
         <Text variant="label" color="textTertiary">
-          Your first stop
+          First stop
         </Text>
         <Text variant="heading">{unit?.title ?? first.title}</Text>
         <Text variant="callout" color="textSecondary">
           {names.join(' · ')}
         </Text>
-        <Text variant="callout" hue="yellow">{`About ${MINUTES_PER_LESSON} minutes · +${XP.lesson} XP`}</Text>
+        <Text variant="callout" hue="yellow">{`${MINUTES_PER_LESSON} min · +${XP.lesson} XP`}</Text>
       </Card>
 
-      <Text variant="label" color="textTertiary">
-        How a lesson works
-      </Text>
-      {LESSON_STEPS.map((s) => (
-        <View key={s.n} style={styles.lessonStep}>
-          <View style={[styles.stepDot, { backgroundColor: t.colors.hue.blue.base }]}>
-            <Text variant="bodyStrong" style={styles.onColor}>
-              {s.n}
-            </Text>
-          </View>
-          <Text variant="bodyStrong" style={styles.flex}>
-            {s.text}
-          </Text>
-        </View>
-      ))}
     </View>
   );
 }
@@ -427,24 +318,7 @@ const useStyles = makeStyles((t) => ({
   part: { flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
   partHead: { flexDirection: 'row', alignItems: 'center', gap: t.space[2] },
   lessonNote: { gap: t.space[1] },
-  way: { flexDirection: 'row', alignItems: 'center', gap: t.space[4] },
-  wayIcon: {
-    width: t.layout.control.lg,
-    height: t.layout.control.lg,
-    borderRadius: t.radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   goalRow: { flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
   readyHead: { flexDirection: 'row', alignItems: 'center', gap: t.space[4] },
   firstStop: { gap: t.space[1] },
-  lessonStep: { flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
-  stepDot: {
-    width: t.space[8],
-    height: t.space[8],
-    borderRadius: t.radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  onColor: { color: t.colors.onColor },
 }));

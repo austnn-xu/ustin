@@ -57,7 +57,7 @@ export default function PinScreen() {
         <View style={styles.centered}>
           <MascotSays mood={ended ? 'sad' : 'worried'} layout="above" size="lg">
             {ended
-              ? `Game ${formatPin(code.padEnd(6, '·'))} has ended or never existed. Game PINs last a week. Check the digits, or host your own.`
+              ? `Game ${formatPin(code.padEnd(6, '·'))} has ended. Check the digits, or host your own.`
               : room.error instanceof ArenaError
                 ? room.error.message
                 : 'Could not open this game.'}
@@ -114,7 +114,7 @@ export default function PinScreen() {
           </Text>
           {room.data ? (
             <Text variant="callout" color="textSecondary" align="center">
-              {`Hosted by ${room.data.host}. Everyone with this PIN gets the same ${arena.MATCH.questions} questions; it lasts a week.`}
+              {`Hosted by ${room.data.host}. Open for a week.`}
             </Text>
           ) : (
             <Skeleton width="70%" />
@@ -132,7 +132,7 @@ export default function PinScreen() {
         {mine && (
           <Card variant="tinted" hue="blue">
             <Text variant="bodyStrong" hue="blue">
-              {`You scored ${fmt(mine.score)} and you're #${mine.rank} of ${entries.length}. The podium updates as friends finish.`}
+              {`You scored ${fmt(mine.score)}: #${mine.rank} of ${entries.length}.`}
             </Text>
           </Card>
         )}
@@ -143,7 +143,7 @@ export default function PinScreen() {
         ) : board.isError ? (
           <BoardMessage error={board.error} onRetry={() => void board.refetch()} />
         ) : entries.length === 0 ? (
-          <BoardMessage empty="Nobody has played yet. Share the PIN, then tap Play: the first score sets the bar." />
+          <BoardMessage empty="Nobody's played yet. Share the PIN and set the bar." />
         ) : (
           <>
             <Podium entries={entries.slice(0, 3).map((e) => ({ key: e.key, name: e.name, paint: e.paint, score: e.value, isMe: e.isMe, rank: e.rank }))} />

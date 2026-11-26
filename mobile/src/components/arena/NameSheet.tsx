@@ -118,7 +118,7 @@ export function NameSheet({
               <View style={styles.flex}>
                 <Text variant="title">{current ? 'Roll a new name' : 'Roll your name'}</Text>
                 <Text variant="callout" color="textSecondary">
-                  Three random words, so nobody has to share their real name. Your avatar is Tin&apos;s paint colour.
+                  Three random words. Roll till you love it.
                 </Text>
               </View>
             </View>
@@ -128,7 +128,7 @@ export function NameSheet({
               </Text>
               {current && (
                 <Text variant="callout" color="textSecondary" align="center">
-                  {`Right now you are ${current}`}
+                  {`Now: ${current}`}
                 </Text>
               )}
               {error && (
@@ -146,8 +146,7 @@ export function NameSheet({
               <View style={styles.remove}>
                 {removing === 'ask' && (
                   <Text variant="callout" hue="red" align="center">
-                    This deletes your name, every match you played and every game you hosted from the leaderboard. It
-                    cannot be undone. Your coins, XP and lessons on this phone stay.
+                    This erases your name and matches for good. Your progress here stays.
                   </Text>
                 )}
                 <Button

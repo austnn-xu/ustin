@@ -14,7 +14,7 @@
     "android": {
       "package": "com.ustin.app",
       "adaptiveIcon": {
-        "backgroundColor": "#F7F7F5",
+        "backgroundColor": "#FAF7F0",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -27,8 +27,8 @@
       "output": "single",
       "name": "US Tin",
       "shortName": "US Tin",
-      "themeColor": "#22A447",
-      "backgroundColor": "#FFFFFF",
+      "themeColor": "#1F965C",
+      "backgroundColor": "#FAF7F0",
       "description": "Learn where things go, one lesson at a time — and find the nearest drop-off for anything."
     },
     "plugins": [

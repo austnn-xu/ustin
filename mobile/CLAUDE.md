@@ -101,15 +101,38 @@ src/stores/           zustand stores (progress, settings)
 - **Spacing is a 4pt grid.** Screen gutter is always `t.layout.gutter`. Content is capped at `t.layout.maxWidth` and centered
   on wide screens.
 - **Type:** variants `hero, display, title, heading, body, bodyStrong, callout, caption, label, button`. Display variants
-  and buttons use Bricolage Grotesque; everything you read uses Plus Jakarta Sans. Buttons are sentence case; only the
-  small `label` variant is uppercase. Only `<Text>` renders text.
-- **Color:** white (or deep blue-grey in dark mode) surfaces, and named hues from `t.colors.hue` that each carry a meaning —
-  see `src/theme/colors.ts`. Hues are for actions, feedback, bins and rewards, never decoration. No gradients.
+  and buttons use Bricolage Grotesque; everything you read uses Plus Jakarta Sans. Everything is sentence case, labels
+  included (shouting all-caps labels are a template tell). Only `<Text>` renders text.
+- **Color — a storybook town, not a default app.** Warm paper (`bg`) behind everything, white cards (`surface`) on it, and
+  ink text: the same blue-black as Tin's outline, so type and mascot look drawn by one hand. Dark mode is a warm ink night
+  with cream text. Hues come from our own family (jade, denim, tomato, marigold, mustard, plum, clay, slate) in
+  `src/theme/colors.ts`; never paste in another brand's palette (we used to ship Duolingo's exact greys and reds, and it
+  showed). Hues are for actions, feedback, bins and rewards, never decoration. No gradients.
+  - **Restraint is the look.** One accent leads each area of a screen. Tinted callouts have a soft fill and no outline.
+    No pastel tile with a coloured outline, no grid of stat cards each with its own coloured icon (`StatRow` puts numbers
+    in one card), no box inside a box.
+  - **Contrast is checked, not eyeballed:** `npm run check:contrast` (also in CI) holds every text/fill pair to WCAG.
   The Learn route is the one scene: sky, tinted ground per unit and town colors from `t.colors.scene`, for artwork only.
 - **Chunky and tactile.** Buttons, option cards and path nodes are 3D: a `depth` edge in the hue's `depth` shade that the face
   presses down into. Cards are flat with a 2px border, not shadows. Shadows only for things that float (feedback panel,
   popovers, tab bar).
 - **Light and dark mode** are both first-class. Every color comes from `t.colors`; check every screen in both.
+
+## Voice
+
+Fewer words, more feeling. Every word on screen is read by someone holding a pizza box over a bin.
+
+- **Tin talks like a friend, in first person**, with contractions: "I'll find drop-offs nearby", not "I will find the
+  nearest drop-off location". Tin never talks about itself in the third person ("Tin is proud of you").
+- **Word budgets.** Tin's bubble: a prompt in about 6 words, a reaction in about 10. A card gets a title and at most one
+  short line. A tour step is one sentence of 10 words or fewer. If it needs a paragraph, it belongs in a guidebook.
+- **Show, don't explain.** Don't describe what's on the screen or how to tap it; don't list features. The first lesson
+  coaches the loop once; nothing else needs instructions.
+- **Rules and numbers live in one place** (the tour, the match intro), not on every card.
+- **Errors say what happened and what to do, in under 10 words**, and never blame the player: "The map is busy. Try
+  again." Say "check your connection" only when the device is actually offline.
+- **Banned:** "in this version of the app", "please note", "you can … any time", "here is what is inside", "simply",
+  "seamless", "leverage", and long dashes doing the work of a full stop.
 
 ## Feel
 
@@ -204,7 +227,8 @@ See `../SECURITY.md` for the whole picture. In practice:
 
 ## Never do
 
-- Gradients, glassmorphism, glowing shadows.
+- Gradients, glassmorphism, glowing shadows. Pastel icon tiles with coloured outlines. Dashboard grids of stat cards.
+- Paragraphs where a few words would do (see Voice).
 - Spinners for loading content — use `<Skeleton>` or Tin thinking with a progress bar.
 - Invented data: no fake drop-off sites, no made-up stats, no lorem ipsum. Places come from OpenStreetMap or are links out.
 - `Alert.alert` / system alerts. Errors are inline or shown by Tin.
@@ -224,7 +248,8 @@ Don't leave finished work sitting on a feature branch.
 2. Run it and screenshot it (iOS simulator when on macOS; in the Linux cloud sandbox use Expo web + Playwright at iPhone viewport,
    see `scripts/screenshot.mjs`). Critique against this file before moving on.
 3. Definition of done:
-   - [ ] Only tokens used (`npm run check:tokens` passes)
+   - [ ] Only tokens used (`npm run check:tokens` passes), and `npm run check:contrast` passes
+   - [ ] Copy within the word budgets (see Voice)
    - [ ] Loading, empty and error states handled where data is fetched
    - [ ] Dark mode checked
    - [ ] Every tappable has press feedback; primary action has haptics

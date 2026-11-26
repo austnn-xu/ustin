@@ -87,7 +87,7 @@ function LeagueView({ me, loading, error, onRetry }: { me: MyLeague | null | und
           Leagues start with a name
         </Text>
         <Text variant="callout" hue="blue">
-          Roll a leaderboard name in the Arena and play a match: you start in Bronze, in a group of players at your level.
+          Roll a name and play a match to start in Bronze.
         </Text>
         <Button label="Go to the Arena" variant="secondary" onPress={() => router.replace('/arena')} />
       </Card>
@@ -111,7 +111,7 @@ function Group({ me }: { me: MyLeague }) {
       <Card style={styles.gap}>
         <Text variant="heading">{`Join this week’s ${info.name} group`}</Text>
         <Text variant="callout" color="textSecondary">
-          {`Your first match this week puts you in a group of up to ${leagues.GROUP_SIZE} ${info.name} players. Every match point counts; the top ${info.promote} move up when the week ends.`}
+          {`Up to ${leagues.GROUP_SIZE} players. Top ${info.promote} move up on Monday.`}
         </Text>
         <Button label="Play a match" icon={Swords} onPress={() => router.push('/match')} />
       </Card>
@@ -136,7 +136,7 @@ function Group({ me }: { me: MyLeague }) {
       <BoardList entries={entries} nextLeague={leagues.LEAGUES[me.league + 1]?.name} prevLeague={leagues.LEAGUES[me.league - 1]?.name} />
       {me.league === leagues.PRISTINE - 1 && size < leagues.MIN_GROUP_FOR_PRISTINE && (
         <Text variant="caption" color="textTertiary">
-          {`Pristine is earned against real competition: a Ruby group needs ${leagues.MIN_GROUP_FOR_PRISTINE} players before anyone moves up.`}
+          {`Pristine opens once a Ruby group has ${leagues.MIN_GROUP_FOR_PRISTINE} players.`}
         </Text>
       )}
     </View>
@@ -162,15 +162,15 @@ function GlobalView({ initial }: { initial: Period }) {
       <Segmented options={PERIODS} value={period} onChange={setPeriod} accessibilityLabel="Leaderboard period" />
       <Text variant="callout" color="textSecondary">
         {period === 'week'
-          ? `The top ${BOARD_SIZE} by points since Monday, 00:00 UTC, every league together.`
-          : `The top ${BOARD_SIZE} by every point ever earned. Totals are shown short (12.3K, 4.56M) and stop at 9 quadrillion.`}
+          ? `Top ${BOARD_SIZE} since Monday.`
+          : `Top ${BOARD_SIZE} of all time.`}
       </Text>
       {board.isPending ? (
         <BoardSkeleton rows={10} />
       ) : board.isError && !rows.length ? (
         <BoardMessage error={board.error} onRetry={() => void board.refetch()} />
       ) : rows.length === 0 ? (
-        <BoardMessage empty="Nobody is on the board yet. Play a match to be first." />
+        <BoardMessage empty="Nobody here yet. Be first!" />
       ) : (
         <>
           {board.isError && <StaleNote at={board.dataUpdatedAt} onRetry={() => void board.refetch()} />}
@@ -180,7 +180,7 @@ function GlobalView({ initial }: { initial: Period }) {
           <BoardList entries={toEntries(rows, BOARD_SIZE).filter((e) => top.length < 2 || e.rank > 3 || e.isMe)} />
           {rows.some((r) => r.isMe) ? null : (
             <Text variant="caption" color="textTertiary" align="center">
-              {`Not in the top ${BOARD_SIZE} yet. Every match counts, and your ${leagueName(0)}-to-Pristine league runs alongside.`}
+              {`Not in the top ${BOARD_SIZE} yet. Keep playing!`}
             </Text>
           )}
         </>
