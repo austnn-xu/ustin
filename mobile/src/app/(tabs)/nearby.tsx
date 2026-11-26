@@ -48,6 +48,9 @@ export default function Nearby() {
     queryKey: ['places', kind, place?.lat, place?.lon],
     queryFn: () => findPlaces(kind, place!.lat, place!.lon),
     enabled: !!place && seen,
+    // The search already tries several mirrors under one deadline; a blind retry would just double the wait.
+    // "Try again" is one tap away.
+    retry: false,
     // Results can come back from the on-device cache, so they are checked before they are drawn.
     select: (data) => cleanPlaces(data) ?? { sites: [], radiusKm: 0, at: { lat: place!.lat, lon: place!.lon } },
   });
@@ -104,9 +107,10 @@ export default function Nearby() {
             ) : query.isError ? (
               <Card padding="lg" style={styles.gap}>
                 <MascotSays mood="sad" size="sm">
-                  I could not reach the map service. It might be busy. Try again in a moment.
+                  The map service did not answer in time. It is free and shared, so it gets busy. Try again, or use one of these searches:
                 </MascotSays>
                 <Button label="Try again" variant="secondary" fullWidth onPress={() => query.refetch()} />
+                <LinksOut kind={kind} />
               </Card>
             ) : query.data.sites.length === 0 ? (
               <Card padding="lg" style={styles.gap}>
@@ -178,10 +182,16 @@ function LinksOut({ kind }: { kind: PlaceKind }) {
 function Loading() {
   const t = useTheme();
   const styles = useStyles();
+  // The free map service is sometimes slow. Say so, rather than leaving a skeleton to look frozen.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), 8_000);
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <View style={styles.gap}>
       <MascotSays mood="thinking" size="sm">
-        Checking the map for places near you…
+        {slow ? 'The map service is slow right now. Still looking, it will not be long…' : 'Checking the map for places near you…'}
       </MascotSays>
       <Skeleton height={t.space[20] * 3} radius="lg" />
       {[0, 1, 2].map((i) => (
