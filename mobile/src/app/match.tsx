@@ -69,7 +69,7 @@ export default function MatchScreen() {
     (async () => {
       setProblem(null);
       if (pin) {
-        if (!leaderboardConfigured) throw new ArenaError('offline', 'Game PINs need the online leaderboard, which is not connected.');
+        if (!leaderboardConfigured) throw new ArenaError('offline', 'Game PINs need the leaderboard, which is offline.');
         const room = await joinRoom(pin);
         const me = (await queryClient.fetchQuery({ queryKey: arenaKeys.me, queryFn: fetchMe })) ?? null;
         if (cancelled) return;
@@ -214,18 +214,18 @@ function Intro({ setup, onStart, onLeave }: { setup: Setup; onStart: () => void;
 
   const sub =
     rival.kind === 'player'
-      ? `Matched from your league. Played these same ${MATCH.questions} questions ${timeAgo(rival.playedAt)}; their answers are revealed as you go.`
+      ? `From your league. Played ${timeAgo(rival.playedAt)}.`
       : rival.kind === 'tin'
-        ? 'Tin, the computer. Right about 7 times in 10, and not the fastest.'
+        ? 'Right about 7 in 10. Not the fastest.'
         : `Hosted by ${rival.host} · ${rival.players === 0 ? 'nobody has played yet' : rival.players === 1 ? '1 player so far' : `${rival.players} players so far`}`;
 
   const note = setup.online
     ? rival.kind === 'room'
-      ? `Beat everyone who played before you for +${REWARDS.pointsWin.toLocaleString('en-US')} leaderboard points.`
-      : `Your score goes on the global leaderboard. A win adds +${(rival.kind === 'tin' ? REWARDS.pointsWinTin : REWARDS.pointsWin).toLocaleString('en-US')}.`
+      ? `Beat everyone for +${REWARDS.pointsWin.toLocaleString('en-US')} points.`
+      : `A win adds +${(rival.kind === 'tin' ? REWARDS.pointsWinTin : REWARDS.pointsWin).toLocaleString('en-US')} points.`
     : leaderboardConfigured
-      ? 'Practice match: coins and XP count, the leaderboard does not (no name, or offline).'
-      : 'Coins and XP count. The global leaderboard is not connected in this version.';
+      ? 'Practice: coins and XP only.'
+      : 'Practice: coins and XP only.';
 
   return (
     <SafeAreaView style={styles.root}>
@@ -272,9 +272,9 @@ function Intro({ setup, onStart, onLeave }: { setup: Setup; onStart: () => void;
           </Text>
 
           <Card style={styles.rules}>
-            <Rule icon={Timer} hue="blue" text={`${MATCH.questions} questions, ${MATCH.questionMs / 1000} seconds each. Tap an answer to lock it in.`} />
-            <Rule icon={Zap} hue="yellow" text={`Right answers score ${MATCH.minPoints}–${MATCH.maxPoints}: the faster, the more.`} />
-            <Rule icon={Flame} hue="orange" text={`Answer streaks add up to +${MATCH.streakCap} a question.`} />
+            <Rule icon={Timer} hue="blue" text={`${MATCH.questions} questions, ${MATCH.questionMs / 1000} seconds each`} />
+            <Rule icon={Zap} hue="yellow" text="Faster answers score more" />
+            <Rule icon={Flame} hue="orange" text="Streaks add bonus points" />
           </Card>
           <Text variant="callout" color="textSecondary" align="center">
             {note}
@@ -463,7 +463,7 @@ function MatchPlayer({ setup, onLeave, onFinish }: { setup: Setup; onLeave: () =
 
       {quitting && (
         <QuitConfirm
-          message="Leaving now ends the match. Nothing is posted and no coins are paid."
+          message="Leave now and this match won't count."
           stayLabel="Keep playing"
           onStay={() => setQuitting(false)}
           onQuit={onLeave}

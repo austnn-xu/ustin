@@ -25,6 +25,9 @@ jobs:
       - name: Design tokens
         working-directory: mobile
         run: npm run check:tokens
+      - name: Colour contrast
+        working-directory: mobile
+        run: npm run check:contrast
       - name: Export the web build
         working-directory: mobile
         run: npm run export:web

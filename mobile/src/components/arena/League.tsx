@@ -82,7 +82,7 @@ export function LeagueBanner({ me, size = 'lg' }: { me: MyLeague; size?: 'md' | 
         )}
         {isPristine(me.league) && (
           <Text variant="caption" color="textSecondary">
-            Win quick matches for RR; drop below 0 and you return to Ruby.
+            Win matches for RR. Drop below 0 and it's back to Ruby.
           </Text>
         )}
       </View>

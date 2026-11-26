@@ -99,7 +99,8 @@ export const type = {
   bodyStrong: variant(fontSize.md, 24, fontFamily.bodyBold),
   callout: variant(fontSize.sm, 20, fontFamily.bodySemibold),
   caption: variant(fontSize.sm, 20, fontFamily.body),
-  label: variant(fontSize.xs, 16, fontFamily.bodyBold, 0.8, { textTransform: 'uppercase' }),
+  /** Small section labels. Sentence case: shouting labels are a generic-template tell. */
+  label: variant(fontSize.sm, 18, fontFamily.bodyBold, 0.1),
   button: variant(fontSize.md, 22, fontFamily.displayBold, -0.1),
 } as const;
 

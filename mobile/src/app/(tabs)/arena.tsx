@@ -1,16 +1,16 @@
 import { router } from 'expo-router';
-import { Flame, Hash, Medal, Swords, Target, Trophy, Users, Zap } from 'lucide-react-native';
+import { Hash, Medal, Swords, Trophy, Users, Zap } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Coin } from '@/components/art/Coin';
 import { Mascot } from '@/components/art/Mascot';
 import { Avatar } from '@/components/arena/Avatar';
 import { BoardList, BoardMessage, BoardSkeleton } from '@/components/arena/BoardList';
 import { isPristine, LeagueBanner, LeagueLadder } from '@/components/arena/League';
 import { NameSheet } from '@/components/arena/NameSheet';
+import { StatRow } from '@/components/StatRow';
 import { StatsBar } from '@/components/StatsBar';
 import { Button, Card, Icon, Input, ListRow, PressableScale, Screen, Text } from '@/components/ui';
-import { arena, leagues, numbers } from '@/lib/engine';
+import { arena, leagues } from '@/lib/engine';
 import { haptics } from '@/lib/haptics';
 import {
   ArenaError,
@@ -122,7 +122,7 @@ export default function Arena() {
             <View style={styles.flex}>
               <Text variant="title">Quick match</Text>
               <Text variant="callout" color="textSecondary">
-                {`${MATCH.questions} questions from the whole course, ${MATCH.questionMs / 1000} seconds each. Race a real player's run on the same questions, or Tin.`}
+                {`${MATCH.questions} questions, ${MATCH.questionMs / 1000} seconds each. Race a player or me.`}
               </Text>
             </View>
           </View>
@@ -176,8 +176,7 @@ export default function Arena() {
             <Text variant="heading">Play with friends</Text>
           </View>
           <Text variant="callout" color="textSecondary">
-            Host a game and share its 6-digit PIN. Everyone who joins answers the same questions, and the podium fills in as
-            each friend finishes.
+            Share a PIN. Everyone plays the same questions.
           </Text>
           <>
               <Button label={hosting ? 'Starting…' : 'Host a game'} variant="secondary" fullWidth disabled={hosting} onPress={host} />
@@ -220,21 +219,13 @@ export default function Arena() {
         </Card>
         )}
 
-        <View style={styles.grid}>
-          <Stat icon={Swords} hue="blue" value={stats.played} label="Matches" />
-          <Stat icon={Medal} hue="yellow" value={stats.wins} label="Wins" />
-          <Stat icon={Zap} hue="yellow" value={stats.best} label="Best score" />
-          <Stat icon={Trophy} hue="purple" value={stats.points} label="Points earned" />
-        </View>
-
-        <Card variant="tinted" hue="yellow" style={styles.gap}>
-          <Text variant="label" hue="yellow">
-            What you earn
-          </Text>
-          <Earn art={<Coin size={t.layout.icon.md} />} text={`${REWARDS.coinPerCorrect} coin per right answer, +${REWARDS.coinsWin} for a win, +${REWARDS.coinsPerfect} for a perfect match`} />
-          <Earn art={<Icon icon={Trophy} hue="yellow" shade="text" />} text={`League points: your score, +${REWARDS.pointsWin.toLocaleString('en-US')} for beating a player (+${REWARDS.pointsWinTin} for beating Tin). The top of your group moves up a league each week`} />
-          <Earn art={<Icon icon={Flame} hue="orange" filled />} text="Every match counts for your streak and pays XP, like a lesson" />
-        </Card>
+        <StatRow
+          stats={[
+            { icon: Swords, hue: 'blue', value: stats.played, label: 'Matches' },
+            { icon: Medal, hue: 'yellow', value: stats.wins, label: 'Wins' },
+            { icon: Zap, hue: 'yellow', value: stats.best, label: 'Best', filled: true },
+          ]}
+        />
       </View>
     </Screen>
   );
@@ -298,8 +289,7 @@ function LeagueCard() {
         <>
           <LeagueLadder current={0} />
           <Text variant="callout" color="textSecondary">
-            Roll a name and play a match to start in Bronze. Each week you race a group of up to 30 players at your level;
-            the top move up, all the way to Pristine.
+            Roll a name and play to start in Bronze.
           </Text>
         </>
       ) : (
@@ -313,35 +303,6 @@ function LeagueCard() {
   );
 }
 
-function Stat({ icon, hue, value, label }: { icon: typeof Target; hue: HueName; value: number; label: string }) {
-  const styles = useStyles();
-  return (
-    <Card style={styles.stat}>
-      <Icon icon={icon} hue={hue} filled={icon === Zap} />
-      <View style={styles.flex}>
-        <Text variant="heading" tabular numberOfLines={1}>
-          {numbers.compact(value)}
-        </Text>
-        <Text variant="caption" color="textSecondary" numberOfLines={1}>
-          {label}
-        </Text>
-      </View>
-    </Card>
-  );
-}
-
-function Earn({ art, text }: { art: React.ReactNode; text: string }) {
-  const styles = useStyles();
-  return (
-    <View style={styles.earn}>
-      {art}
-      <Text variant="callout" hue="yellow" style={styles.flex}>
-        {text}
-      </Text>
-    </View>
-  );
-}
-
 const useStyles = makeStyles((t) => ({
   stack: { gap: t.space[4], paddingTop: t.space[2] },
   hero: { gap: t.space[4] },
@@ -352,7 +313,4 @@ const useStyles = makeStyles((t) => ({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: t.space[2] },
   joinRow: { flexDirection: 'row', alignItems: 'flex-start', gap: t.space[2] },
   recentLabel: { marginTop: t.space[2], marginBottom: t.space[1] },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space[3] },
-  stat: { flexBasis: '46%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', gap: t.space[3] },
-  earn: { flexDirection: 'row', alignItems: 'flex-start', gap: t.space[3] },
 }));

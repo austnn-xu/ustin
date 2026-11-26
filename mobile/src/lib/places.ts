@@ -354,7 +354,7 @@ export async function geocode(query: string): Promise<GeoPoint> {
   try {
     data = await getJSON<Nom>(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&${params}`, 10_000);
   } catch {
-    throw new LookupError('Could not reach the map service. Check your connection and try again.');
+    throw new LookupError("Can't reach the map. Try again.");
   }
   const hit = data[0];
   if (!hit) throw new LookupError(zip ? `Could not find ZIP code ${zip}.` : `Could not find "${q}".`);

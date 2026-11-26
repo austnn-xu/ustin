@@ -7,39 +7,31 @@ import { makeStyles, useTheme } from '@/theme';
 /** Plain-language privacy and "how to read the answers" page. Keep it true to SECURITY.md. */
 const SECTIONS: { title: string; body: string[] }[] = [
   {
-    title: 'What stays on your phone',
-    body: [
-      'Your progress (XP, streak, lessons, coins, Tin’s outfit) and settings (theme, daily goal, saved ZIP code or approximate location) are stored on this device only. Reset progress in Settings clears them.',
-      'US Tin has no email sign-up, no password, no ads and no analytics or tracking.',
-    ],
+    title: 'On your phone',
+    body: ['Your progress and settings live on this device. No sign-up, no ads, no tracking.'],
   },
   {
     title: 'Photos',
-    body: ['When you look up an item with a photo (web version), the photo is read on your device. It is never uploaded.'],
+    body: ['Read on your device. Never uploaded.'],
   },
   {
-    title: 'Your location',
+    title: 'Location',
+    body: ['Sent only to OpenStreetMap, to find places near you.'],
+  },
+  {
+    title: 'Leaderboard',
     body: [
-      'A ZIP code or your location is used only to find nearby drop-off places. It is sent to OpenStreetMap services (Zippopotam, Nominatim and Overpass) to look up coordinates and places, and nowhere else. Those services have their own privacy policies.',
+      'If you join, your rolled name, Tin\u2019s look and your scores are shared. No email, no real name.',
+      'Arena \u2192 your name \u2192 Remove me erases it all.',
     ],
   },
   {
-    title: 'The leaderboard',
-    body: [
-      'When the online Arena is available you roll a name: three random, family-friendly words like Happy Mossy Otter. That name, your Tin’s paint colour and outfit (the hat, glasses and neckwear it wears), your match scores and any game PINs you host are stored with an anonymous account so others can see the board. You never type a name, and no email or real name is needed.',
-      'To delete all of it, go to Arena, tap your name, then Remove me from the leaderboard. Your matches, PINs and the anonymous account are erased.',
-    ],
+    title: 'The answers',
+    body: ['General US guidance. Rules vary by town, so yours wins. Map places can be out of date, so call ahead.'],
   },
   {
-    title: 'Reading the answers',
-    body: [
-      'US Tin gives general guidance based on common US recycling practice. Rules differ between towns and haulers, so when your local program says something different, follow your local program.',
-      'Map results come from OpenStreetMap, which anyone can edit. Call ahead before you drive somewhere.',
-    ],
-  },
-  {
-    title: 'Questions or problems',
-    body: ['Open an issue, or report a security problem privately, at github.com/austnn-xu/ustin.'],
+    title: 'Questions?',
+    body: ['github.com/austnn-xu/ustin'],
   },
 ];
 

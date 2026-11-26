@@ -36,7 +36,7 @@ function CrashScreen({ retry }: { retry: () => Promise<void> }) {
     <Screen>
       <View style={styles.wrap}>
         <MascotSays mood="worried" size="lg" layout="above">
-          Oops, something tipped over. Your progress is safe. Let's try that again.
+          Oops, something tipped over. Your progress is safe.
         </MascotSays>
         <Button label="Try again" fullWidth onPress={() => void retry()} />
       </View>

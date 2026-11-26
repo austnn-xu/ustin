@@ -96,7 +96,7 @@ export const hueForObject = (objectId: string): HueName => SECTION_HUE[sectionOf
 
 export const iconForSection = (sectionId: string): LucideIcon => SECTION_ICON[sectionId] ?? Package;
 
-/** The item's picture: its glyph on a tile in its shelf's hue. */
+/** The item's picture: its glyph on a soft tile in its shelf's hue (no outline: an outlined pastel tile is template-ish). */
 export function ItemArt({ objectId, size = 'md' }: { objectId: string; size?: 'sm' | 'md' | 'lg' }) {
   const t = useTheme();
   const styles = useStyles();
@@ -105,10 +105,10 @@ export function ItemArt({ objectId, size = 'md' }: { objectId: string; size?: 's
   const px = t.layout.art[size];
   return (
     <View
-      style={[styles.tile, { width: px, height: px, backgroundColor: hue.subtle, borderColor: hue.base }]}
+      style={[styles.tile, { width: px, height: px, backgroundColor: hue.subtle, borderColor: hue.subtle }]}
       aria-hidden
     >
-      <Glyph size={px * 0.5} color={hue.base} strokeWidth={t.layout.iconStroke} />
+      <Glyph size={px * 0.5} color={hue.text} strokeWidth={t.layout.iconStroke} />
     </View>
   );
 }

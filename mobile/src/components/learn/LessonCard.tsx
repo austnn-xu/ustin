@@ -24,7 +24,7 @@ export function LessonCard({ unit, lesson, index, state }: { unit: Unit; lesson:
         {lesson.review ? 'Sorting center: unit review' : `Stop ${index + 1} of ${unit.lessons.length}`}
       </Text>
       <Text variant="callout" style={!locked && styles.onColor} color="textTertiary" numberOfLines={3}>
-        {locked ? 'Finish the stops before this one to unlock it.' : shown}
+        {locked ? 'Finish the stops before this one.' : shown}
       </Text>
       {!locked && (
         <View style={styles.cta}>

@@ -101,7 +101,7 @@ export function FeedbackPanel({ correct, title, answer, explain, showTin, payout
           )}
         </ScrollView>
 
-        {coach && <CoachTip>{correct ? 'The why is the lesson. Tap Continue' : 'Mistakes are free. Read why, then Continue'}</CoachTip>}
+        {coach && <CoachTip>{correct ? 'Read why, then Continue' : 'Read why, then Continue'}</CoachTip>}
         <Button label="Continue" hue={hueName} fullWidth onPress={onContinue} />
       </View>
     </Animated.View>

@@ -42,7 +42,7 @@ export default function WhatBin() {
 
           {state.phase === 'idle' ? (
             <MascotSays mood="happy" size="sm">
-              Tell me what you are throwing away and I will tell you where every part goes.
+              What are you tossing?
             </MascotSays>
           ) : (
             <PhotoResult state={state} onReset={reset} />
@@ -78,7 +78,7 @@ export default function WhatBin() {
                 <Card style={styles.gap}>
                   <Text variant="bodyStrong">{`Nothing called "${query.trim()}" yet`}</Text>
                   <Text variant="body" color="textSecondary">
-                    Try a simpler word, like the material: plastic, glass, paper, metal. Or browse by shelf in the Learn tab guidebooks.
+                    Try a simpler word, like plastic or glass.
                   </Text>
                 </Card>
               </View>
@@ -106,7 +106,7 @@ export default function WhatBin() {
               </>
             )}
             <Text variant="label" color="textSecondary">
-              People often get these wrong
+              Often mixed up
             </Text>
             <View style={styles.tiles}>
               {POPULAR.map((id) => rules.findObject(id))
@@ -144,7 +144,7 @@ function PhotoResult({ state, onReset }: { state: Exclude<Recognition, { phase: 
     body = (
       <View style={styles.gap}>
         <MascotSays mood="thinking" size="sm">
-          {state.progress < 1 ? 'Warming up my eyes… this only takes a while the first time.' : 'Almost ready…'}
+          {state.progress < 1 ? 'Warming up my eyes…' : 'Almost ready…'}
         </MascotSays>
         <View style={styles.progressRow}>
           <ProgressBar value={state.progress} hue="blue" accessibilityLabel="Downloading the recognition model" />
@@ -191,7 +191,7 @@ function PhotoResult({ state, onReset }: { state: Exclude<Recognition, { phase: 
       body = (
         <View style={styles.gap}>
           <MascotSays mood="thinking" size="sm">
-            {`I can't tell exactly what it is, but it looks like ${narrowed.material.id}. Which one is it?`}
+            {`Looks like ${narrowed.material.id}. Which one?`}
           </MascotSays>
           {narrowed.objects.map((o) => (
             <ListRow key={o.id} title={o.label} leading={<ItemArt objectId={o.id} size="sm" />} onPress={() => openItem(o.id)} />
@@ -202,8 +202,8 @@ function PhotoResult({ state, onReset }: { state: Exclude<Recognition, { phase: 
       body = (
         <MascotSays mood="worried" size="sm">
           {result.looksLikeWaste
-            ? "Hmm, I don't recognise that one. Try searching for it below."
-            : `That looks like a ${result.saw.label}, not something you'd throw away. Search for your item below.`}
+            ? "Hmm, I don't know that one. Try searching."
+            : `I see a ${result.saw.label}. Try searching instead.`}
         </MascotSays>
       );
     }

@@ -11,7 +11,7 @@ export default function NotFound() {
     <Screen>
       <View style={styles.wrap}>
         <MascotSays mood="thinking" size="lg" layout="above">
-          I looked everywhere and that page is not on the route. Let's get you back.
+          Hmm, this page isn't on my route.
         </MascotSays>
         <Button label="Back to the route" fullWidth onPress={() => router.replace('/')} />
       </View>

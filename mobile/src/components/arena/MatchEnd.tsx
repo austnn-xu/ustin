@@ -125,15 +125,15 @@ export function MatchEnd({
   const line =
     rival.kind === 'room'
       ? roomPlace
-        ? `You placed #${roomPlace.rank} of ${room.data!.length} in game ${formatPin(rival.code)}. The podium updates as friends finish.`
-        : `Game ${formatPin(rival.code)}: the podium updates as friends finish.`
+        ? `#${roomPlace.rank} of ${room.data!.length} so far.`
+        : `The podium fills in as friends finish.`
       : outcome === 'win'
         ? `You beat ${rival.kind === 'player' ? rival.name : 'Tin'} by ${fmt(score - localRivalScore!)} points.`
         : outcome === 'loss'
-          ? `${rival.kind === 'player' ? rival.name : 'Tin'} won by ${fmt(localRivalScore! - score)}. Every question you missed is one you know now.`
+          ? `${rival.kind === 'player' ? rival.name : 'Tin'} won by ${fmt(localRivalScore! - score)}. Rematch?`
           : outcome === 'tie'
-            ? 'Exactly the same score. Rematch?'
-            : 'Every right answer is one more thing kept out of landfill.';
+            ? 'A perfect tie. Rematch?'
+            : 'Nice sorting!';
   const mood: Mood = outcome === 'win' ? 'cheer' : outcome === 'tie' ? 'wow' : outcome === 'loss' ? 'happy' : 'cheer';
 
   const coins = useCountUp(rewards?.coins ?? 0, 900, t.motion.stagger * 3);
@@ -210,8 +210,8 @@ function PostCard({
         <Icon icon={CloudOff} hue="slate" shade="text" />
         <Text variant="callout" hue="slate" style={styles.flex}>
           {leaderboardConfigured
-            ? 'Practice match: not posted to the leaderboard. Roll a name in the Arena to compete.'
-            : 'The global leaderboard is not connected in this version, so this match stays on your phone.'}
+            ? 'Practice match. Roll a name to compete.'
+            : 'Practice match. The leaderboard is offline.'}
         </Text>
       </Card>
     );
@@ -222,7 +222,7 @@ function PostCard({
         <View style={styles.row}>
           <Icon icon={CloudOff} hue="red" shade="text" />
           <Text variant="callout" hue="red" style={styles.flex}>
-            {`${error ?? 'Could not post this match.'} Your coins and XP are safe.`}
+            {`${error ?? 'Could not post this match.'} Your coins are safe.`}
           </Text>
         </View>
         <Button label="Try posting again" variant="neutral" labelHue="red" size="md" onPress={onRetry} />
@@ -249,12 +249,12 @@ function PostCard({
   let sub: string;
   if (fellToRuby) {
     title = `${posted.rrChange} RR: back to Ruby`;
-    sub = 'Top a Ruby group to earn Pristine again.';
+    sub = 'Top a Ruby group to climb back.';
   } else if (pristine) {
     title = posted.rrChange > 0 ? `+${posted.rrChange} RR` : posted.rrChange < 0 ? `${posted.rrChange} RR` : 'RR unchanged';
     sub = vsPlayer
       ? `${numbers.compact(posted.rr)} RR${my?.pristineRank ? ` · Pristine #${my.pristineRank}` : ''}`
-      : 'Only quick matches against other players move RR.';
+      : 'Only matches against players move RR.';
   } else {
     title = `+${numbers.compact(rewards.earned)} league points`;
     sub = `${bonus}${my && my.league === posted.league && my.rank ? ` · #${my.rank} of ${my.size} in ${leagueName(posted.league)}` : ''}`;

@@ -121,7 +121,7 @@ export default function Shop() {
               {item ? item.name : 'Your Tin'}
             </Text>
             <Text variant="caption" color="textSecondary" align="center">
-              {`Earn coins in lessons: ${COINS.correct} per right answer, +${COINS.combo5} for 5 in a row, +${COINS.combo10} for 10 in a row.`}
+              {`${COINS.correct} coin per right answer. Streaks pay more.`}
             </Text>
           </View>
 
