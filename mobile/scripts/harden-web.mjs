@@ -92,7 +92,8 @@ const tags = [
 
 // Page metadata: a real title, installable on a phone's home screen, and a proper link preview when shared.
 const base = (process.env.EXPO_BASE_URL ?? '').replace(/\/$/, '');
-const site = (process.env.SITE_URL ?? 'https://austnn-xu.github.io/ustin').replace(/\/$/, '');
+// The app is published under the website, at /app (see build-pages.sh).
+const site = (process.env.SITE_URL ?? 'https://us-tin.org').replace(/\/$/, '');
 const TITLE = 'US Tin: learn where things go';
 const DESCRIPTION = 'Learn where everything goes, one short lesson at a time. Look up any item and find the nearest drop-off.';
 const meta = [
@@ -106,7 +107,7 @@ const meta = [
   `<meta property="og:title" content="${TITLE}">`,
   `<meta property="og:description" content="${DESCRIPTION}">`,
   `<meta property="og:image" content="${site}/apple-touch-icon.png">`,
-  `<meta property="og:url" content="${site}/">`,
+  `<meta property="og:url" content="${site}${base.replace(process.env.BASE_PATH ?? '', '')}/">`,
   '<meta name="twitter:card" content="summary">',
 ].join('\n    ');
 

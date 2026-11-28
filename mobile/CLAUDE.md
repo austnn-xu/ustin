@@ -239,7 +239,14 @@ See `../SECURITY.md` for the whole picture. In practice:
 ## Shipping
 
 The owner wants every finished update live: once a change passes its checks, open a PR into the default branch, merge
-it, and publish the web build to GitHub Pages (`npm run publish:web`, served at https://austnn-xu.github.io/ustin/).
+it, and publish the web build to GitHub Pages (`npm run publish:web`). The website (`../site`) is served at
+https://us-tin.org/ and the app under it at https://us-tin.org/app/; `scripts/build-pages.sh`
+assembles both, and links from before the app moved are forwarded by `../site/redirect.js`. The published build needs
+`EXPO_PUBLIC_SUPABASE_URL` and its key in `mobile/.env`, or the Arena's leaderboard ships switched off.
+
+The website follows its own notes (`../site/DESIGN.md`): it borrows the app's ink, palette, type and Tin, but it is
+hand-written HTML and CSS, not React Native. If the shop, the course or the catalog changes, `npm test` in `../` fails
+until the site's data is regenerated (`node ../site/tools/make-data.cjs`, `node scripts/capture-site-art.cjs`).
 Don't leave finished work sitting on a feature branch.
 
 ## Process (per screen)
