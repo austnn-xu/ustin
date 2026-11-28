@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>US Tin: know where everything goes</title>
+  <meta name="description" content="US Tin is a free app that teaches you what goes in which bin, five minutes at a time, and answers on the spot. Lessons, a lookup for 177 items, nearby drop-offs and a quiz arena.">
+  <meta name="theme-color" content="#2D7BC0">
+  <link rel="canonical" href="https://us-tin.org/">
+  <link rel="manifest" href="app/manifest.webmanifest">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="US Tin">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="US Tin">
+  <meta property="og:title" content="US Tin: know where everything goes">
+  <meta property="og:description" content="A free app that teaches you what goes in which bin, five minutes at a time.">
+  <meta property="og:image" content="https://us-tin.org/og.png">
+  <meta property="og:url" content="https://us-tin.org/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="fonts/BricolageGrotesque_800ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/PlusJakartaSans_500Medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/site.js" defer></script>
+</head>
+<body class="home">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" data-nav>
+  <a class="nav-logo" href="./" aria-label="US Tin home">
+    <svg viewBox="16 -6 88 100" aria-hidden="true"><use href="#tin-head"/></svg>
+    <span>US Tin</span>
+  </a>
+  <nav class="nav-links" aria-label="Main">
+    <a class="pill" href="#how">How it works</a>
+    <a class="pill" href="#app">The app</a>
+    <a class="pill" href="#install">Install</a>
+    <a class="pill" href="#faq">FAQ</a>
+  </nav>
+  <a class="btn btn-small" href="app/">Open the app</a>
+</header>
+
+<main id="main">
+
+<!-- Hero: a morning in the town Tin lives in. -->
+<section class="hero" aria-labelledby="hero-title">
+  <img class="cloud cloud-a" src="img/cloud-a.svg" alt="" width="520" height="230">
+  <img class="cloud cloud-b" src="img/cloud-b.svg" alt="" width="380" height="190">
+  <img class="cloud cloud-c" src="img/cloud-c.svg" alt="" width="260" height="140">
+  <div class="hero-copy">
+    <h1 id="hero-title">Know where everything goes.</h1>
+    <p class="lede">US Tin is a free app that teaches you what goes in which bin, five minutes at a time, and answers on the spot when you're holding something over one.</p>
+    <div class="actions">
+      <a class="btn" href="app/">Open the app</a>
+      <a class="btn btn-quiet" href="#install">Add to home screen</a>
+    </div>
+  </div>
+
+  <svg class="meadow" viewBox="0 -160 1600 720" preserveAspectRatio="xMidYMax slice" focusable="false">
+    <g aria-hidden="true">
+    <!-- Far hills -->
+    <path d="M-20 318 C180 250 360 236 560 290 C740 338 880 262 1080 248 C1260 236 1420 280 1620 300 V600 H-20 Z" fill="#8ACB62" stroke="#26323B" stroke-width="5"/>
+    <!-- Left tree -->
+    <g class="tree">
+      <path d="M176 352 C168 300 182 250 160 196 L196 196 C206 250 196 300 214 352 Z" fill="#26323B"/>
+      <path d="M180 330 C176 296 186 262 176 228 M200 318 C198 290 204 266 196 240" stroke="#7E6A8F" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <g stroke="#26323B" stroke-width="10"><circle cx="112" cy="168" r="58"/><circle cx="176" cy="118" r="70"/><circle cx="246" cy="160" r="60"/><circle cx="150" cy="208" r="52"/><circle cx="218" cy="210" r="50"/></g>
+      <g fill="#A9DB4F"><circle cx="112" cy="168" r="58"/><circle cx="176" cy="118" r="70"/><circle cx="246" cy="160" r="60"/><circle cx="150" cy="208" r="52"/><circle cx="218" cy="210" r="50"/></g>
+      <path d="M118 150 q8 -14 14 0 q6 -14 14 2 M200 98 q8 -14 14 0 q6 -14 14 2 M226 186 q8 -14 14 0 q6 -14 14 2" stroke="#26323B" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <path d="M140 92 q20 -22 46 -18" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" opacity=".7"/>
+    </g>
+    <!-- Right tree -->
+    <g class="tree">
+      <path d="M1426 344 C1434 296 1420 250 1440 202 L1406 202 C1398 250 1408 296 1390 344 Z" fill="#26323B"/>
+      <g stroke="#26323B" stroke-width="10"><circle cx="1360" cy="176" r="54"/><circle cx="1424" cy="128" r="66"/><circle cx="1490" cy="170" r="58"/><circle cx="1400" cy="214" r="50"/><circle cx="1462" cy="218" r="48"/></g>
+      <g fill="#A9DB4F"><circle cx="1360" cy="176" r="54"/><circle cx="1424" cy="128" r="66"/><circle cx="1490" cy="170" r="58"/><circle cx="1400" cy="214" r="50"/><circle cx="1462" cy="218" r="48"/></g>
+      <path d="M1380 160 q8 -14 14 0 q6 -14 14 2 M1440 110 q8 -14 14 0 q6 -14 14 2 M1460 196 q8 -14 14 0 q6 -14 14 2" stroke="#26323B" stroke-width="5" stroke-linecap="round" fill="none"/>
+    </g>
+    <!-- Bushes -->
+    <g stroke="#26323B" stroke-width="9"><circle cx="300" cy="352" r="34"/><circle cx="340" cy="340" r="40"/><circle cx="1260" cy="346" r="36"/><circle cx="1298" cy="356" r="28"/></g>
+    <g fill="#6FBF4A"><circle cx="300" cy="352" r="34"/><circle cx="340" cy="340" r="40"/><circle cx="1260" cy="346" r="36"/><circle cx="1298" cy="356" r="28"/></g>
+    <!-- The meadow -->
+    <path d="M-20 392 C320 330 600 318 800 318 C1000 318 1280 330 1620 392 V600 H-20 Z" fill="#5DBB4A" stroke="#26323B" stroke-width="5"/>
+    <g stroke="#26323B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M140 452 l7 -16 l5 12 l7 -18 l5 16"/><path d="M420 400 l7 -16 l5 12 l7 -18 l5 16"/><path d="M560 470 l7 -16 l5 12 l7 -18 l5 16"/>
+      <path d="M1060 468 l7 -16 l5 12 l7 -18 l5 16"/><path d="M1180 404 l7 -16 l5 12 l7 -18 l5 16"/><path d="M1420 456 l7 -16 l5 12 l7 -18 l5 16"/>
+      <path d="M300 500 l7 -16 l5 12 l7 -18 l5 16"/><path d="M820 500 l7 -16 l5 12 l7 -18 l5 16"/><path d="M1300 512 l7 -16 l5 12 l7 -18 l5 16"/>
+    </g>
+    <!-- Shadows, then the three bins: trash, compost, recycling -->
+    <g fill="#3F9A35"><ellipse cx="630" cy="414" rx="62" ry="11"/><ellipse cx="760" cy="410" rx="62" ry="11"/><ellipse cx="890" cy="414" rx="62" ry="11"/><ellipse cx="1036" cy="418" rx="54" ry="10"/></g>
+    <g transform="translate(572 286) scale(1.8)"><use href="#bin" width="64" height="72" class="bin-trash"/><use href="#ico-trash" x="20" y="34" width="24" height="24" class="bin-icon"/></g>
+    <g transform="translate(702 282) scale(1.8)"><use href="#bin" width="64" height="72" class="bin-compost"/><use href="#ico-sprout" x="20" y="34" width="24" height="24" class="bin-icon"/></g>
+    <g transform="translate(832 286) scale(1.8)"><use href="#bin" width="64" height="72" class="bin-recycle"/><use href="#ico-recycle" x="20" y="34" width="24" height="24" class="bin-icon"/></g>
+    </g>
+    <!-- Tin, standing on the grass beside the bins. Poke it. -->
+    <g class="hero-tin" role="button" tabindex="0" aria-label="Say hi to Tin" data-poke>
+      <g class="tin-body"><use href="#tin" x="986" y="276" width="100" height="140"/></g>
+    </g>
+  </svg>
+</section>
+
+<!-- The course, as a road. If this browser has used the app, the truck sits where they are. -->
+<section class="route-card card" aria-labelledby="route-title" data-route>
+  <div class="route-head">
+    <div>
+      <p class="small" data-route-label>The course</p>
+      <h2 id="route-title" class="route-big" data-route-big>53 stops</h2>
+      <p data-route-text>Across 12 neighbourhoods, from Bottles &amp; cans to Around the house. About five minutes a stop.</p>
+    </div>
+    <a class="btn btn-quiet" href="app/" data-route-cta>Start the first stop</a>
+  </div>
+  <div class="road" role="img" aria-label="The route, with Tin's truck at the start" data-road>
+    <ol class="road-units" data-road-units></ol>
+    <div class="truck" data-truck>
+      <svg viewBox="0 0 120 76" aria-hidden="true"><use href="#truck"/></svg>
+    </div>
+  </div>
+  <p class="road-ends small"><span>Bottles &amp; cans</span><span>Around the house</span></p>
+</section>
+
+<!-- How it works: the coffee cup comes apart as you scroll. -->
+<section class="how" id="how" aria-labelledby="how-title">
+  <div class="how-copy">
+    <h2 id="how-title">A coffee cup is three things.</h2>
+    <p>Most people bin it whole. US Tin takes it apart: the lid, the sleeve and the cup each get their own answer, down to the resin code, with the reason why.</p>
+    <ol class="how-steps" data-how-steps>
+      <li data-step="0"><strong>One cup.</strong> It looks like one thing, so it goes in one bin.</li>
+      <li data-step="1"><strong>Three materials.</strong> A polypropylene lid, a paperboard sleeve, a paper cup fused to a plastic lining.</li>
+      <li data-step="2"><strong>Two bins.</strong> Lid and sleeve go in recycling. The cup goes in the trash, because the lining won't come off the paper.</li>
+    </ol>
+  </div>
+  <div class="how-track" data-how>
+    <div class="how-pin">
+    <p class="how-caption" data-how-caption aria-hidden="true"></p>
+    <div class="how-stage">
+      <svg class="cup-art" viewBox="0 0 600 790" role="img" aria-labelledby="cup-desc">
+        <desc id="cup-desc">A takeaway coffee cup separates into its lid, its sleeve and its cup. The lid and sleeve drop into the recycling bin; the cup drops into the trash. The compost bin stays empty.</desc>
+        <g class="steam" data-part="steam" stroke="#26323B" stroke-width="5" stroke-linecap="round" fill="none" opacity=".55">
+          <path d="M270 120 q-14 -20 0 -40 q14 -20 0 -40"/><path d="M300 112 q-14 -20 0 -40 q14 -20 0 -40"/><path d="M330 120 q-14 -20 0 -40 q14 -20 0 -40"/>
+        </g>
+        <!-- Cup body: paper, fused to a polyethylene lining -->
+        <g data-part="body">
+          <path d="M210 196 L390 196 L362 498 Q360 512 346 512 L254 512 Q240 512 238 498 Z" fill="#FFFFFF" stroke="#26323B" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M232 232 L252 480" stroke="#E3E9EE" stroke-width="12" stroke-linecap="round"/>
+          <path d="M215 250 L385 250" stroke="#26323B" stroke-width="4" stroke-dasharray="2 9" stroke-linecap="round" opacity=".35"/>
+          <path d="M206 196 L394 196" stroke="#26323B" stroke-width="12" stroke-linecap="round"/>
+          <path d="M206 196 L394 196" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <!-- Sleeve: plain paperboard -->
+        <g data-part="sleeve">
+          <path d="M219 300 L381 300 L370 420 L230 420 Z" fill="#D7A86E" stroke="#26323B" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M245 306 L251 414 M275 306 L278 414 M305 306 L305 414 M335 306 L332 414 M362 306 L357 414" stroke="#B9874D" stroke-width="4"/>
+          <rect x="268" y="334" width="64" height="52" rx="10" fill="#FAF7F0" stroke="#26323B" stroke-width="4"/>
+          <path d="M286 352 h28 M286 366 h20" stroke="#26323B" stroke-width="4" stroke-linecap="round"/>
+        </g>
+        <!-- Lid: #5 polypropylene -->
+        <g data-part="lid">
+          <path d="M196 200 Q196 178 222 176 L378 176 Q404 178 404 200 Z" fill="#F1F2EE" stroke="#26323B" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M226 176 Q232 146 260 144 L340 144 Q368 146 374 176" fill="#F1F2EE" stroke="#26323B" stroke-width="6" stroke-linejoin="round"/>
+          <ellipse cx="338" cy="156" rx="14" ry="5" fill="#26323B"/>
+          <path d="M262 160 l9 -14 l9 14 z" fill="none" stroke="#26323B" stroke-width="3" stroke-linejoin="round"/>
+          <text x="271" y="158.5" font-size="9" font-family="Bricolage Grotesque, sans-serif" font-weight="800" text-anchor="middle" fill="#26323B">5</text>
+        </g>
+        <!-- Bins: trash, compost, recycling -->
+        <g class="cup-bins">
+          <ellipse class="ground" cx="128" cy="738" rx="70" ry="12"/><ellipse class="ground" cx="300" cy="738" rx="70" ry="12"/><ellipse class="ground" cx="472" cy="738" rx="70" ry="12"/>
+          <g transform="translate(70 600) scale(1.82)"><use href="#bin" width="64" height="72" class="bin-trash"/><use href="#ico-trash" x="20" y="34" width="24" height="24" class="bin-icon"/></g>
+          <g transform="translate(242 600) scale(1.82)"><use href="#bin" width="64" height="72" class="bin-compost"/><use href="#ico-sprout" x="20" y="34" width="24" height="24" class="bin-icon"/></g>
+          <g transform="translate(414 600) scale(1.82)"><use href="#bin" width="64" height="72" class="bin-recycle"/><use href="#ico-recycle" x="20" y="34" width="24" height="24" class="bin-icon"/></g>
+          <g class="bin-label" text-anchor="middle"><text x="128" y="778">Trash</text><text x="300" y="778">Compost</text><text x="472" y="778">Recycling</text></g>
+        </g>
+      </svg>
+      <div class="cup-label" data-label="lid"><strong>Lid</strong><span>Polypropylene, #5</span><em class="tag tag-recycle">Recycling</em></div>
+      <div class="cup-label" data-label="sleeve"><strong>Sleeve</strong><span>Paperboard</span><em class="tag tag-recycle">Recycling</em></div>
+      <div class="cup-label" data-label="body"><strong>Cup</strong><span>Paper fused to a plastic lining</span><em class="tag tag-trash">Trash</em></div>
+      <p class="cup-note" data-cup-note>Not compost either: the plastic lining doesn't rot.</p>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- The app, as four big cards. -->
+<section class="app" id="app" aria-labelledby="app-title">
+  <div class="section-head">
+    <h2 id="app-title">Learn it, look it up, find a drop-off, play.</h2>
+    <p>Four tabs, one Tin. Everything runs on the same rulebook, so a lesson never teaches something the lookup would contradict.</p>
+  </div>
+  <div class="cards">
+    <article class="feature feature-learn">
+      <h3>Lessons on a recycling route</h3>
+      <p>Five-minute lessons, one neighbourhood at a time. Get one wrong and you see why, then it comes back at the end. No hearts, no lives.</p>
+      <div class="phone"><img src="img/screen-learn.webp" alt="The Learn tab: a road through town with wheelie-bin stops and Tin driving the recycling truck" width="393" height="852" loading="lazy"></div>
+      <p class="feature-foot">53 lessons and a sorting centre review at the end of each unit</p>
+    </article>
+    <article class="feature feature-lookup">
+      <h3>Ask about the thing in your hand</h3>
+      <p>Search 177 items or take a photo. Every part gets its bin, its resin code and the reason.</p>
+      <div class="phone"><img src="img/screen-verdict.webp" alt="The verdict for a disposable coffee cup: cup body in trash, lid and sleeve in curbside recycling, with the reason for each" width="393" height="852" loading="lazy"></div>
+      <p class="feature-foot">Asks a follow-up only when it changes the answer</p>
+    </article>
+    <article class="feature feature-near">
+      <h3>Find who takes it</h3>
+      <p>Batteries, paint, old phones. Type a ZIP code and see the nearest places that accept it.</p>
+      <div class="phone"><img src="img/screen-near-me.webp" alt="Near me: Tin asks where to look, with a ZIP code field and a button to use your location" width="393" height="852" loading="lazy"></div>
+      <p class="feature-foot">Real places from OpenStreetMap, never invented ones</p>
+    </article>
+    <article class="feature feature-arena">
+      <h3>Race your friends</h3>
+      <p>Ten timed questions. Share a six-digit PIN and everyone plays the same match, whenever they can.</p>
+      <div class="phone"><img src="img/screen-arena.webp" alt="An Arena match: question 1 of 10, which drop-off takes a fire extinguisher, with a 20-second timer" width="393" height="852" loading="lazy"></div>
+      <p class="feature-foot">Eight leagues, from Bronze to Pristine</p>
+    </article>
+  </div>
+</section>
+
+<!-- Tin's wardrobe: every item the shop sells, drawn by the app itself. -->
+<section class="wardrobe" aria-labelledby="wardrobe-title">
+  <div class="section-head">
+    <h2 id="wardrobe-title">Tin's wardrobe</h2>
+    <p>Every right answer earns a coin. Spend them on things for Tin to wear, all over the app.</p>
+  </div>
+  <div class="card wardrobe-card">
+    <p class="wardrobe-count" data-wardrobe-count>27 things to wear. Nothing here costs real money.</p>
+    <div class="chips" role="group" aria-label="Show" data-chips>
+      <button class="chip" type="button" aria-pressed="true" data-filter="all">All</button>
+      <button class="chip" type="button" aria-pressed="false" data-filter="Hats">Hats</button>
+      <button class="chip" type="button" aria-pressed="false" data-filter="Glasses">Glasses</button>
+      <button class="chip" type="button" aria-pressed="false" data-filter="Neckwear">Neckwear</button>
+      <button class="chip" type="button" aria-pressed="false" data-filter="Paint">Paint</button>
+    </div>
+    <ul class="wall" data-wall aria-live="polite"></ul>
+    <noscript><p>The wardrobe needs JavaScript to draw. Open the app's Shop to see it.</p></noscript>
+    <p class="legend small" aria-hidden="true"><span class="dot dot-hat"></span>Hats <span class="dot dot-eyes"></span>Glasses <span class="dot dot-neck"></span>Neckwear <span class="dot dot-paint"></span>Paint</p>
+  </div>
+</section>
+
+<!-- Honest numbers. -->
+<section class="honest" id="honest" aria-labelledby="honest-title">
+  <div class="honest-inner">
+    <div class="honest-copy">
+      <h2 id="honest-title">The first version was right about 1 time in 18.</h2>
+      <p>Photo recognition shipped with a bug. The model gives 1,001 scores, a background class and then the 1,000 real ones, and we read them one place off. Every guess landed on the class next door. A photo of an espresso cup came back as "cup", which was close enough to hide the problem.</p>
+      <p>Fixing the bug only got us to 13%. What actually worked was a second model, trained on 2,527 photos of real waste, and teaching the app to say "not sure" instead of guessing.</p>
+    </div>
+    <figure class="bench">
+      <figcaption>Useful answers, out of 506 photos it had never seen</figcaption>
+      <div class="bench-row">
+        <span>As first shipped</span>
+        <svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="10" rx="5" class="bench-track"/><rect width="5.5" height="10" rx="5" class="bench-bar bench-bad"/></svg>
+        <b>5.5%</b>
+      </div>
+      <div class="bench-row">
+        <span>Bug fixed</span>
+        <svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="10" rx="5" class="bench-track"/><rect width="13.2" height="10" rx="5" class="bench-bar bench-bad"/></svg>
+        <b>13.2%</b>
+      </div>
+      <div class="bench-row">
+        <span>With the waste-photo model</span>
+        <svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="10" rx="5" class="bench-track"/><rect width="77.1" height="10" rx="5" class="bench-bar bench-good"/></svg>
+        <b>77.1%</b>
+      </div>
+      <p class="bench-note">Confidently wrong answers fell from 31.6% to 4.3%. The photos are from the TrashNet dataset: single objects on a white board, so a real kitchen counter will do worse. A useful answer is the right item, or the right material when it isn't sure of the item.</p>
+    </figure>
+    <aside class="privacy-note">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-camera"/></svg>
+      <div>
+        <h3>Your photo stays on your phone.</h3>
+        <p>The model runs in your browser. About 14 MB of it comes to you once; the picture never goes anywhere.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- Why food matters. -->
+<section class="food" aria-labelledby="food-title">
+  <div class="food-art" aria-hidden="true">
+    <svg viewBox="0 0 320 260"><use href="#apple-core"/></svg>
+  </div>
+  <div class="food-copy">
+    <h2 id="food-title">Food is the biggest thing in US landfills.</h2>
+    <p>About 24% of what US towns send to landfill is food.<a class="fn" href="#src-1" id="ref-1" aria-label="Source 1">1</a> Buried without air, it rots into methane, which traps about 80 times more heat than CO&#8322; over 20 years.<a class="fn" href="#src-1" aria-label="Source 1">1</a> Food is behind about 58% of the methane that escapes city landfills.<a class="fn" href="#src-1" aria-label="Source 1">1</a></p>
+    <p>That's why the route has a whole unit on it, right after Food scraps, with a bonus guide to turning a storage tote into a compost bin.</p>
+    <ol class="sources small">
+      <li id="src-1">EPA, <cite>Quantifying Methane Emissions from Landfilled Food Waste</cite> (2023). <a href="#ref-1" aria-label="Back to the text">Back</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- Install. -->
+<section class="install" id="install" aria-labelledby="install-title" data-install>
+  <div class="section-head">
+    <h2 id="install-title">Put it on your home screen.</h2>
+    <p>US Tin is a web app: no App Store, no download, no account. Add it once and it opens full screen, like any other app, with your progress kept on the device.</p>
+  </div>
+  <div class="card install-card">
+    <div class="tabs" role="tablist" aria-label="Your device">
+      <button role="tab" id="tab-iphone" aria-controls="panel-iphone" aria-selected="true" data-tab="iphone">iPhone</button>
+      <button role="tab" id="tab-ipad" aria-controls="panel-ipad" aria-selected="false" tabindex="-1" data-tab="ipad">iPad</button>
+      <button role="tab" id="tab-android" aria-controls="panel-android" aria-selected="false" tabindex="-1" data-tab="android">Android</button>
+      <button role="tab" id="tab-computer" aria-controls="panel-computer" aria-selected="false" tabindex="-1" data-tab="computer">Computer</button>
+    </div>
+    <p class="install-guess small" data-install-guess hidden></p>
+    <p class="install-done" data-install-done hidden>You're already using US Tin from your home screen. Nice.</p>
+
+    <div class="panel" role="tabpanel" id="panel-iphone" aria-labelledby="tab-iphone">
+      <ol class="steps">
+        <li><span>Open the app in Safari.</span> <a class="btn btn-small" href="app/">Open the app</a></li>
+        <li><span>Tap Share <i class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-share"/></svg></i> in the toolbar. On iOS 26, tap <i class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-more"/></svg></i> first, then Share.</span></li>
+        <li><span>Scroll down and tap Add to Home Screen <i class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-plus-square"/></svg></i>.</span></li>
+        <li><span>Leave Open as Web App on, then tap Add.</span></li>
+      </ol>
+      <p class="small">Chrome and other browsers on iPhone have the same Share button, in the address bar.</p>
+    </div>
+    <div class="panel" role="tabpanel" id="panel-ipad" aria-labelledby="tab-ipad" hidden>
+      <ol class="steps">
+        <li><span>Open the app in Safari.</span> <a class="btn btn-small" href="app/">Open the app</a></li>
+        <li><span>Tap Share <i class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-share"/></svg></i> at the top right, beside the address bar. On iPadOS 26 it can sit under <i class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-more"/></svg></i>.</span></li>
+        <li><span>Tap Add to Home Screen <i class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-plus-square"/></svg></i>.</span></li>
+        <li><span>Leave Open as Web App on, then tap Add.</span></li>
+      </ol>
+      <p class="small">On iPad the app opens in a phone-width column, centred. Lessons are built for one hand.</p>
+    </div>
+    <div class="panel" role="tabpanel" id="panel-android" aria-labelledby="tab-android" hidden>
+      <p class="install-now" data-install-now hidden><button class="btn" type="button" data-install-button>Install US Tin</button></p>
+      <ol class="steps">
+        <li><span>Open the app in Chrome.</span> <a class="btn btn-small" href="app/">Open the app</a></li>
+        <li><span>Tap the menu <i class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-more-v"/></svg></i> at the top right.</span></li>
+        <li><span>Tap Add to home screen, or Install app, then Install.</span></li>
+      </ol>
+      <p class="small">Samsung Internet and Firefox call it Add page to, then Home screen.</p>
+    </div>
+    <div class="panel panel-computer" role="tabpanel" id="panel-computer" aria-labelledby="tab-computer" hidden>
+      <div>
+        <p class="install-now" data-install-now hidden><button class="btn" type="button" data-install-button>Install US Tin</button></p>
+        <ol class="steps">
+          <li><span>In Chrome or Edge, open the app and click the install icon at the right end of the address bar.</span></li>
+          <li><span>In Safari on a Mac, open the app and choose File, then Add to Dock.</span></li>
+        </ol>
+        <p class="small">It's made for phones, though. Scan the code to open it on yours.</p>
+      </div>
+      <figure class="qr">
+        <img src="img/qr-app.svg" alt="QR code linking to us-tin.org/app" width="168" height="168">
+        <figcaption class="small">us-tin.org/app</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- The changelog, from the commit history. -->
+<section class="log" id="changelog" aria-labelledby="log-title">
+  <div class="section-head">
+    <h2 id="log-title">From the workshop</h2>
+    <p>What changed, and when. Taken from the project's history, so it's in order and nothing is left out on purpose.</p>
+  </div>
+  <ol class="log-list">
+    <li><time datetime="2026-11-28">28 Nov 2026</time><p>This website. The app moved to its own address under it, and old links forward there.</p></li>
+    <li><time datetime="2026-11-26">26 Nov</time><p>US Tin got its own look: warm paper, ink, and far fewer words on every screen.</p></li>
+    <li><time datetime="2026-11-26">26 Nov</time><p>Leaderboard names are rolled from three family-friendly words, never typed. Players show up as their own dressed-up Tin.</p></li>
+    <li><time datetime="2026-11-26">26 Nov</time><p>Near me stopped taking minutes to load, and stopped blaming your connection for our server problems.</p></li>
+    <li><time datetime="2026-11-21">21 Nov</time><p>The Arena: timed matches, game PINs for friends, and eight leagues from Bronze to Pristine.</p></li>
+    <li><time datetime="2026-10-24">24 Oct</time><p>A Food &amp; methane unit, and a bonus guide to building your own compost bin.</p></li>
+    <li><time datetime="2026-10-10">10 Oct</time><p>Motion went on a budget: the more often something happens, the less it moves.</p></li>
+    <li><time datetime="2026-10-06">6 Oct</time><p>The lesson path became a recycling route. Coins and a shop for Tin. Hearts were dropped, so mistakes cost nothing.</p></li>
+    <li><time datetime="2026-10-05">5 Oct</time><p>The course: lessons generated from the same catalog the lookup uses.</p></li>
+    <li><time datetime="2026-09-19">19 Sep</time><p>Found the off-by-one that made recognition random, and trained the waste-photo model that fixed it.</p></li>
+    <li><time datetime="2026-09-19">19 Sep</time><p>Day one: point a camera at something, get a bin.</p></li>
+  </ol>
+</section>
+
+<!-- FAQ. -->
+<section class="faq" id="faq" aria-labelledby="faq-title">
+  <div class="section-head">
+    <h2 id="faq-title">Questions people ask</h2>
+  </div>
+  <div class="faq-list">
+    <details>
+      <summary>Is it free?</summary>
+      <p>Yes. No ads, no subscription, no account. Coins are earned with right answers and can't be bought.</p>
+    </details>
+    <details>
+      <summary>Does it work where I live?</summary>
+      <p>US Tin gives general guidance for the US. Every town runs its own program, so if your hauler or city says something different, they win. Near me shows real places from OpenStreetMap; call ahead, because hours and rules change.</p>
+    </details>
+    <details>
+      <summary>What happens to my photos?</summary>
+      <p>Nothing leaves your phone. Recognition runs in the browser, on the device. There is no upload and no server that sees the picture.</p>
+    </details>
+    <details>
+      <summary>Where is my progress saved?</summary>
+      <p>On your device, in the browser's storage. That's why there's no sign-up. It also means clearing your browser's data, or switching phones, starts you over.</p>
+    </details>
+    <details>
+      <summary>Can a class play together?</summary>
+      <p>Yes. Host a game in the Arena and share its six-digit PIN. Everyone plays the same ten questions, at the same time or any time that week, and the podium fills in as they finish. There's no teacher dashboard.</p>
+    </details>
+    <details>
+      <summary>I think an answer is wrong.</summary>
+      <p>Tell us, with the item and your town: <a href="https://github.com/austnn-xu/ustin/issues">open an issue on GitHub</a>. Every answer comes from one catalog, so a fix there fixes the lessons too.</p>
+    </details>
+    <details>
+      <summary>Is there an app in the App Store?</summary>
+      <p>Not yet. The web app does everything the store version would, including working from your home screen. The photo recognition currently runs in the web version only.</p>
+    </details>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <svg class="footer-meadow" viewBox="0 0 1600 150" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 150 V92 C260 40 520 30 800 52 C1080 74 1340 40 1600 70 V150 Z" fill="#5DBB4A" stroke="#26323B" stroke-width="5" vector-effect="non-scaling-stroke"/>
+    <path d="M0 150 V118 C300 92 620 96 900 108 C1180 120 1400 98 1600 104 V150 Z" fill="#26323B"/>
+  </svg>
+  <div class="footer-truck" aria-hidden="true"><svg viewBox="0 0 120 76"><use href="#truck"/></svg></div>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <p class="wordmark">US Tin</p>
+      <p>Know where everything goes.</p>
+      <a class="btn" href="app/">Open the app</a>
+    </div>
+    <nav class="footer-cols" aria-label="Footer">
+      <div>
+        <h2>The app</h2>
+        <ul><li><a href="app/">Open the app</a></li><li><a href="#app">What's in it</a></li><li><a href="#install">Install</a></li><li><a href="#faq">FAQ</a></li></ul>
+      </div>
+      <div>
+        <h2>About</h2>
+        <ul><li><a href="#changelog">Changelog</a></li><li><a href="#honest">How accurate it is</a></li><li><a href="https://github.com/austnn-xu/ustin">Source on GitHub</a></li><li><a href="press/">Press kit</a></li></ul>
+      </div>
+      <div>
+        <h2>Legal</h2>
+        <ul><li><a href="terms/">Terms of use</a></li><li><a href="privacy/">Privacy</a></li><li><a href="cookies/">Cookies</a></li><li><a href="accessibility/">Accessibility</a></li><li><button class="linklike" type="button" data-cookie-settings>Cookie settings</button></li></ul>
+      </div>
+    </nav>
+  </div>
+  <div class="footer-base small">
+    <p>&copy; 2026 US Tin. General guidance for the US; your local rules win.</p>
+    <p>Set in Bricolage Grotesque and Plus Jakarta Sans. Drawn in SVG. No trackers on this site.</p>
+  </div>
+</footer>
+
+<!-- Cookie notice: honest, because there is little to consent to. -->
+<div class="consent card" role="region" aria-label="Cookie notice" data-consent hidden>
+  <p><strong>No tracking here.</strong> We don't set cookies. The app keeps your progress in this browser's storage, on your device. <a href="cookies/">Details</a></p>
+  <div class="consent-actions">
+    <button class="btn btn-small" type="button" data-consent-accept>Accept all</button>
+    <button class="btn btn-small btn-quiet" type="button" data-consent-essential>Essential only</button>
+    <button class="linklike" type="button" data-cookie-settings>Settings</button>
+  </div>
+</div>
+
+<dialog class="cookie-dialog card" data-cookie-dialog aria-labelledby="cookie-dialog-title">
+  <form method="dialog">
+    <h2 id="cookie-dialog-title">Cookie settings</h2>
+    <div class="pref">
+      <div><h3>Essential</h3><p>Your app progress, settings, and this choice. Stored on your device only.</p></div>
+      <span class="pref-fixed small">Always on</span>
+    </div>
+    <div class="pref">
+      <div><h3>Preferences</h3><p>Remembers small things on this site, like which device you picked in the install guide.</p></div>
+      <label class="switch"><input type="checkbox" data-pref="preferences"><span class="visually-hidden">Preferences</span></label>
+    </div>
+    <div class="pref">
+      <div><h3>Analytics and advertising</h3><p>We don't run any, so there's nothing to switch on.</p></div>
+      <label class="switch"><input type="checkbox" disabled><span class="visually-hidden">Analytics and advertising (not used)</span></label>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-small" value="save" data-consent-save>Save</button>
+      <button class="btn btn-small btn-quiet" value="cancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Drawings used more than once. -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="bin" viewBox="0 0 64 72" overflow="visible">
+      <rect x="24" y="1" width="16" height="9" rx="3" class="bin-depth" stroke="#26323B" stroke-width="2.5"/>
+      <path d="M10 22 H54 L50.5 65 Q50 70 45 70 H19 Q14 70 13.5 65 Z" class="bin-base" stroke="#26323B" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M22 28 L23.5 62 M42 28 L40.5 62" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>
+      <rect x="4" y="9" width="56" height="13" rx="5" class="bin-depth" stroke="#26323B" stroke-width="2.5"/>
+      <rect x="7" y="11" width="50" height="4" rx="2" fill="#fff" fill-opacity=".35"/>
+    </symbol>
+    <symbol id="ico-recycle" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/><path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/><path d="m14 16-3 3 3 3"/><path d="M8.293 13.596 7.196 9.5 3.1 10.598"/><path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/><path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>
+    </symbol>
+    <symbol id="ico-sprout" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>
+    </symbol>
+    <symbol id="ico-trash" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6M14 11v6"/>
+    </symbol>
+    <symbol id="ico-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/>
+    </symbol>
+    <symbol id="ico-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></symbol>
+    <symbol id="ico-more-v" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></symbol>
+    <symbol id="ico-plus-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 12h8M12 8v8"/>
+    </symbol>
+    <symbol id="ico-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>
+    </symbol>
+    <symbol id="tin-head" viewBox="16 -6 88 100">
+      <rect x="22" y="30" width="76" height="60" rx="14" fill="#CDD7DD" stroke="#2F3E46" stroke-width="5"/>
+      <path d="M80 32 h4 a12 12 0 0 1 12 12 v30 h-16 z" fill="#A3B2BB"/>
+      <ellipse cx="60" cy="30" rx="40" ry="10" fill="#E8EEF1" stroke="#2F3E46" stroke-width="5"/>
+      <ellipse cx="60" cy="30" rx="31" ry="6" fill="#A3B2BB"/>
+      <ellipse cx="46" cy="60" rx="9" ry="10" fill="#fff" stroke="#24313A" stroke-width="3"/><circle cx="47" cy="60" r="5" fill="#24313A"/>
+      <ellipse cx="74" cy="60" rx="9" ry="10" fill="#fff" stroke="#24313A" stroke-width="3"/><circle cx="75" cy="60" r="5" fill="#24313A"/>
+    </symbol>
+    <symbol id="tin" viewBox="0 -28 120 168" overflow="visible">
+      <ellipse cx="45" cy="131" rx="10" ry="5" fill="#2F3E46"/><ellipse cx="75" cy="131" rx="10" ry="5" fill="#2F3E46"/>
+      <g fill="none" stroke-linecap="round">
+        <path d="M26 80 Q12 88 16 104" stroke="#2F3E46" stroke-width="12"/><path d="M26 80 Q12 88 16 104" stroke="#CDD7DD" stroke-width="6"/>
+        <g class="tin-arm-rest"><path d="M94 80 Q108 88 104 104" stroke="#2F3E46" stroke-width="12"/><path d="M94 80 Q108 88 104 104" stroke="#CDD7DD" stroke-width="6"/></g>
+        <g class="tin-arm-wave"><path d="M94 74 Q112 62 106 38" stroke="#2F3E46" stroke-width="12"/><path d="M94 74 Q112 62 106 38" stroke="#CDD7DD" stroke-width="6"/></g>
+      </g>
+      <rect x="22" y="30" width="76" height="98" rx="14" fill="#CDD7DD"/>
+      <path d="M78 30 h6 a14 14 0 0 1 14 14 v70 a14 14 0 0 1 -14 14 h-6 z" fill="#A3B2BB"/>
+      <path d="M24 48 H96 M24 112 H96" stroke="#A3B2BB" stroke-width="3"/>
+      <rect x="22" y="96" width="76" height="14" fill="#1F965C"/>
+      <path d="M22 103 H98" stroke="#166E43" stroke-width="2" stroke-dasharray="3 5"/>
+      <rect x="22" y="30" width="76" height="98" rx="14" fill="none" stroke="#2F3E46" stroke-width="4" stroke-linejoin="round"/>
+      <ellipse cx="60" cy="30" rx="40" ry="10" fill="#E8EEF1" stroke="#2F3E46" stroke-width="4"/>
+      <ellipse cx="60" cy="30" rx="31" ry="6" fill="#A3B2BB"/>
+      <ellipse cx="70" cy="27" rx="8" ry="3.5" fill="none" stroke="#2F3E46" stroke-width="3"/>
+      <g opacity=".85" fill="#FF9AA6"><ellipse cx="34" cy="80" rx="6" ry="4"/><ellipse cx="86" cy="80" rx="6" ry="4"/></g>
+      <g class="tin-eyes-open">
+        <ellipse cx="46" cy="64" rx="10" ry="11" fill="#fff" stroke="#24313A" stroke-width="3"/><circle cx="47" cy="63" r="5.5" fill="#24313A"/><circle cx="49" cy="60" r="2" fill="#fff"/>
+        <ellipse cx="74" cy="64" rx="10" ry="11" fill="#fff" stroke="#24313A" stroke-width="3"/><circle cx="75" cy="63" r="5.5" fill="#24313A"/><circle cx="77" cy="60" r="2" fill="#fff"/>
+      </g>
+      <g class="tin-eyes-blink" stroke="#24313A" stroke-width="4" stroke-linecap="round" fill="none"><path d="M37 65 Q46 70 55 65"/><path d="M65 65 Q74 70 83 65"/></g>
+      <g class="tin-eyes-shut" stroke="#24313A" stroke-width="4" stroke-linecap="round" fill="none"><path d="M37 66 Q46 55 55 66"/><path d="M65 66 Q74 55 83 66"/></g>
+      <path class="tin-smile" d="M49 79 Q60 89 71 79" stroke="#24313A" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <g class="tin-grin"><path d="M45 77 Q60 97 75 77 Z" fill="#5B2430" stroke="#24313A" stroke-width="3" stroke-linejoin="round"/><path d="M53 87 Q60 81 67 87 Q60 92 53 87 Z" fill="#FF6F80"/></g>
+    </symbol>
+    <symbol id="truck" viewBox="0 0 120 76">
+      <rect x="4" y="14" width="74" height="42" rx="8" fill="#2D7BC0" stroke="#26323B" stroke-width="3"/>
+      <rect x="10" y="19" width="62" height="4" rx="2" fill="#fff" fill-opacity=".35"/>
+      <path d="M80 26 H100 Q106 26 109 32 L115 44 V56 H80 Z" fill="#FFF2DC" stroke="#26323B" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M86 30 H99 Q103 30 105 34 L109 43 H86 Z" fill="#9ED8F5"/>
+      <rect x="89" y="33" width="13" height="14" rx="3" fill="#CDD7DD"/>
+      <ellipse cx="95.5" cy="33" rx="7" ry="2.5" fill="#E8EEF1"/>
+      <circle cx="93" cy="38.5" r="1.6" fill="#24313A"/><circle cx="98.5" cy="38.5" r="1.6" fill="#24313A"/>
+      <path d="M93 42 Q95.7 44.5 98.5 42" stroke="#24313A" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <circle cx="113" cy="48" r="2" fill="#FFD84D"/>
+      <use href="#ico-recycle" x="28" y="21" width="26" height="26"/>
+      <g fill="#26323B"><circle cx="24" cy="62" r="10"/><circle cx="60" cy="62" r="10"/><circle cx="98" cy="62" r="10"/></g>
+      <g fill="#BAC2CA"><circle cx="24" cy="62" r="4"/><circle cx="60" cy="62" r="4"/><circle cx="98" cy="62" r="4"/></g>
+    </symbol>
+    <symbol id="apple-core" viewBox="0 0 320 260">
+      <ellipse class="ground" cx="160" cy="236" rx="110" ry="14"/>
+      <path d="M160 52 C120 40 84 62 84 104 C84 128 104 134 112 150 C120 166 102 178 102 196 C102 224 132 236 160 230 C188 236 218 224 218 196 C218 178 200 166 208 150 C216 134 236 128 236 104 C236 62 200 40 160 52 Z" fill="#F7E9C8" stroke="#26323B" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M84 104 C84 62 120 40 160 52 C200 40 236 62 236 104 C222 92 206 88 190 96 C176 86 144 86 130 96 C114 88 98 92 84 104 Z" fill="#D9533F" stroke="#26323B" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M102 196 C102 224 132 236 160 230 C188 236 218 224 218 196 C204 206 188 206 176 200 C166 208 154 208 144 200 C132 206 116 206 102 196 Z" fill="#D9533F" stroke="#26323B" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M160 52 C160 36 166 26 176 18" stroke="#26323B" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <path d="M170 28 C188 14 210 18 218 30 C200 40 182 38 170 28 Z" fill="#5DBB4A" stroke="#26323B" stroke-width="5" stroke-linejoin="round"/>
+      <g fill="#5B3A22"><ellipse cx="148" cy="142" rx="5" ry="9" transform="rotate(-18 148 142)"/><ellipse cx="172" cy="142" rx="5" ry="9" transform="rotate(18 172 142)"/></g>
+      <path d="M122 70 q12 -10 26 -8" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" opacity=".6"/>
+    </symbol>
+  </defs>
+</svg>
+</body>
+</html>

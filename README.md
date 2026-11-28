@@ -2,6 +2,13 @@
 
 **Learn where everything goes, one short lesson at a time.** Then look up anything in the moment, and find the nearest place that takes it.
 
+**Website:** https://us-tin.org/ · **The app:** https://us-tin.org/app/
+
+The website (`site/`) is the front door: what US Tin is, a scroll-through of a coffee cup coming apart into its three
+parts, the four tabs, Tin's wardrobe, the honest accuracy numbers, how to put the app on a home screen (iPhone, iPad,
+Android, computer), the changelog, FAQ, and the terms, privacy, cookie and accessibility pages. It is hand-written HTML,
+CSS and a little JavaScript, with no framework and no trackers. Why it looks the way it does: [`site/DESIGN.md`](site/DESIGN.md).
+
 The app lives in [`mobile/`](mobile/) (Expo + React Native, runs on iOS, Android and the web). It has four tabs; two of them hold a pair of screens, switched at the top:
 
 | Tab | What it does |
@@ -160,7 +167,9 @@ npm install
 npm run web             # http://localhost:8081 in a browser (photo recognition works here)
 npm start               # Expo dev server: scan the QR code with Expo Go on a phone
 npm run typecheck
-npm run publish:web     # build and publish the web version to GitHub Pages (/ustin)
+npm run build:pages     # the website + the app, as GitHub Pages serves them, into mobile/pages/
+npm run preview:pages   # serve that at http://localhost:4173/ (with Pages' 404 behaviour)
+npm run publish:web     # build and publish both to GitHub Pages (us-tin.org, app at us-tin.org/app)
 ```
 
 Progress is stored on the device. Location is only sent to OpenStreetMap services (Zippopotam / Nominatim for the ZIP lookup, Overpass for nearby places) and never anywhere else.
@@ -185,6 +194,8 @@ The camera needs a secure context, so `localhost` works, but testing from a phon
 ## Layout
 
 ```
+site/                      The website: home page, legal pages, press kit. Notes in site/DESIGN.md
+site/tools/                Generators for the site's data, textures and long-form pages
 mobile/                    The app (Expo). Design rules in mobile/CLAUDE.md
 lib/catalog.js             177 objects on 11 shelves, built from component factories  ← the substance
 lib/streams.js             Outcomes, material streams, follow-up questions

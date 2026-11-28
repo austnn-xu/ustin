@@ -28,9 +28,12 @@ jobs:
       - name: Colour contrast
         working-directory: mobile
         run: npm run check:contrast
-      - name: Export the web build
+      - name: Build the website and the app (what GitHub Pages serves)
         working-directory: mobile
-        run: npm run export:web
+        run: npm run build:pages
       - name: Build is hardened
         working-directory: mobile
-        run: grep -q "Content-Security-Policy" dist/index.html
+        run: |
+          grep -q "Content-Security-Policy" pages/app/index.html
+          grep -q "Content-Security-Policy" pages/index.html
+          grep -q "redirect.js" pages/404.html

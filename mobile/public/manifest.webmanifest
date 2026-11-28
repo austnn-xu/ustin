@@ -1,9 +1,10 @@
 {
+  "id": "../",
   "name": "US Tin",
   "short_name": "US Tin",
   "description": "Learn where things go, one lesson at a time, and find the nearest drop-off for anything.",
   "start_url": "./",
-  "scope": "./",
+  "scope": "../",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FAF7F0",

@@ -49,7 +49,12 @@ OpenStreetMap's embed in a sandboxed iframe that cannot navigate the app and is 
 
 ## The web build
 
-The Expo app is published to GitHub Pages, which cannot send HTTP headers. `mobile/scripts/harden-web.mjs` runs on every
+The website (`site/`) and the Expo app (under `/app/`) are published to GitHub Pages, which cannot send HTTP headers.
+Every website page carries its own `<meta>` policy (scripts and styles from the site only, no inline scripts or style
+attributes, no third-party requests at all), and `test/site.test.js` fails if a page breaks it. The website sets no
+cookies and keeps only the visitor's cookie choice and, with consent, one preference in localStorage.
+
+For the app: `mobile/scripts/harden-web.mjs` runs on every
 export and puts what a page can declare into `index.html` / `404.html`:
 
 - **Content-Security-Policy:** scripts only from the site itself (no inline scripts, no `eval`;
