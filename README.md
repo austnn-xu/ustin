@@ -160,7 +160,7 @@ npm install
 npm run web             # http://localhost:8081 in a browser (photo recognition works here)
 npm start               # Expo dev server: scan the QR code with Expo Go on a phone
 npm run typecheck
-npm run publish:web     # build and publish the web version to GitHub Pages (/ustin)
+npm run publish:web     # build and publish the web version to GitHub Pages (us-tin.org)
 ```
 
 Progress is stored on the device. Location is only sent to OpenStreetMap services (Zippopotam / Nominatim for the ZIP lookup, Overpass for nearby places) and never anywhere else.

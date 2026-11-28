@@ -69,7 +69,7 @@ export default function PinScreen() {
 
   const mine = board.data?.find((r) => r.isMe);
   const share = async () => {
-    // On the web this page's own address is the invite (it keeps the site's /ustin base path, which createURL drops).
+    // On the web this page's own address is the invite (it keeps any base path, which createURL drops).
     const url = Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.href.split(/[?#]/)[0]! : Linking.createURL(`/pin/${code}`);
     const message = `Race me in US Tin! Game PIN ${formatPin(code)} · ${arena.MATCH.questions} questions on where things go. ${url}`;
     haptics.light();

@@ -239,7 +239,7 @@ See `../SECURITY.md` for the whole picture. In practice:
 ## Shipping
 
 The owner wants every finished update live: once a change passes its checks, open a PR into the default branch, merge
-it, and publish the web build to GitHub Pages (`npm run publish:web`, served at https://austnn-xu.github.io/ustin/).
+it, and publish the web build to GitHub Pages (`npm run publish:web`, served at https://us-tin.org/).
 Don't leave finished work sitting on a feature branch.
 
 ## Process (per screen)
