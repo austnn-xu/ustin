@@ -13,6 +13,7 @@ EXPO_OFFLINE=1 npx expo export --platform web
 cp dist/index.html dist/404.html   # SPA fallback so deep links survive a refresh
 node scripts/harden-web.mjs dist   # Content-Security-Policy + referrer policy (see SECURITY.md)
 touch dist/.nojekyll               # Pages' Jekyll would drop the _expo/ folder
+printf 'us-tin.org\n' > dist/CNAME     # the custom domain; wiping the branch below would otherwise unset it
 
 git -C "$REPO_ROOT" fetch -q origin gh-pages
 git -C "$REPO_ROOT" worktree add -q "$WT" origin/gh-pages
